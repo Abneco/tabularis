@@ -35,10 +35,6 @@ const PLUGIN_INIT_TIMEOUT: Duration = Duration::from_secs(15);
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-/// Heuristic for the JSON-RPC "method not found" error (code -32601). Only
-/// the error *message* survives the response plumbing, so optional-method
-/// fallbacks match on the standard wording (and the code, for SDKs that
-/// embed it in the message).
 /// Read an `execute_query` response in either supported shape.
 ///
 /// A plugin written before session pinning answers with the `QueryResult`
@@ -49,16 +45,14 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
 ///
 /// The wrapper is recognised by its `in_transaction` key: a bare
 /// `QueryResult` has no such field, while its own `rows`/`columns` live one
-/// level down under `result`.
+/// level down under `result`. A non-bool flag reads as `false`, as in
+/// [`parse_batch_response`].
 fn parse_query_response(value: Value) -> Result<(QueryResult, bool), String> {
     if let Some(object) = value.as_object() {
-        if let (Some(result), Some(in_transaction)) = (
-            object.get("result"),
-            object.get("in_transaction").and_then(Value::as_bool),
-        ) {
+        if let (Some(result), Some(flag)) = (object.get("result"), object.get("in_transaction")) {
             let parsed: QueryResult =
                 serde_json::from_value(result.clone()).map_err(|e| e.to_string())?;
-            return Ok((parsed, in_transaction));
+            return Ok((parsed, flag.as_bool().unwrap_or(false)));
         }
     }
     let parsed: QueryResult = serde_json::from_value(value).map_err(|e| e.to_string())?;
@@ -89,6 +83,10 @@ fn parse_batch_response(value: Value) -> Result<(Vec<BatchStatementResult>, bool
     Ok((statements, false))
 }
 
+/// Heuristic for the JSON-RPC "method not found" error (code -32601). Only
+/// the error *message* survives the response plumbing, so optional-method
+/// fallbacks match on the standard wording (and the code, for SDKs that
+/// embed it in the message).
 fn is_method_not_found(err: &str) -> bool {
     err.to_lowercase().contains("method not found") || err.contains("-32601")
 }
@@ -2101,6 +2099,23 @@ mod tests {
             parse_query_response(value).expect("wrapper form is a valid response");
         assert_eq!(result.columns, vec!["id".to_string()]);
         assert!(in_transaction);
+    }
+
+    #[test]
+    fn parse_query_response_reads_a_null_flag_as_false() {
+        let value = serde_json::json!({
+            "result": {
+                "columns": ["id"],
+                "rows": [[1]],
+                "affected_rows": 0,
+                "pagination": null
+            },
+            "in_transaction": null
+        });
+        let (result, in_transaction) =
+            parse_query_response(value).expect("a null flag still marks the wrapper");
+        assert_eq!(result.columns, vec!["id".to_string()]);
+        assert!(!in_transaction);
     }
 
     #[test]
