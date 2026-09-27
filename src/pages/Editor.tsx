@@ -306,8 +306,6 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
   const [transactionTabIds, setTransactionTabIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
-  const transactionTabIdsRef = useRef<ReadonlySet<string>>(transactionTabIds);
-  transactionTabIdsRef.current = transactionTabIds;
 
   useEffect(() => {
     const unlisten = listen<{ session_id: string; in_transaction: boolean }>(
@@ -328,15 +326,16 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     };
   }, []);
 
-  /// Roll back and hand back the connection of every closing tab that holds
-  /// one. Called only once a close actually proceeds, so cancelling the
+  /// Roll back and hand back the connection of every closing tab. Called for
+  /// every tab, not only badged ones: the badge state is lost on remount and
+  /// unset while a first run is in flight, and the backend waits for that run.
+  /// Called only once a close actually proceeds, so cancelling the
   /// unsaved-file prompt cannot discard a live transaction.
   const releaseTransactionSessions = useCallback(
     (tabIds: ReadonlyArray<string>) => {
-      const pinned = tabIds.filter((id) => transactionTabIdsRef.current.has(id));
-      if (pinned.length === 0 || !activeConnectionId) return;
+      if (tabIds.length === 0 || !activeConnectionId) return;
       const connectionId = activeConnectionId;
-      for (const sessionId of pinned) {
+      for (const sessionId of tabIds) {
         void invoke("release_query_session", { connectionId, sessionId }).catch(
           () => {
             // The tab is already gone; nothing useful to surface.
@@ -344,8 +343,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         );
       }
       setTransactionTabIds((prev) => {
+        if (!tabIds.some((id) => prev.has(id))) return prev;
         const next = new Set(prev);
-        for (const id of pinned) next.delete(id);
+        for (const id of tabIds) next.delete(id);
         return next;
       });
     },
@@ -3989,6 +3989,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                     // This tab is holding a pooled connection open, and its
                     // uncommitted changes are invisible to every other tab.
                     <span
+                      role="status"
                       className="shrink-0 px-1 rounded text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-400"
                       title={t("editor.transactionOpenHint")}
                       aria-label={t("editor.transactionOpenHint")}
