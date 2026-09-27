@@ -306,6 +306,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
   const [transactionTabIds, setTransactionTabIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
+  const transactionTabIdsRef = useRef<ReadonlySet<string>>(transactionTabIds);
+  transactionTabIdsRef.current = transactionTabIds;
 
   useEffect(() => {
     const unlisten = listen<{ session_id: string; in_transaction: boolean }>(
@@ -1809,6 +1811,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
           connectionId: activeConnectionId,
           query: countTarget,
           schema: tab.schema ?? activeSchema,
+          // Inside a transaction, count what the tab sees, uncommitted rows included.
+          sessionId: transactionTabIdsRef.current.has(tab.id) ? tab.id : undefined,
         });
         const latest = tabsRef.current.find((t) => t.id === tab.id) ?? tab;
         if (!latest.result?.pagination) return;
@@ -3682,6 +3686,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         format,
         csvDelimiter: format === "csv" ? csvDelimiter : undefined,
         ...databaseParam,
+        // Inside a transaction, export what the tab sees, uncommitted rows included.
+        sessionId:
+          activeTab && transactionTabIds.has(activeTab.id) ? activeTab.id : undefined,
       });
 
       // Success: update modal state instead of showing toast

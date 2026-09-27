@@ -4795,6 +4795,35 @@ pub async fn explain_query_plan<R: Runtime>(
     }
 }
 
+/// Run a read on the connection pinned to `session_id`, inside its open
+/// transaction, so it sees the tab's uncommitted changes. A savepoint keeps a
+/// failing read from aborting the user's transaction.
+pub(crate) async fn read_in_open_transaction(
+    drv: &dyn crate::drivers::driver_trait::DatabaseDriver,
+    params: &ConnectionParams,
+    query: &str,
+    limit: Option<u32>,
+    page: u32,
+    schema: Option<&str>,
+    session_id: &str,
+) -> Result<QueryResult, String> {
+    let batch = [
+        "SAVEPOINT tabularis_read".to_string(),
+        query.to_string(),
+        "ROLLBACK TO SAVEPOINT tabularis_read".to_string(),
+        "RELEASE SAVEPOINT tabularis_read".to_string(),
+    ];
+    let (results, _) = drv
+        .execute_batch_in_session(params, &batch, limit, page, schema, Some(session_id), None)
+        .await?;
+    // With no transaction open (a stale badge) only the savepoint lines fail; the read still runs.
+    match results.into_iter().nth(1) {
+        Some(BatchStatementResult { result: Some(result), .. }) => Ok(result),
+        Some(BatchStatementResult { error: Some(e), .. }) => Err(e),
+        _ => Err("The statement produced no result".to_string()),
+    }
+}
+
 // --- Count Query ---
 
 #[tauri::command]
@@ -4803,6 +4832,7 @@ pub async fn count_query<R: Runtime>(
     connection_id: String,
     query: String,
     schema: Option<String>,
+    session_id: Option<String>,
 ) -> Result<u64, String> {
     let saved_conn = find_connection_by_id(&app, &connection_id)?;
     let expanded_params = expand_ssh_connection_params(&app, &saved_conn.params).await?;
@@ -4814,9 +4844,25 @@ pub async fn count_query<R: Runtime>(
     let count_q = format!("SELECT COUNT(*) FROM ({}) as count_wrapper", sanitized);
 
     let drv = driver_for_params(&params).await?;
-    let result = drv
-        .execute_query(&params, &count_q, None, 1, schema.as_deref())
-        .await?;
+    // The editor sends a session only for a tab inside a transaction.
+    let result = match session_id.as_deref() {
+        Some(id) => {
+            read_in_open_transaction(
+                drv.as_ref(),
+                &params,
+                &count_q,
+                None,
+                1,
+                schema.as_deref(),
+                id,
+            )
+            .await?
+        }
+        None => {
+            drv.execute_query(&params, &count_q, None, 1, schema.as_deref())
+                .await?
+        }
+    };
 
     let total: u64 = result
         .rows
