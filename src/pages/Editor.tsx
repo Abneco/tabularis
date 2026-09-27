@@ -328,32 +328,6 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     };
   }, []);
 
-  /// Roll back and hand back the connection of every closing tab. Called for
-  /// every tab, not only badged ones: the badge state is lost on remount and
-  /// unset while a first run is in flight, and the backend waits for that run.
-  /// Called only once a close actually proceeds, so cancelling the
-  /// unsaved-file prompt cannot discard a live transaction.
-  const releaseTransactionSessions = useCallback(
-    (tabIds: ReadonlyArray<string>) => {
-      if (tabIds.length === 0 || !activeConnectionId) return;
-      const connectionId = activeConnectionId;
-      for (const sessionId of tabIds) {
-        void invoke("release_query_session", { connectionId, sessionId }).catch(
-          () => {
-            // The tab is already gone; nothing useful to surface.
-          },
-        );
-      }
-      setTransactionTabIds((prev) => {
-        if (!tabIds.some((id) => prev.has(id))) return prev;
-        const next = new Set(prev);
-        for (const id of tabIds) next.delete(id);
-        return next;
-      });
-    },
-    [activeConnectionId],
-  );
-
   useEffect(() => {
     const unlisten = listen<ExportProgress>("export_progress", (event) => {
       setExportState((prev) => ({
@@ -946,8 +920,14 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
 
   const requestTabClosure = useCallback(
     (tabIds: string[], action: () => void) => {
+      // EditorProvider releases a closed tab's session once it leaves the list.
       const close = () => {
-        releaseTransactionSessions(tabIds);
+        setTransactionTabIds((prev) => {
+          if (!tabIds.some((id) => prev.has(id))) return prev;
+          const next = new Set(prev);
+          for (const id of tabIds) next.delete(id);
+          return next;
+        });
         action();
       };
       if (!hasUnsavedSqlFileTabs(tabsRef.current, tabIds)) {
@@ -957,7 +937,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       pendingTabCloseActionRef.current = close;
       setHasPendingSqlFileClose(true);
     },
-    [releaseTransactionSessions],
+    [],
   );
 
   const handleCloseTab = useCallback(

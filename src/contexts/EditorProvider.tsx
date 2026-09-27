@@ -50,6 +50,26 @@ export const EditorProvider = ({ children }: { children: ReactNode }) => {
     tabsRef.current = tabs;
   }, [tabs]);
 
+  // Every close path ends here, so a tab leaving the list releases its pinned
+  // connection, rolling back any transaction it left open. Clearing the list on
+  // disconnect is skipped: that connection is going away.
+  const releasedFromTabsRef = useRef<Tab[]>([]);
+  useEffect(() => {
+    const previous = releasedFromTabsRef.current;
+    releasedFromTabsRef.current = tabs;
+    if (!activeConnectionId) return;
+    const open = new Set(tabs.map((t) => t.id));
+    for (const tab of previous) {
+      if (open.has(tab.id)) continue;
+      void invoke("release_query_session", {
+        connectionId: tab.connectionId,
+        sessionId: tab.id,
+      }).catch(() => {
+        // The tab is already gone; nothing useful to surface.
+      });
+    }
+  }, [tabs, activeConnectionId]);
+
   // Load tabs from file storage when connection changes
   useEffect(() => {
     if (!activeConnectionId) {
