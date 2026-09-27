@@ -4509,13 +4509,7 @@ pub async fn execute_query<R: Runtime>(
             // point, so this path reports session state exactly as a batch
             // does.
             if let Some(id) = session_id.as_deref() {
-                let _ = app.emit(
-                    "session-transaction-state",
-                    SessionTransactionStateEvent {
-                        session_id: id,
-                        in_transaction,
-                    },
-                );
+                emit_session_state(&app, &connection_id, id, in_transaction);
             }
             if let Some(database) = &dropped {
                 emit_database_dropped(&app, &connection_id, database);
@@ -4524,14 +4518,24 @@ pub async fn execute_query<R: Runtime>(
         }
         Ok(Err(e)) => {
             log::error!("Query execution failed: {}", e);
-            emit_session_state_after_failure(&app, session_driver.as_ref(), session_id.as_deref())
-                .await;
+            emit_session_state_after_failure(
+                &app,
+                &connection_id,
+                session_driver.as_ref(),
+                session_id.as_deref(),
+            )
+            .await;
             Err(e)
         }
         Err(_) => {
             log::warn!("Query was cancelled");
-            emit_session_state_after_failure(&app, session_driver.as_ref(), session_id.as_deref())
-                .await;
+            emit_session_state_after_failure(
+                &app,
+                &connection_id,
+                session_driver.as_ref(),
+                session_id.as_deref(),
+            )
+            .await;
             Err("Query cancelled".into())
         }
     }
@@ -4560,22 +4564,80 @@ struct SessionTransactionStateEvent<'a> {
     in_transaction: bool,
 }
 
+/// Sessions last reported inside a transaction, per connection id, so a
+/// disconnect can release them through the driver.
+fn open_sessions() -> &'static Mutex<HashMap<String, std::collections::HashSet<String>>> {
+    static OPEN: std::sync::OnceLock<Mutex<HashMap<String, std::collections::HashSet<String>>>> =
+        std::sync::OnceLock::new();
+    OPEN.get_or_init(Default::default)
+}
+
+fn note_session_state(connection_id: &str, session_id: &str, in_transaction: bool) {
+    let mut open = open_sessions().lock().unwrap_or_else(|e| e.into_inner());
+    if in_transaction {
+        open.entry(connection_id.to_string())
+            .or_default()
+            .insert(session_id.to_string());
+    } else if let Some(ids) = open.get_mut(connection_id) {
+        ids.remove(session_id);
+        if ids.is_empty() {
+            open.remove(connection_id);
+        }
+    }
+}
+
+fn take_open_sessions(connection_id: &str) -> Vec<String> {
+    let mut open = open_sessions().lock().unwrap_or_else(|e| e.into_inner());
+    open.remove(connection_id)
+        .map(|ids| ids.into_iter().collect())
+        .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod open_sessions_tests {
+    use super::{note_session_state, take_open_sessions};
+
+    #[test]
+    fn disconnect_takes_only_that_connections_open_sessions() {
+        note_session_state("os-conn-a", "tab-1", true);
+        note_session_state("os-conn-a", "tab-2", true);
+        note_session_state("os-conn-a", "tab-2", false);
+        note_session_state("os-conn-b", "tab-3", true);
+
+        assert_eq!(take_open_sessions("os-conn-a"), vec!["tab-1".to_string()]);
+        assert!(take_open_sessions("os-conn-a").is_empty());
+        assert_eq!(take_open_sessions("os-conn-b"), vec!["tab-3".to_string()]);
+    }
+}
+
+/// Tell the UI whether a tab is inside a transaction, and remember it for disconnect.
+fn emit_session_state<R: Runtime>(
+    app: &AppHandle<R>,
+    connection_id: &str,
+    session_id: &str,
+    in_transaction: bool,
+) {
+    note_session_state(connection_id, session_id, in_transaction);
+    let _ = app.emit(
+        "session-transaction-state",
+        SessionTransactionStateEvent {
+            session_id,
+            in_transaction,
+        },
+    );
+}
+
 /// A failed or cancelled run returns no session flag, so ask the driver, or
 /// the tab's TX badge would keep showing a transaction that already ended.
 async fn emit_session_state_after_failure<R: Runtime>(
     app: &AppHandle<R>,
+    connection_id: &str,
     drv: &dyn crate::drivers::driver_trait::DatabaseDriver,
     session_id: Option<&str>,
 ) {
     let Some(id) = session_id else { return };
     if let Some(in_transaction) = drv.session_in_transaction(id).await {
-        let _ = app.emit(
-            "session-transaction-state",
-            SessionTransactionStateEvent {
-                session_id: id,
-                in_transaction,
-            },
-        );
+        emit_session_state(app, connection_id, id, in_transaction);
     }
 }
 
@@ -4595,6 +4657,7 @@ pub async fn release_query_session<R: Runtime>(
     let params = resolve_connection_params_with_id(&expanded_params, &connection_id)?;
     let drv = driver_for_params(&params).await?;
     drv.release_session(&session_id).await;
+    note_session_state(&connection_id, &session_id, false);
     Ok(())
 }
 
@@ -4692,13 +4755,7 @@ pub async fn execute_query_batch<R: Runtime>(
             // transaction is open, so the UI has to be able to show it and
             // release it on close.
             if let Some(id) = session_id.as_deref() {
-                let _ = app.emit(
-                    "session-transaction-state",
-                    SessionTransactionStateEvent {
-                        session_id: id,
-                        in_transaction,
-                    },
-                );
+                emit_session_state(&app, &connection_id, id, in_transaction);
             }
             let success_count = batch_results.iter().filter(|r| r.result.is_some()).count();
             log::info!(
@@ -4721,14 +4778,24 @@ pub async fn execute_query_batch<R: Runtime>(
         }
         Ok(Err(e)) => {
             log::error!("Batch execution failed at setup: {}", e);
-            emit_session_state_after_failure(&app, session_driver.as_ref(), session_id.as_deref())
-                .await;
+            emit_session_state_after_failure(
+                &app,
+                &connection_id,
+                session_driver.as_ref(),
+                session_id.as_deref(),
+            )
+            .await;
             Err(e)
         }
         Err(_) => {
             log::warn!("Batch was cancelled");
-            emit_session_state_after_failure(&app, session_driver.as_ref(), session_id.as_deref())
-                .await;
+            emit_session_state_after_failure(
+                &app,
+                &connection_id,
+                session_driver.as_ref(),
+                session_id.as_deref(),
+            )
+            .await;
             Err("Query cancelled".into())
         }
     }
@@ -5751,6 +5818,26 @@ pub async fn disconnect_connection<R: Runtime>(
     let expanded_params = expand_ssh_connection_params(&app, &saved_conn.params).await?;
     let expanded_params = expand_k8s_connection_params(&app, &expanded_params).await?;
     let params = resolve_connection_params_with_id(&expanded_params, &connection_id)?;
+
+    // Roll back the transactions its tabs left open while the connection is still reachable.
+    let open = take_open_sessions(&connection_id);
+    if !open.is_empty() {
+        match driver_for_params(&params).await {
+            Ok(drv) => {
+                for id in &open {
+                    drv.release_session(id).await;
+                    let _ = app.emit(
+                        "session-transaction-state",
+                        SessionTransactionStateEvent {
+                            session_id: id,
+                            in_transaction: false,
+                        },
+                    );
+                }
+            }
+            Err(e) => log::warn!("Could not release open sessions on disconnect: {e}"),
+        }
+    }
 
     // Close the connection pool
     crate::pool_manager::close_pool_with_id(&params, Some(&connection_id)).await;
