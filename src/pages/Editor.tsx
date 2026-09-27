@@ -3863,6 +3863,12 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
           onDrop={handleTabsDrop}
           className="flex flex-1 overflow-x-auto no-scrollbar h-full relative"
         >
+          {/* Always mounted, so a screen reader announces when the active tab opens a transaction. */}
+          <span role="status" className="sr-only">
+            {activeTabId && transactionTabIds.has(activeTabId)
+              ? t("editor.transactionOpenHint")
+              : ""}
+          </span>
           {tabs.map((tab, index) => (
             <div
               key={tab.id}
@@ -3976,7 +3982,6 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                     // This tab is holding a pooled connection open, and its
                     // uncommitted changes are invisible to every other tab.
                     <span
-                      role="status"
                       className="shrink-0 px-1 rounded text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-400"
                       title={t("editor.transactionOpenHint")}
                       aria-label={t("editor.transactionOpenHint")}
