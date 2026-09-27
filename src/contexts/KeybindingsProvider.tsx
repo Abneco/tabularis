@@ -33,6 +33,7 @@ export const KeybindingsProvider = ({ children }: { children: ReactNode }) => {
       const def = (shortcutDefs as ShortcutDef[]).find((d) => d.id === id);
       if (!def) return false;
       const match = resolveMatch(def, overrides, isMac);
+      if (!match || typeof match.key !== "string") return false;
       if (matchesEvent(event, match)) return true;
       // On Mac, accept Ctrl as an alias for ⌘ (and vice-versa) for user convenience
       if (isMac && match.metaKey && !match.ctrlKey) {
@@ -47,7 +48,12 @@ export const KeybindingsProvider = ({ children }: { children: ReactNode }) => {
     async (id: string, mac: KeyMatch, win: KeyMatch) => {
       const next = { ...overrides, [id]: { mac, win } };
       setOverrides(next);
-      await invoke("save_keybindings", { keybindings: next });
+      try {
+        await invoke("save_keybindings", { keybindings: next });
+      } catch (error) {
+        setOverrides((current) => (current === next ? overrides : current));
+        throw error;
+      }
     },
     [overrides],
   );
@@ -57,7 +63,12 @@ export const KeybindingsProvider = ({ children }: { children: ReactNode }) => {
       const next = { ...overrides };
       delete next[id];
       setOverrides(next);
-      await invoke("save_keybindings", { keybindings: next });
+      try {
+        await invoke("save_keybindings", { keybindings: next });
+      } catch (error) {
+        setOverrides((current) => (current === next ? overrides : current));
+        throw error;
+      }
     },
     [overrides],
   );

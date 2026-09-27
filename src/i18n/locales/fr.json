@@ -49,6 +49,7 @@
   "common": {
     "save": "Enregistrer",
     "close": "Fermer",
+    "resizeColumn": "Redimensionner la colonne",
     "cancel": "Annuler",
     "delete": "Supprimer",
     "edit": "Modifier",
@@ -106,6 +107,8 @@
     "noTables": "Aucune table trouvée",
     "expandTable": "Développer la table {{name}}",
     "collapseTable": "Réduire la table {{name}}",
+    "expandView": "Développer la vue {{name}}",
+    "collapseView": "Réduire la vue {{name}}",
     "columns": "colonnes",
     "parameters": "paramètres",
     "noParameters": "Aucun paramètre",
@@ -187,6 +190,7 @@
     "splitHorizontal": "Diviser horizontalement",
     "separateConnections": "Séparer les connexions",
     "splitGroup": "Diviser le groupe",
+    "resizePanels": "Redimensionner les panneaux",
     "filterTables": "Filtrer les tables...",
     "noTablesMatch": "Aucune table correspondante",
     "filterDatabases": "Filtrer les bases de données...",
@@ -517,7 +521,7 @@
     "darkTheme": "Thème sombre",
     "fontFamily": "Famille de police",
     "fonts": {
-      "system": "Police système par défaut",
+      "system": "Police du thème",
       "systemDesc": "Utilise la police par défaut de votre OS",
       "custom": "Police personnalisée",
       "customPlaceholder": "ex. Comic Sans MS",
@@ -764,6 +768,13 @@
       "filterAll": "Tous",
       "filterInstalled": "Installés",
       "filterUpdates": "Mises à jour",
+      "kindFilter": "Filtrer par type",
+      "kindAll": "Tous les types",
+      "kindDrivers": "Pilotes",
+      "kindThemes": "Thèmes",
+      "kindTheme": "Thème",
+      "kindDriver": "Pilote",
+      "manageThemes": "Gérer dans Apparence",
       "searchNoResults": "Aucun plugin ne correspond à la recherche.",
       "version": "Version",
       "requiresVersion": "Nécessite Tabularis ≥ {{version}}",
@@ -844,7 +855,8 @@
       "categories": {
         "editor": "Éditeur",
         "navigation": "Navigation",
-        "data_grid": "Grille de données"
+        "data_grid": "Grille de données",
+        "notebook": "Notebook"
       },
       "runQuery": "Exécuter la requête",
       "runQueryEditor": "Exécuter la requête (dans l’éditeur)",
@@ -856,6 +868,9 @@
       "toggleRightSidebar": "Basculer la barre latérale droite",
       "focusTableFilter": "Focaliser le filtre de tables",
       "openConnections": "Ouvrir les connexions",
+      "openSettings": "Ouvrir les paramètres",
+      "conflict": "Ce raccourci entre en conflit avec « {{shortcut}} ».",
+      "needsModifier": "Ajoutez une touche de modification, comme Ctrl ou Alt.",
       "newConnection": "Nouvelle connexion",
       "newTab": "Nouvel onglet",
       "closeTab": "Fermer l’onglet",
@@ -961,6 +976,7 @@
     "badges": {
       "morePlugins": "{{count}} de plus — ouvrez Plugins pour voir toutes les mises à jour",
       "driverUpdate": "Mise à jour du pilote disponible",
+      "themeUpdate": "Mise à jour du thème disponible",
       "tag": "Mise à jour",
       "driverTooltip": "{{name}} {{version}} est disponible. Ce plugin est partagé par vos connexions. Ouvrez Plugins → Mises à jour pour le gérer.",
       "core_one": "{{count}} mise à jour du cœur disponible",
@@ -1177,6 +1193,7 @@
   },
   "dataGrid": {
     "noRowIdentity": "Impossible de modifier les lignes : \"{{table}}\" n'a pas de clé primaire, la modification nécessite donc que le résultat inclue toutes les colonnes de la table. Sélectionnez toutes les colonnes (p. ex. SELECT *) ou ajoutez une clé primaire.",
+    "resizeRelatedPanel": "Faites glisser pour redimensionner le panneau",
     "keylessRowNotFound": "Aucune ligne ne correspond aux valeurs d'origine lors de la mise à jour de \"{{column}}\". La table n'a pas de clé primaire et les données ont peut-être changé : actualisez puis réessayez.",
     "keylessDeleteNotFound": "Aucune ligne ne correspond aux valeurs d'origine lors de la suppression. La table n'a pas de clé primaire et les données ont peut-être changé : actualisez puis réessayez.",
     "newRow": "NOUVELLE",
@@ -1515,6 +1532,7 @@
       "addSqlCell": "Ajouter une cellule SQL",
       "addMarkdownCell": "Ajouter une cellule Markdown",
       "addCell": "Ajouter",
+      "resizeResult": "Redimensionner le résultat",
       "runAll": "Tout exécuter",
       "runAllTooltip": "Exécuter toutes les cellules SQL de haut en bas",
       "runCell": "Exécuter la cellule",
@@ -2484,5 +2502,13 @@
     },
     "title": "Journal du test de connexion",
     "showLog": "Afficher le journal"
+  },
+  "themePackages": {
+    "import": "Importer un thème",
+    "registryMismatch": "Ce paquet provient d’un autre registre. Changez explicitement le registre configuré avant de le mettre à jour.",
+    "importedTheme": "Thème importé", "manage": "Gérer les thèmes", "importJSON": "Importer un JSON Tabularis", "importVSCode": "Importer depuis VS Code", "edit": "Modifier le thème personnel", "localPackage": "Paquet local", "installTitle": "Installer le paquet de thème", "installSubtitle": "Thème déclaratif issu du registre configuré. Aucun code n'est exécuté.", "discover": "Parcourir les thèmes dans Plugins", "refresh": "Actualiser", "preview": "Aperçu", "apply": "Appliquer", "confirm": "Confirmer", "duplicate": "Dupliquer en thème personnel", "exportJSON": "Exporter un JSON autonome", "exportPackage": "Exporter un paquet d’auteur", "remove": "Supprimer", "update": "Mettre à jour le paquet", "disable": "Désactiver le paquet", "enable": "Activer le paquet", "removePackage": "Désinstaller le paquet", "disabled": "Désactivé", "file": "Fichier du thème", "name": "Nom du thème", "mode": "Mode / base", "detectMode": "Détecter (choisir si ambigu)", "source": "JSON du thème", "search": "Rechercher des thèmes", "loading": "Chargement…", "noThemes": "Aucun thème disponible dans ce registre.", "details": "Détails / installation", "readme": "README / captures", "version": "Version du paquet", "latest": "Dernière version", "install": "Installer / remplacer le paquet", "chooseArchive": "Choisir une archive ZIP", "screenshots": "Captures d’écran (ouvrir à l’extérieur)", "externalMedia": "Les images et autres médias distants ne sont pas chargés automatiquement. Les liens s’ouvrent dans votre navigateur.", "snapshotEditor": "JSON exact de l’éditeur", "snapshotEditorHelp": "Cet instantané indépendant contrôle les couleurs SQL à la place de l’ancien alias. Les modifications sont prévisualisées puis enregistrées en vérifiant la révision d’origine.", "recover": "Récupérer les installations interrompues", "recoveryExplanation": "Vérifier et récupérer explicitement les opérations de thèmes inachevées. Cela peut restaurer des installations interrompues, sans sélectionner de thème ni modifier les préférences enregistrées.", "recoveryDone": "Vérifications de récupération terminées. Consultez les éventuels problèmes ci-dessous.", "catalogIssues": "Diagnostics du catalogue", "fileTooLarge": "Le fichier dépasse la limite d’importation.", "previewHint": "L’aperçu est temporaire. Annuler restaure le thème enregistré ; Appliquer enregistre le choix.", "previewReady": "Aperçu actif. Vérifiez l’application et l’éditeur avant de confirmer.", "licenseNotice": "Importer ou exporter n’accorde aucun droit de redistribution. Conservez l’attribution et vérifiez la licence avant publication.", "acknowledge": "Je comprends et accepte les limites de conversion indiquées.", "applyAfterSave": "Appliquer après l’enregistrement", "savedNotApplied": "Thème enregistré, mais sélection échouée. Ne le réimportez pas ; sélectionnez le thème enregistré.", "installHint": "L’installation remplace tout le paquet sans sélectionner de variante. Aperçu, import local et sélection ne comptent pas comme téléchargements.", "installedHint": "Paquet installé. Fermez et choisissez une variante dans Apparence.", "committedRefreshFailed": "Opération effectuée, mais actualisation du catalogue échouée. Actualisez avant de réessayer.", "missing": "Sélection enregistrée indisponible : {{id}}. Thème hors ligne utilisé sans modifier la préférence.", "downloads": "Téléchargements : {{count}}", "downloadsUnavailable": "Nombre de téléchargements indisponible", "installedVersion": "Installée : {{version}}", "minimumVersion": "Nécessite Tabularis {{version}} ou ultérieur", "incompatible": "Version incompatible ou ne contenant pas exactement une archive universelle.", "packageWarning": "Concerne toutes les variantes. Les sélections enregistrées sont conservées et restaurées dès leur disponibilité.", "deleteWarning": "Supprimer ce thème personnel ? Ses sélections enregistrées utiliseront les thèmes par défaut.", "duplicateHint": "Créer une copie personnelle indépendante et modifiable, sans l’activer.", "exportError": "Échec de l’export du paquet ; l’export JSON autonome reste disponible.", "runtimeWarning": "Indiquez la première version réellement compatible. Un numéro de développement ne prouve pas la compatibilité des anciens clients.", "packageName": "Identifiant du paquet (minuscules)", "minimumRuntime": "Version minimale de Tabularis", "license": "Texte de licence et attribution", "rightsAcknowledged": "J’ai vérifié les droits de redistribution et l’attribution.",
+    "groups": { "builtin": "Intégrés · hors ligne", "installed": "Paquets installés", "personal": "Thèmes personnels" }, "modes": { "light": "Clair", "dark": "Sombre", "high-contrast": "Contraste élevé" },
+    "importErrors": { "unrecognized": "Thème VS Code non reconnu.", "modeRequired": "Choisissez un mode puis relancez l’aperçu.", "includeOnly": "Les thèmes composés uniquement d’includes ne sont pas importables. Fournissez les couleurs réelles.", "noSupportedData": "Aucune couleur ou règle SQL prise en charge.", "invalidColor": "Valeur incorrecte pour une couleur prise en charge.", "invalidRules": "Règles de jetons incorrectes ou trop nombreuses." },
+    "diagnostics": { "unsupportedKey": "Champ non pris en charge", "unsupportedColor": "Couleur non prise en charge", "unsupportedScope": "Portée non prise en charge", "scopeApproximation": "Correspondance SQL approximative", "unsupportedStyle": "Style non pris en charge", "ignoredInclude": "Include non chargé", "ignoredSemanticTokens": "Jetons sémantiques ignorés", "unsupportedReference": "Référence externe non chargée", "unsupportedSetting": "Réglage non pris en charge", "tokenAlphaFlattened": "Opacité des jetons calculée sur le fond de base", "modeApproximation": "Mode remplacé ou approximatif", "diagnosticsTruncated": "Diagnostics supplémentaires omis" }
   }
 }

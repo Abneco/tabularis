@@ -367,9 +367,9 @@ describe("DataGrid keyboard navigation", () => {
     fireEvent.keyDown(gridOf(container), { key: "ArrowDown", shiftKey: true });
     fireEvent.keyDown(gridOf(container), { key: "ArrowRight", shiftKey: true });
 
-    expect(cellAt(container, 0, 0)).toHaveClass("bg-blue-500/15");
-    expect(cellAt(container, 1, 1)).toHaveClass("bg-blue-500/15");
-    expect(cellAt(container, 2, 0)).not.toHaveClass("bg-blue-500/15");
+    expect(cellAt(container, 0, 0)).toHaveClass("bg-accent-primary/15");
+    expect(cellAt(container, 1, 1)).toHaveClass("bg-accent-primary/15");
+    expect(cellAt(container, 2, 0)).not.toHaveClass("bg-accent-primary/15");
 
     // Ctrl+Shift+Arrow extends to the edge.
     fireEvent.keyDown(gridOf(container), {
@@ -377,7 +377,7 @@ describe("DataGrid keyboard navigation", () => {
       shiftKey: true,
       ctrlKey: true,
     });
-    expect(cellAt(container, 2, 1)).toHaveClass("bg-blue-500/15");
+    expect(cellAt(container, 2, 1)).toHaveClass("bg-accent-primary/15");
   });
 
   it("Shift+Space selects the row(s) and Cmd/Ctrl+Space the column(s) of the focused cell", () => {
@@ -400,9 +400,9 @@ describe("DataGrid keyboard navigation", () => {
     expect(onSelectionChange).toHaveBeenLastCalledWith(new Set([1]));
 
     fireEvent.keyDown(gridOf(container), { key: " ", ctrlKey: true });
-    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-blue-500/20");
+    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-accent-primary/20");
     expect(container.querySelectorAll("th")[2]).not.toHaveClass(
-      "bg-blue-500/20",
+      "bg-accent-primary/20",
     );
 
     // Ctrl+Shift+Space is the IME-safe alternative for column selection.
@@ -412,7 +412,7 @@ describe("DataGrid keyboard navigation", () => {
       ctrlKey: true,
       shiftKey: true,
     });
-    expect(container.querySelectorAll("th")[2]).toHaveClass("bg-blue-500/20");
+    expect(container.querySelectorAll("th")[2]).toHaveClass("bg-accent-primary/20");
   });
 
   it("leaves keys to focusable controls inside the grid", () => {
@@ -807,11 +807,11 @@ describe("DataGrid column selection", () => {
     fireEvent.click(screen.getByText("id"), { metaKey: true });
 
     expect(onSort).not.toHaveBeenCalled();
-    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-blue-500/20");
+    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-accent-primary/20");
 
     fireEvent.click(screen.getByText("id"), { metaKey: true });
     expect(container.querySelectorAll("th")[1]).not.toHaveClass(
-      "bg-blue-500/20",
+      "bg-accent-primary/20",
     );
   });
 
@@ -820,14 +820,14 @@ describe("DataGrid column selection", () => {
 
     fireEvent.click(screen.getByText("id"));
     expect(onSort).not.toHaveBeenCalled();
-    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-blue-500/20");
+    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-accent-primary/20");
 
     // Plain click replaces the selection instead of adding to it.
     fireEvent.click(screen.getByText("name"));
     expect(container.querySelectorAll("th")[1]).not.toHaveClass(
-      "bg-blue-500/20",
+      "bg-accent-primary/20",
     );
-    expect(container.querySelectorAll("th")[2]).toHaveClass("bg-blue-500/20");
+    expect(container.querySelectorAll("th")[2]).toHaveClass("bg-accent-primary/20");
 
     fireEvent.click(screen.getAllByLabelText("dataGrid.sortByAsc")[0]);
     expect(onSort).toHaveBeenCalledWith("id");
@@ -866,12 +866,12 @@ describe("DataGrid column selection", () => {
     const { container } = renderGrid();
 
     fireEvent.click(screen.getByText("id"), { metaKey: true });
-    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-blue-500/20");
+    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-accent-primary/20");
 
     // Click the row-number cell of the first row → column selection clears.
     fireEvent.click(container.querySelector("tbody tr td")!);
     expect(container.querySelectorAll("th")[1]).not.toHaveClass(
-      "bg-blue-500/20",
+      "bg-accent-primary/20",
     );
   });
 
@@ -879,7 +879,7 @@ describe("DataGrid column selection", () => {
 
     fireEvent.contextMenu(container.querySelectorAll("th")[1]);
     fireEvent.click(await screen.findByText("dataGrid.selectColumn"));
-    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-blue-500/20");
+    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-accent-primary/20");
 
     fireEvent.contextMenu(container.querySelectorAll("th")[1]);
     const item = await screen.findByText("dataGrid.copySelectedColumns");
@@ -898,7 +898,7 @@ describe("DataGrid column selection", () => {
       ctrlKey: true,
     });
 
-    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-blue-500/20");
+    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-accent-primary/20");
     expect(screen.queryByText("dataGrid.copyColumnName")).toBeNull();
   });
 });
@@ -942,16 +942,16 @@ describe("DataGrid cell range selection", () => {
 
     // Range rows 0-1 × cols 1-2 highlighted; outside cells are not.
     expect(screen.getByText("Alice").closest("td")).toHaveClass(
-      "bg-blue-500/15",
+      "bg-accent-primary/15",
     );
     expect(screen.getByText("Seattle").closest("td")).toHaveClass(
-      "bg-blue-500/15",
+      "bg-accent-primary/15",
     );
     expect(screen.getByText("Cara").closest("td")).not.toHaveClass(
-      "bg-blue-500/15",
+      "bg-accent-primary/15",
     );
     expect(screen.getByText("Denver").closest("td")).not.toHaveClass(
-      "bg-blue-500/15",
+      "bg-accent-primary/15",
     );
   });
 
@@ -979,16 +979,16 @@ describe("DataGrid cell range selection", () => {
     const { container } = renderGrid();
 
     fireEvent.click(screen.getByText("id"), { metaKey: true });
-    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-blue-500/20");
+    expect(container.querySelectorAll("th")[1]).toHaveClass("bg-accent-primary/20");
 
     fireEvent.click(screen.getByText("Alice"));
     fireEvent.click(screen.getByText("Seattle"), { shiftKey: true });
 
     expect(container.querySelectorAll("th")[1]).not.toHaveClass(
-      "bg-blue-500/20",
+      "bg-accent-primary/20",
     );
     expect(screen.getByText("Seattle").closest("td")).toHaveClass(
-      "bg-blue-500/15",
+      "bg-accent-primary/15",
     );
   });
 
@@ -998,12 +998,12 @@ describe("DataGrid cell range selection", () => {
     fireEvent.click(screen.getByText("Alice"));
     fireEvent.click(screen.getByText("Seattle"), { shiftKey: true });
     expect(screen.getByText("Seattle").closest("td")).toHaveClass(
-      "bg-blue-500/15",
+      "bg-accent-primary/15",
     );
 
     fireEvent.click(screen.getByText("Cara"));
     expect(screen.getByText("Seattle").closest("td")).not.toHaveClass(
-      "bg-blue-500/15",
+      "bg-accent-primary/15",
     );
 
     // New anchor: Shift+click now ranges from Cara's row only.
@@ -1029,6 +1029,81 @@ describe("DataGrid cell range selection", () => {
     const copied = writeText.mock.calls[0][0] as string;
     expect(copied).toContain("Alice,Portland");
     expect(copied).not.toContain("Cara");
+  });
+});
+
+describe("DataGrid JSON context menu", () => {
+  beforeEach(() => {
+    vi.mocked(invoke).mockReset();
+    vi.mocked(invoke).mockResolvedValue("json-viewer-session");
+  });
+
+  it("opens value-detected JSON cells in read-only grids without metadata", async () => {
+    const payload = { status: "ok" };
+    const { container } = render(
+      <DataGrid
+        columns={["payload"]}
+        data={[[payload]]}
+        tableName={null}
+        pkColumns={null}
+        selectedRows={new Set()}
+        onSelectionChange={vi.fn()}
+        readonly
+      />,
+    );
+
+    fireEvent.contextMenu(
+      container.querySelector('td[data-col-index="0"]')!,
+    );
+    const openJsonItem = await screen.findByText("contextMenu.openJsonEditor");
+    expect(screen.queryByText("dataGrid.setNull")).toBeNull();
+    expect(screen.queryByText("contextMenu.openSidebar")).toBeNull();
+    fireEvent.click(openJsonItem);
+
+    await waitFor(() =>
+      expect(invoke).toHaveBeenCalledWith("open_json_viewer_window", {
+        value: payload,
+        originalValue: payload,
+        colName: "payload",
+        rowLabel: "Row 1",
+        readOnly: true,
+        cellKey: null,
+      }),
+    );
+  });
+
+  it("opens value-detected JSON cells in tableless query results", async () => {
+    const payload = { status: "ok" };
+    const { container } = render(
+      <DataGrid
+        columns={["payload"]}
+        data={[[payload]]}
+        tableName={null}
+        pkColumns={null}
+        selectedRows={new Set()}
+        onSelectionChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.contextMenu(
+      container.querySelector('td[data-col-index="0"]')!,
+    );
+    const openJsonItem = await screen.findByText("contextMenu.openJsonEditor");
+    expect(screen.queryByText("dataGrid.setNull")).toBeNull();
+    expect(screen.queryByText("dataGrid.pasteCells")).toBeNull();
+    expect(screen.queryByText("contextMenu.openSidebar")).toBeNull();
+    fireEvent.click(openJsonItem);
+
+    await waitFor(() =>
+      expect(invoke).toHaveBeenCalledWith("open_json_viewer_window", {
+        value: payload,
+        originalValue: payload,
+        colName: "payload",
+        rowLabel: "Row 1",
+        readOnly: true,
+        cellKey: null,
+      }),
+    );
   });
 });
 

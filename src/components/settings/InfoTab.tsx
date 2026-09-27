@@ -72,7 +72,7 @@ export function InfoTab() {
   return (
     <div>
       {/* Hero */}
-      <div className="bg-gradient-to-br from-blue-900/20 to-elevated border border-blue-500/20 rounded-2xl p-8 text-center relative overflow-hidden mb-8">
+      <div className="bg-gradient-to-br from-accent-primary/10 to-elevated border border-accent-primary/20 rounded-2xl p-8 text-center relative overflow-hidden mb-8">
         <div className="absolute top-0 right-0 p-4 opacity-10">
           <Code2 size={120} />
         </div>
@@ -81,7 +81,7 @@ export function InfoTab() {
           <img
             src="/logo.png"
             alt="tabularis"
-            className="w-16 h-16 rounded-2xl mx-auto mb-4 shadow-lg shadow-blue-500/30"
+            className="w-16 h-16 rounded-2xl mx-auto mb-4 shadow-lg shadow-accent-primary/30"
             style={{
               backgroundColor: !currentTheme?.id?.includes("-light")
                 ? currentTheme?.colors?.surface?.secondary || "#334155"
@@ -115,14 +115,14 @@ export function InfoTab() {
           </div>
           <button
             onClick={() => setIsWhatsNewOpen(true)}
-            className="flex items-center gap-2 bg-purple-900/20 hover:bg-purple-900/30 text-purple-400 px-4 py-2 rounded-lg font-medium transition-colors border border-purple-500/30"
+            className="flex items-center gap-2 bg-accent-secondary/10 hover:bg-accent-secondary/15 text-accent-secondary px-4 py-2 rounded-lg font-medium transition-colors border border-accent-secondary/30"
           >
             <Sparkles size={18} />
             {t("whatsNew.title")}
           </button>
           <button
             onClick={() => setIsOpenSourceLibrariesOpen(true)}
-            className="flex items-center gap-2 bg-blue-900/20 hover:bg-blue-900/30 text-blue-400 px-4 py-2 rounded-lg font-medium transition-colors border border-blue-500/30"
+            className="flex items-center gap-2 bg-accent-primary/20 hover:bg-accent-primary/30 text-accent px-4 py-2 rounded-lg font-medium transition-colors border border-accent-primary/30"
           >
             <Library size={18} />
             {t("settings.openSourceLibraries")}
@@ -194,7 +194,7 @@ export function InfoTab() {
                       type="button"
                       onClick={() => downloadAndInstall()}
                       disabled={isDownloading}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-white text-xs font-semibold shadow-sm hover:bg-accent-primary/90 disabled:opacity-60 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent-primary text-inverse text-xs font-semibold shadow-sm hover:bg-accent-primary/90 disabled:opacity-60 transition-colors"
                     >
                       {isDownloading ? (
                         <>
@@ -283,7 +283,7 @@ export function InfoTab() {
                   {item.done ? (
                     <CheckCircle2
                       size={18}
-                      className="text-green-500 shrink-0"
+                      className="text-accent-success shrink-0"
                     />
                   ) : (
                     <Circle
@@ -341,7 +341,7 @@ export function InfoTab() {
         action={
           <button
             onClick={() => invoke("open_task_manager_window")}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-blue-500/15 border border-blue-500/25 text-blue-400 hover:bg-blue-500/25 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-accent-primary/15 border border-accent-primary/25 text-accent hover:bg-accent-primary/25 transition-colors"
           >
             <Activity size={14} />
             {t("taskManager.header.open")}
@@ -371,7 +371,7 @@ export function InfoTab() {
         <div className="pt-3 flex flex-col items-center text-center">
           <button
             onClick={() => openUrl("https://github.com/TabularisDB/tabularis")}
-            className="text-blue-400 hover:text-blue-300 font-medium text-sm hover:underline"
+            className="text-accent hover:text-accent/90 font-medium text-sm hover:underline"
           >
             github.com/TabularisDB/tabularis
           </button>

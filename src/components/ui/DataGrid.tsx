@@ -1312,10 +1312,10 @@ export const DataGrid = React.memo(
                       }}
                     >
                       {displaySortState === "asc" && (
-                        <ArrowUp size={14} className="text-blue-400" />
+                        <ArrowUp size={14} className="text-accent" />
                       )}
                       {displaySortState === "desc" && (
-                        <ArrowDown size={14} className="text-blue-400" />
+                        <ArrowDown size={14} className="text-accent" />
                       )}
                       {displaySortState === "none" && (
                         <ArrowUpDown
@@ -1419,22 +1419,20 @@ export const DataGrid = React.memo(
         colIndex: number,
         colName: string,
       ) => {
-        if (tableName) {
-          e.preventDefault();
-          // Find the merged row corresponding to this DOM element
-          const mergedRow = mergedRows.find((mr) => mr.rowData === row);
-          setContextMenu({
-            x: e.clientX,
-            y: e.clientY,
-            row,
-            rowIndex,
-            colIndex,
-            colName,
-            mergedRow,
-          });
-        }
+        e.preventDefault();
+        // Find the merged row corresponding to this DOM element
+        const mergedRow = mergedRows.find((mr) => mr.rowData === row);
+        setContextMenu({
+          x: e.clientX,
+          y: e.clientY,
+          row,
+          rowIndex,
+          colIndex,
+          colName,
+          mergedRow,
+        });
       },
-      [tableName, mergedRows],
+      [mergedRows],
     );
 
     const revertSelectedRow = useCallback(() => {
@@ -2458,11 +2456,13 @@ export const DataGrid = React.memo(
 
     return (
       <>
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- focus host for the spreadsheet keyboard model (arrows, ranges, copy); a full ARIA grid needs per-cell roles and activedescendant */}
         <div
           ref={parentRef}
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- same focus host: must be reachable with Tab to use the keyboard model
           tabIndex={0}
           onKeyDown={handleGridKeyDown}
-          className="h-full overflow-auto border border-default rounded bg-elevated relative focus:outline-none"
+          className="h-full overflow-auto border border-default rounded bg-elevated relative focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
         >
           <table className="w-full text-left border-collapse">
             <thead
@@ -2486,7 +2486,7 @@ export const DataGrid = React.memo(
                       key={header.id}
                       className={`px-4 py-2 text-xs font-semibold tracking-wider border-b border-r border-default last:border-r-0 whitespace-nowrap ${
                         selectedColIndices.has(headerColIndex)
-                          ? "text-primary bg-blue-500/20"
+                          ? "text-primary bg-accent-primary/20"
                           : "text-secondary"
                       }`}
                       onContextMenu={(e) => {
@@ -2625,11 +2625,15 @@ export const DataGrid = React.memo(
               const isAutoIncrement = autoIncrementColumns?.includes(colName);
               const isNullable = nullableColumns?.includes(colName);
               const hasDefault = defaultValueColumns?.includes(colName);
+              const colDataType = columnTypeMap?.get(colName) ?? "";
+              const contextCellValue =
+                contextMenu.row[contextMenu.colIndex];
+              const isReadonlyGrid = Boolean(readonlyProp) || !tableName;
 
               // Build menu items dynamically
               const menuItems: ContextMenuItem[] = [];
 
-              if (!readonlyProp) {
+              if (!isReadonlyGrid) {
                 // Cell value manipulation options (shown first for cell context)
                 // SET GENERATED only for insertion rows, not for existing rows
                 if (isAutoIncrement && isInsertion) {
@@ -2656,7 +2660,6 @@ export const DataGrid = React.memo(
                 // Empty string ("") is only a valid value for textual columns.
                 // Strongly-typed columns (uuid, numeric, temporal, …) reject it,
                 // so offer "Set Empty" only where an empty string is assignable.
-                const colDataType = columnTypeMap?.get(colName) ?? "";
                 if (supportsEmptyString(colDataType)) {
                   menuItems.push({
                     label: t("dataGrid.setEmpty"),
@@ -2671,25 +2674,24 @@ export const DataGrid = React.memo(
                     action: setCellServerNow,
                   });
                 }
-                if (isJsonColumn(colDataType)) {
-                  menuItems.push({
-                    label: t("contextMenu.openJsonEditor"),
-                    icon: Braces,
-                    action: openJsonEditor,
-                  });
-                }
-
-                // Separator before row actions
-                if (menuItems.length > 0) {
-                  menuItems.push({ separator: true });
-                }
               }
 
-              const fkContextValue =
-                contextMenu.row[contextMenu.colIndex];
+              if (isJsonCellTarget(colDataType, contextCellValue)) {
+                menuItems.push({
+                  label: t("contextMenu.openJsonEditor"),
+                  icon: Braces,
+                  action: openJsonEditor,
+                });
+              }
+
+              // Separator before row actions
+              if (menuItems.length > 0) {
+                menuItems.push({ separator: true });
+              }
+
               const fkForContextPreview = getForeignKeyForPreview(
                 contextMenu.colName,
-                fkContextValue,
+                contextCellValue,
                 fksByColumn,
                 { isInsertion },
               );
@@ -2706,7 +2708,7 @@ export const DataGrid = React.memo(
                       updateSelection(new Set());
                       onForeignKeyShowPanel(
                         fkForContextPreview,
-                        fkContextValue,
+                        contextCellValue,
                       );
                       setContextMenu(null);
                     },
@@ -2721,7 +2723,7 @@ export const DataGrid = React.memo(
                     action: () => {
                       onForeignKeyNavigate(
                         fkForContextPreview,
-                        fkContextValue,
+                        contextCellValue,
                       );
                       setContextMenu(null);
                     },
@@ -2796,7 +2798,7 @@ export const DataGrid = React.memo(
                 },
               });
 
-              if (!readonlyProp) {
+              if (!isReadonlyGrid) {
                 menuItems.push({
                   label: t("dataGrid.pasteCells"),
                   icon: ClipboardPaste,
@@ -2824,7 +2826,7 @@ export const DataGrid = React.memo(
                 },
               });
 
-              if (!readonlyProp) {
+              if (!isReadonlyGrid) {
                 menuItems.push(
                   {
                     label: t("contextMenu.openSidebar"),

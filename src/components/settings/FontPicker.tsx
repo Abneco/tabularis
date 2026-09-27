@@ -39,7 +39,7 @@ export function FontPicker({
           className={clsx(
             "p-3 rounded-xl border transition-all text-left",
             value === inheritOption.value
-              ? "bg-surface-secondary border-blue-500 shadow-lg shadow-blue-900/20"
+              ? "bg-surface-secondary border-accent-primary shadow-lg shadow-accent-primary/20"
               : "bg-base border-default hover:border-strong",
           )}
         >
@@ -48,7 +48,7 @@ export function FontPicker({
               {inheritOption.label}
             </span>
             {value === inheritOption.value && (
-              <CheckCircle2 size={16} className="text-blue-500" />
+              <CheckCircle2 size={16} className="text-accent" />
             )}
           </div>
           <p
@@ -66,7 +66,7 @@ export function FontPicker({
           className={clsx(
             "p-3 rounded-xl border transition-all text-left",
             value === font.name
-              ? "bg-surface-secondary border-blue-500 shadow-lg shadow-blue-900/20"
+              ? "bg-surface-secondary border-accent-primary shadow-lg shadow-accent-primary/20"
               : "bg-base border-default hover:border-strong",
           )}
         >
@@ -75,7 +75,7 @@ export function FontPicker({
               {font.label}
             </span>
             {value === font.name && (
-              <CheckCircle2 size={16} className="text-blue-500" />
+              <CheckCircle2 size={16} className="text-accent" />
             )}
           </div>
           <p
@@ -95,7 +95,7 @@ export function FontPicker({
         className={clsx(
           "p-3 rounded-xl border transition-all text-left relative",
           !isPreset
-            ? "bg-surface-secondary border-blue-500 shadow-lg shadow-blue-900/20"
+            ? "bg-surface-secondary border-accent-primary shadow-lg shadow-accent-primary/20"
             : "bg-base border-default hover:border-strong",
         )}
       >
@@ -104,7 +104,7 @@ export function FontPicker({
             {t("settings.fonts.custom")}
           </span>
           {!isPreset && (
-            <CheckCircle2 size={16} className="text-blue-500" />
+            <CheckCircle2 size={16} className="text-accent" />
           )}
         </div>
         <div className="space-y-2">
@@ -124,9 +124,9 @@ export function FontPicker({
               }
             }}
             className={clsx(
-              "w-full bg-base border rounded-lg px-3 py-2 text-sm text-primary focus:outline-none focus:border-blue-500 transition-colors",
+              "w-full bg-base border rounded-lg px-3 py-2 text-sm text-primary focus:outline-none focus:border-focus transition-colors",
               !isPreset && customFont === value
-                ? "border-blue-500"
+                ? "border-accent-primary"
                 : "border-strong",
             )}
           />

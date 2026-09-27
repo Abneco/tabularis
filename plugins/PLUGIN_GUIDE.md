@@ -41,10 +41,13 @@ A Tabularis plugin is distributed as a `.zip` file. When extracted into the plug
 
 ```text
 plugins/
-└── duckdb/
-    ├── .tabularium  (or legacy manifest.json)
-    └── duckdb-plugin  (or duckdb-plugin.exe on Windows)
+└── drivers/
+    └── duckdb/
+        ├── .tabularium  (or legacy manifest.json)
+        └── duckdb-plugin  (or duckdb-plugin.exe on Windows)
 ```
+
+Installations and updates always use `plugins/<kind-folder>/<name>/`, mapping `theme` to `themes`, `driver` to `drivers`, and otherwise keeping the kind unchanged. Legacy or manually copied `plugins/<name>/` bundles are a discovery fallback; the kind-scoped copy wins. An absent manifest `kind` means `driver`; declarative themes use `theme` and are never started as drivers.
 
 ### The `.tabularium` manifest
 
@@ -1490,9 +1493,9 @@ You should see a valid JSON-RPC response on stdout.
 ### Installing Locally
 
 1. Create the plugin directory in Tabularis's data folder:
-   - **Linux:** `~/.local/share/tabularis/plugins/myplugin/`
-   - **macOS:** `~/Library/Application Support/tabularis/plugins/myplugin/`
-   - **Windows:** `%APPDATA%\tabularis\plugins\myplugin\`
+   - **Linux:** `~/.local/share/tabularis/plugins/drivers/myplugin/`
+   - **macOS:** `~/Library/Application Support/tabularis/plugins/drivers/myplugin/`
+   - **Windows:** `%APPDATA%\tabularis\plugins\drivers\myplugin\`
 2. Place your `.tabularium` (or legacy `manifest.json`) and the compiled executable in that directory.
 3. On Linux/macOS, make the executable runnable: `chmod +x myplugin`
 4. Restart Tabularis (or install via Settings to hot-reload without restart).

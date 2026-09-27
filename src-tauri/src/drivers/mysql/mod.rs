@@ -385,6 +385,11 @@ pub async fn get_foreign_keys(
     let pool = get_mysql_pool(params).await?;
     let text = resolve_text_proto(&pool, params).await?;
 
+    // Scope both metadata views independently so MySQL 5.7 can prune table
+    // discovery on both sides. A schema-to-schema join can cause the optimizer
+    // to discard the constant constraint-schema filter. KCU's constraint schema
+    // is its table schema; binding the same database and table on both sides
+    // also keeps table-scoped constraint names (MariaDB 12.1+) separate.
     let query = r#"
         SELECT
             kcu.CONSTRAINT_NAME,
@@ -396,14 +401,21 @@ pub async fn get_foreign_keys(
         FROM information_schema.KEY_COLUMN_USAGE kcu
         JOIN information_schema.REFERENTIAL_CONSTRAINTS rc
         ON kcu.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
-        AND kcu.CONSTRAINT_SCHEMA = rc.CONSTRAINT_SCHEMA
         WHERE kcu.TABLE_SCHEMA = ?
         AND kcu.TABLE_NAME = ?
+        AND rc.CONSTRAINT_SCHEMA = ?
+        AND rc.TABLE_NAME = ?
         AND kcu.REFERENCED_TABLE_NAME IS NOT NULL
         ORDER BY kcu.CONSTRAINT_NAME, kcu.ORDINAL_POSITION
     "#;
 
-    let rows = fetch_all_rows(&pool, text, query, &[db_name, table_name]).await?;
+    let rows = fetch_all_rows(
+        &pool,
+        text,
+        query,
+        &[db_name, table_name, db_name, table_name],
+    )
+    .await?;
 
     Ok(rows
         .iter()

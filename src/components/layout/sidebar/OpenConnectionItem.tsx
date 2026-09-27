@@ -152,12 +152,12 @@ export const OpenConnectionItem = ({
           onContextMenu={handleContextMenu}
           className={`flex items-center justify-center w-12 h-12 rounded-lg transition-all relative ${
             isSelected
-              ? 'ring-2 ring-accent-primary bg-accent-primary/20 text-accent-primary'
+              ? 'ring-2 ring-accent-primary bg-accent-primary/20 text-accent'
               : getConnectionItemClass(isActive)
           }`}
         >
           {isConnecting ? (
-            <Loader2 size={20} className="animate-spin text-accent-primary" />
+            <Loader2 size={20} className="animate-spin text-accent" />
           ) : (
             <div
               className="w-11 h-11 rounded-lg flex items-center justify-center text-white shadow-md"
@@ -192,20 +192,20 @@ export const OpenConnectionItem = ({
           {/* K8s badge */}
           {connection.k8sEnabled && !showShortcutHint && (
             <div className="absolute top-1 right-1">
-              <Shield size={9} className="text-accent-primary fill-accent-primary/20" />
+              <Shield size={9} className="text-accent fill-accent-primary/20" />
             </div>
           )}
 
           {/* AWS SSM badge */}
           {connection.ssmEnabled && !connection.k8sEnabled && !showShortcutHint && (
             <div className="absolute top-1 right-1">
-              <Shield size={9} className="text-orange-400 fill-orange-400/20" />
+              <Shield size={9} className="text-accent-warning fill-accent-warning/20" />
             </div>
           )}
 
           {/* Shortcut hint badge */}
           {showShortcutHint && shortcutIndex !== undefined && (
-            <div className="absolute -top-1 -left-1 w-4 h-4 bg-accent-primary rounded-full flex items-center justify-center text-white text-[9px] font-bold z-20 shadow-sm">
+            <div className="absolute -top-1 -left-1 w-4 h-4 bg-accent-primary rounded-full flex items-center justify-center text-inverse text-[9px] font-bold z-20 shadow-sm">
               {shortcutIndex}
             </div>
           )}
@@ -242,7 +242,7 @@ export const OpenConnectionItem = ({
           <div className="font-medium">{name}</div>
           <div className="text-muted text-[10px]">{database}</div>
           {isSelected && (
-            <div className="text-accent-primary text-[10px] mt-0.5">Selected (Ctrl+click to deselect)</div>
+            <div className="text-accent text-[10px] mt-0.5">Selected (Ctrl+click to deselect)</div>
           )}
           {hasError && <div className="text-accent-error text-[10px] mt-0.5 max-w-[180px] truncate">{error}</div>}
         </div>

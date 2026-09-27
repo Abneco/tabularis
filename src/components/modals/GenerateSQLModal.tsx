@@ -173,8 +173,8 @@ export const GenerateSQLModal = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-default bg-base">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-900/30 rounded-lg">
-              <FileCode size={20} className="text-blue-400" />
+            <div className="p-2 bg-accent-primary/15 rounded-lg">
+              <FileCode size={20} className="text-accent" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-primary">
@@ -227,7 +227,7 @@ export const GenerateSQLModal = ({
               className={clsx(
                 "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
                 tab === tabId
-                  ? "text-primary border-blue-500"
+                  ? "text-primary border-accent-primary"
                   : "text-muted border-transparent hover:text-primary",
               )}
             >
@@ -242,7 +242,7 @@ export const GenerateSQLModal = ({
           {dialectError ? (
             <div
               role="alert"
-              className="rounded-lg border border-red-500/40 bg-red-950/20 px-4 py-3 text-sm text-red-400"
+              className="rounded-lg border border-accent-error/40 bg-accent-error/10 px-4 py-3 text-sm text-accent-error"
             >
               {dialectError}
             </div>
@@ -277,7 +277,7 @@ export const GenerateSQLModal = ({
             </button>
             <button
               onClick={handleCopy}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}
               {copied ? t("generateSQL.copied") : t("generateSQL.copy")}

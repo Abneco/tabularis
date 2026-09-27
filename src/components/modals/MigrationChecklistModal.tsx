@@ -231,8 +231,8 @@ export const MigrationChecklistModal = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-default bg-base">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-900/30 rounded-lg">
-              <ArrowLeftRight size={20} className="text-blue-400" />
+            <div className="p-2 bg-accent-primary/15 rounded-lg">
+              <ArrowLeftRight size={20} className="text-accent" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-primary">
@@ -268,7 +268,7 @@ export const MigrationChecklistModal = ({
                     checked={checked.has(conn.id)}
                     onChange={() => toggleChecked(conn.id)}
                     disabled={migrating}
-                    className="mt-1 accent-blue-500"
+                    className="mt-1 accent-accent-primary"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -277,7 +277,7 @@ export const MigrationChecklistModal = ({
                       </span>
                       {status === "running" && (
                         <span className="flex items-center gap-1.5 shrink-0">
-                          <Loader2 size={13} className="text-blue-400 animate-spin" />
+                          <Loader2 size={13} className="text-accent animate-spin" />
                           {testingIds.has(conn.id) && (
                             <span className="text-xs text-muted">
                               {t("migration.checklist.testing")}
@@ -286,10 +286,10 @@ export const MigrationChecklistModal = ({
                         </span>
                       )}
                       {status === "ok" && (
-                        <Check size={13} className="text-green-400 shrink-0" />
+                        <Check size={13} className="text-accent-success shrink-0" />
                       )}
                       {(status === "connection" || status === "process" || status === "failed") && (
-                        <AlertTriangle size={13} className="text-red-400 shrink-0" />
+                        <AlertTriangle size={13} className="text-accent-error shrink-0" />
                       )}
                     </div>
                     {gaps.length > 0 && manifest && (
@@ -301,7 +301,7 @@ export const MigrationChecklistModal = ({
                               key={gap.feature}
                               className="flex items-center justify-between gap-2 text-xs"
                             >
-                              <span className="text-amber-400">{gapLabel(gap.feature)}</span>
+                              <span className="text-accent-warning">{gapLabel(gap.feature)}</span>
                               {reported ? (
                                 <span className="text-muted shrink-0">
                                   {t("migration.checklist.alreadyReported")}
@@ -310,7 +310,7 @@ export const MigrationChecklistModal = ({
                                 <button
                                   onClick={() => void handleReportGap(gap.feature)}
                                   disabled={!repoUrl}
-                                  className="flex items-center gap-1 text-blue-400 hover:text-blue-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+                                  className="flex items-center gap-1 text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
                                 >
                                   <ExternalLink size={11} />
                                   {t("migration.checklist.reportThisGap")}
@@ -322,7 +322,7 @@ export const MigrationChecklistModal = ({
                       </div>
                     )}
                     {isUriBased && (
-                      <p className="mt-1.5 text-xs text-amber-400/80">
+                      <p className="mt-1.5 text-xs text-accent-warning/80">
                         {t("migration.checklist.uriWarning")}
                       </p>
                     )}
@@ -352,7 +352,7 @@ export const MigrationChecklistModal = ({
             <button
               onClick={() => void handleMigrateSelected()}
               disabled={checked.size === 0 || migrating}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-50 text-inverse rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
               {migrating && <Loader2 size={16} className="animate-spin" />}
               {t("migration.checklist.migrateSelected", { count: checked.size })}

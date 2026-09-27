@@ -94,14 +94,14 @@ export const SidebarColumnItem = ({
         onDoubleClick={!isView && canManage !== false ? () => onEdit(column) : undefined}
       >
         {column.is_pk ? (
-          <Key size={12} className="text-yellow-500 shrink-0" />
+          <Key size={12} className="text-semantic-pk shrink-0" />
         ) : (
           <Columns size={12} className="text-muted shrink-0" />
         )}
         <span
           className={clsx(
             "truncate flex-1 min-w-0",
-            column.is_pk && "font-bold text-yellow-500/80",
+            column.is_pk && "font-bold text-semantic-pk/80",
           )}
         >
           {column.name}

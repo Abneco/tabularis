@@ -10,6 +10,8 @@ on:
     paths:
       - 'src/**'
       - 'src-tauri/**'
+      - 'tests/**'
+      - 'packages/explain/**' # imported from source by the host
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'tsconfig.json'
@@ -19,6 +21,8 @@ on:
     paths:
       - 'src/**'
       - 'src-tauri/**'
+      - 'tests/**'
+      - 'packages/explain/**' # imported from source by the host
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'tsconfig.json'

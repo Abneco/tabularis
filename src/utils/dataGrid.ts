@@ -448,31 +448,31 @@ export function getCellStateClass(params: CellClassParams): string {
   const isPlaceholder = isAutoIncrementPlaceholder || isDefaultValuePlaceholder;
 
   if (isPendingDelete) {
-    return "text-red-400/60 line-through decoration-red-500/30";
+    return "text-semantic-deleted/60 line-through decoration-semantic-deleted/30";
   }
 
   if (isSelected && isInsertion) {
     if (isPlaceholder) return "text-muted italic select-none";
     if (isModified)
       return isJsonCell
-        ? "bg-blue-500/40 border-l-2 border-l-blue-400"
-        : "bg-blue-600/20 text-blue-200 italic font-medium";
-    return isJsonCell ? "bg-blue-900/20" : "bg-blue-900/20 text-secondary italic";
+        ? "bg-semantic-modified/25 border-l-2 border-l-semantic-modified"
+        : "bg-semantic-modified/20 text-semantic-modified italic font-medium";
+    return isJsonCell ? "bg-accent-primary/10" : "bg-accent-primary/10 text-secondary italic";
   }
 
   if (isInsertion) {
     if (isPlaceholder) return "text-muted italic select-none";
     if (isModified)
       return isJsonCell
-        ? "bg-green-500/40 border-l-2 border-l-green-400"
-        : "bg-green-500/15 text-green-200 italic";
-    return isJsonCell ? "bg-green-500/5" : "bg-green-500/5 text-secondary italic";
+        ? "bg-semantic-new/25 border-l-2 border-l-semantic-new"
+        : "bg-semantic-new/15 text-semantic-new italic";
+    return isJsonCell ? "bg-semantic-new/5" : "bg-semantic-new/5 text-secondary italic";
   }
 
   if (isModified) {
     return isJsonCell
-      ? "bg-blue-500/40 border-l-2 border-l-blue-400"
-      : "bg-blue-600/30 text-blue-100 italic font-medium";
+      ? "bg-semantic-modified/25 border-l-2 border-l-semantic-modified"
+      : "bg-semantic-modified/30 text-semantic-modified italic font-medium";
   }
 
   return isJsonCell ? "" : "text-secondary";

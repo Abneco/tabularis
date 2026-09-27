@@ -46,6 +46,9 @@ pub mod export;
 pub mod export_crypto;
 #[cfg(test)]
 pub mod export_import_tests;
+pub mod fs_path;
+#[cfg(test)]
+pub mod fs_path_tests;
 pub mod health_check;
 #[cfg(test)]
 pub mod group_tree_tests;
@@ -102,6 +105,7 @@ mod system_theme;
 pub mod task_manager;
 pub mod theme_commands;
 pub mod theme_models;
+pub mod theme_packages;
 pub mod updater;
 pub mod window_decorations;
 pub mod drivers {
@@ -671,6 +675,22 @@ pub fn run() {
             ai_commands::list_pending_approvals,
             ai_commands::decide_pending_approval,
             // Themes
+            theme_packages::commands::preview_theme_document,
+            theme_packages::commands::preview_local_theme_package,
+            theme_packages::commands::install_local_theme_package,
+            theme_packages::commands::fetch_theme_registry,
+            theme_packages::commands::fetch_theme_package_detail,
+            theme_packages::commands::install_registry_theme,
+            theme_packages::commands::cancel_theme_install,
+            theme_packages::commands::set_theme_package_enabled,
+            theme_packages::commands::uninstall_theme_package,
+            theme_packages::commands::recover_theme_packages,
+            theme_commands::get_theme_catalog,
+            theme_commands::create_personal_theme,
+            theme_commands::create_personal_snapshot,
+            theme_commands::update_personal_theme,
+            theme_commands::update_personal_snapshot,
+            theme_commands::duplicate_personal_theme,
             theme_commands::get_all_themes,
             theme_commands::get_theme,
             theme_commands::save_custom_theme,

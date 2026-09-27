@@ -49,6 +49,7 @@
   "common": {
     "save": "Speichern",
     "close": "Schließen",
+    "resizeColumn": "Spaltenbreite ändern",
     "cancel": "Abbrechen",
     "delete": "Löschen",
     "edit": "Bearbeiten",
@@ -106,6 +107,8 @@
     "noTables": "Keine Tabellen gefunden",
     "expandTable": "Tabelle {{name}} erweitern",
     "collapseTable": "Tabelle {{name}} einklappen",
+    "expandView": "Ansicht {{name}} erweitern",
+    "collapseView": "Ansicht {{name}} einklappen",
     "columns": "Spalten",
     "parameters": "Parameter",
     "noParameters": "Keine Parameter",
@@ -174,6 +177,7 @@
     "splitHorizontal": "Horizontal teilen",
     "separateConnections": "Verbindungen trennen",
     "splitGroup": "Gruppe teilen",
+    "resizePanels": "Größe der Bereiche ändern",
     "filterTables": "Tabellen filtern...",
     "noTablesMatch": "Keine passende Tabelle",
     "filterDatabases": "Datenbanken filtern...",
@@ -499,7 +503,7 @@
     "darkTheme": "Dunkles Thema",
     "fontFamily": "Schriftfamilie",
     "fonts": {
-      "system": "Systemstandard",
+      "system": "Standard des Themes",
       "systemDesc": "Verwendet die Standardschrift deines Betriebssystems",
       "custom": "Benutzerdefinierte Schrift",
       "customPlaceholder": "z. B. Comic Sans MS",
@@ -731,6 +735,13 @@
       "filterAll": "Alle",
       "filterInstalled": "Installiert",
       "filterUpdates": "Updates",
+      "kindFilter": "Nach Typ filtern",
+      "kindAll": "Alle Typen",
+      "kindDrivers": "Treiber",
+      "kindThemes": "Designs",
+      "kindTheme": "Design",
+      "kindDriver": "Treiber",
+      "manageThemes": "In Darstellung verwalten",
       "searchNoResults": "Keine Plugins entsprechen der Suche.",
       "version": "Version",
       "requiresVersion": "Erfordert Tabularis ≥ {{version}}",
@@ -811,7 +822,8 @@
       "categories": {
         "editor": "Editor",
         "navigation": "Navigation",
-        "data_grid": "Datenraster"
+        "data_grid": "Datenraster",
+        "notebook": "Notebook"
       },
       "runQuery": "Abfrage ausführen",
       "runQueryEditor": "Abfrage ausführen (im Editor)",
@@ -823,6 +835,9 @@
       "toggleRightSidebar": "Rechte Seitenleiste umschalten",
       "focusTableFilter": "Tabellenfilter fokussieren",
       "openConnections": "Verbindungen öffnen",
+      "openSettings": "Einstellungen öffnen",
+      "conflict": "Diese Tastenkombination steht in Konflikt mit „{{shortcut}}“.",
+      "needsModifier": "Modifikatortaste hinzufügen, etwa Strg oder Alt.",
       "newConnection": "Neue Verbindung",
       "newTab": "Neuer Tab",
       "closeTab": "Tab schließen",
@@ -927,6 +942,7 @@
     "badges": {
       "morePlugins": "{{count}} weitere — öffne Plugins, um alle Updates zu sehen",
       "driverUpdate": "Treiber-Update verfügbar",
+      "themeUpdate": "Design-Update verfügbar",
       "tag": "Update",
       "driverTooltip": "{{name}} {{version}} ist verfügbar. Dieses Plugin wird von mehreren Verbindungen genutzt. Öffne Plugins → Updates, um es zu verwalten.",
       "core_one": "{{count}} Core-Update verfügbar",
@@ -1140,6 +1156,7 @@
   },
   "dataGrid": {
     "noRowIdentity": "Zeilen können nicht bearbeitet werden: \"{{table}}\" hat keinen Primärschlüssel, daher muss das Ergebnis alle Spalten der Tabelle enthalten. Wählen Sie alle Spalten aus (z. B. SELECT *) oder fügen Sie einen Primärschlüssel hinzu.",
+    "resizeRelatedPanel": "Ziehen, um die Größe des Bereichs zu ändern",
     "keylessRowNotFound": "Beim Aktualisieren von \"{{column}}\" stimmte keine Zeile mit den ursprünglichen Werten überein. Die Tabelle hat keinen Primärschlüssel und die Daten haben sich möglicherweise geändert – aktualisieren und erneut versuchen.",
     "keylessDeleteNotFound": "Beim Löschen stimmte keine Zeile mit den ursprünglichen Werten überein. Die Tabelle hat keinen Primärschlüssel und die Daten haben sich möglicherweise geändert – aktualisieren und erneut versuchen.",
     "newRow": "NEU",
@@ -1474,6 +1491,7 @@
       "addSqlCell": "SQL-Zelle hinzufügen",
       "addMarkdownCell": "Markdown-Zelle hinzufügen",
       "addCell": "Hinzufügen",
+      "resizeResult": "Größe des Ergebnisses ändern",
       "runAll": "Alle ausführen",
       "runAllTooltip": "Alle SQL-Zellen von oben nach unten ausführen",
       "runCell": "Zelle ausführen",
@@ -2403,5 +2421,13 @@
     },
     "title": "Protokoll des Verbindungstests",
     "showLog": "Protokoll anzeigen"
+  },
+  "themePackages": {
+    "import": "Theme importieren",
+    "registryMismatch": "Dieses Paket stammt aus einer anderen Registry. Ändern Sie die konfigurierte Registry ausdrücklich, bevor Sie es aktualisieren.",
+    "importedTheme": "Importiertes Design", "manage": "Designs verwalten", "importJSON": "Tabularis-JSON importieren", "importVSCode": "Aus VS Code importieren", "edit": "Persönliches Design bearbeiten", "localPackage": "Lokales Paket", "installTitle": "Design-Paket installieren", "installSubtitle": "Deklaratives Design aus der konfigurierten Registry. Es wird kein Code ausgeführt.", "discover": "Designs unter Plugins durchsuchen", "refresh": "Liste aktualisieren", "preview": "Vorschau", "apply": "Anwenden", "confirm": "Bestätigen", "duplicate": "Als persönliches Design kopieren", "exportJSON": "Eigenständiges JSON exportieren", "exportPackage": "Autorenpaket exportieren", "remove": "Löschen", "update": "Paket aktualisieren", "disable": "Paket deaktivieren", "enable": "Paket aktivieren", "removePackage": "Paket deinstallieren", "disabled": "Deaktiviert", "file": "Designdatei", "name": "Designname", "mode": "Modus / Basis", "detectMode": "Erkennen (bei Unklarheit auswählen)", "source": "Design-JSON", "search": "Designs suchen", "loading": "Wird geladen…", "noThemes": "Keine Designs in dieser Registry verfügbar.", "details": "Details / Installation", "readme": "README / Bildschirmfotos", "version": "Paketversion", "latest": "Neueste Version", "install": "Paket installieren / ersetzen", "chooseArchive": "ZIP-Archiv auswählen", "screenshots": "Screenshots (extern öffnen)", "externalMedia": "Bilder und andere entfernte Medien werden nicht automatisch geladen. Links öffnen sich im Browser.", "snapshotEditor": "Exaktes Editor-JSON", "snapshotEditorHelp": "Dieser unabhängige Snapshot steuert die SQL-Farben anstelle des alten Alias. Änderungen werden als Vorschau angezeigt und gegen die ursprüngliche Revision gespeichert.", "recover": "Unterbrochene Installationen wiederherstellen", "recoveryExplanation": "Unvollständige Theme-Transaktionen ausdrücklich prüfen und wiederherstellen. Dies kann unterbrochene Installationen reparieren, wählt aber kein Theme aus und ändert keine gespeicherten Einstellungen.", "recoveryDone": "Wiederherstellungsprüfung abgeschlossen. Verbleibende Meldungen stehen unten.", "catalogIssues": "Katalogdiagnose", "fileTooLarge": "Die Datei überschreitet das Importlimit.", "previewHint": "Die Vorschau ist vorübergehend. Abbrechen stellt das gespeicherte Design wieder her; Anwenden speichert die Auswahl.", "previewReady": "Vorschau aktiv. Prüfen Sie Anwendung und Editor vor der Bestätigung.", "licenseNotice": "Import oder Export gewährt keine Weiterverbreitungsrechte. Urheberangaben beibehalten und Lizenz vor der Veröffentlichung prüfen.", "acknowledge": "Ich verstehe und akzeptiere die aufgeführten Konvertierungsgrenzen.", "applyAfterSave": "Nach dem Speichern anwenden", "savedNotApplied": "Design gespeichert, Auswahl fehlgeschlagen. Nicht erneut importieren; gespeichertes Design auswählen.", "installHint": "Die Installation ersetzt das gesamte Paket, wählt aber keine Variante. Vorschau, lokaler Import und Auswahl zählen nicht als Downloads.", "installedHint": "Paket installiert. Schließen und unter Erscheinungsbild eine Variante auswählen.", "committedRefreshFailed": "Vorgang abgeschlossen, Katalogaktualisierung fehlgeschlagen. Liste vor einem erneuten Versuch aktualisieren.", "missing": "Gespeicherte Auswahl nicht verfügbar: {{id}}. Offline-Ersatz ohne Änderung der Einstellung.", "downloads": "Downloads: {{count}}", "downloadsUnavailable": "Downloadanzahl nicht verfügbar", "installedVersion": "Installiert: {{version}}", "minimumVersion": "Benötigt Tabularis {{version}} oder neuer", "incompatible": "Inkompatible Version oder nicht genau ein universelles Archiv vorhanden.", "packageWarning": "Betrifft alle Paketvarianten. Gespeicherte Auswahlen bleiben erhalten und werden bei erneuter Verfügbarkeit wiederhergestellt.", "deleteWarning": "Persönliches Design löschen? Seine gespeicherten Anwendungsauswahlen verwenden danach die Standarddesigns.", "duplicateHint": "Unabhängige, bearbeitbare persönliche Kopie erstellen, ohne sie zu aktivieren.", "exportError": "Paketexport fehlgeschlagen; eigenständiger JSON-Export bleibt verfügbar.", "runtimeWarning": "Die tatsächlich erste unterstützte Version angeben. Eine Entwicklungsversionsnummer beweist keine Kompatibilität alter Clients.", "packageName": "Paketkennung (Kleinbuchstaben)", "minimumRuntime": "Minimale Tabularis-Version", "license": "Lizenztext und Urheberangaben", "rightsAcknowledged": "Ich habe Weiterverbreitungsrechte und Urheberangaben geprüft.",
+    "groups": { "builtin": "Integriert · offline", "installed": "Installierte Pakete", "personal": "Persönliche Designs" }, "modes": { "light": "Hell", "dark": "Dunkel", "high-contrast": "Hoher Kontrast" },
+    "importErrors": { "unrecognized": "Kein erkanntes VS-Code-Design.", "modeRequired": "Modus auswählen und Vorschau erneut öffnen.", "includeOnly": "Reine Include-Designs sind nicht importierbar. Die tatsächlichen Farben bereitstellen.", "noSupportedData": "Keine unterstützten Farben oder SQL-Tokenregeln gefunden.", "invalidColor": "Ungültiger Wert einer unterstützten Farbe.", "invalidRules": "Ungültige oder zu viele Tokenregeln." },
+    "diagnostics": { "unsupportedKey": "Nicht unterstütztes Feld", "unsupportedColor": "Nicht unterstützte Farbe", "unsupportedScope": "Nicht unterstützter Bereich", "scopeApproximation": "Angenäherte SQL-Zuordnung", "unsupportedStyle": "Nicht unterstützter Stil", "ignoredInclude": "Include nicht geladen", "ignoredSemanticTokens": "Semantische Tokens ignoriert", "unsupportedReference": "Externe Referenz nicht geladen", "unsupportedSetting": "Nicht unterstützte Einstellung", "tokenAlphaFlattened": "Token-Deckkraft gegen den Basishintergrund berechnet", "modeApproximation": "Modus überschrieben oder angenähert", "diagnosticsTruncated": "Weitere Diagnosen ausgelassen" }
   }
 }

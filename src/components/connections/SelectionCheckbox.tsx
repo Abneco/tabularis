@@ -22,7 +22,7 @@ export const SelectionCheckbox = ({ selected, selectionActive, onToggle, classNa
     className={clsx(
       'w-5 h-5 shrink-0 rounded-md border flex items-center justify-center transition-all duration-150',
       selected
-        ? 'bg-accent-primary border-accent-primary text-white opacity-100'
+        ? 'bg-accent-primary border-accent-primary text-inverse opacity-100'
         : clsx(
             'bg-elevated/90 border-strong text-transparent hover:border-accent-primary/70',
             selectionActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',

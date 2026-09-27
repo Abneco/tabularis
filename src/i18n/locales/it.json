@@ -49,6 +49,7 @@
   "common": {
     "save": "Salva",
     "close": "Chiudi",
+    "resizeColumn": "Ridimensiona colonna",
     "cancel": "Annulla",
     "delete": "Elimina",
     "edit": "Modifica",
@@ -106,6 +107,8 @@
     "noTables": "Nessuna tabella trovata",
     "expandTable": "Espandi tabella {{name}}",
     "collapseTable": "Comprimi tabella {{name}}",
+    "expandView": "Espandi vista {{name}}",
+    "collapseView": "Comprimi vista {{name}}",
     "columns": "colonne",
     "parameters": "parametri",
     "noParameters": "Nessun parametro",
@@ -174,6 +177,7 @@
     "splitHorizontal": "Dividi Orizzontale",
     "separateConnections": "Separa Connessioni",
     "splitGroup": "Gruppo Diviso",
+    "resizePanels": "Ridimensiona pannelli",
     "filterTables": "Filtra tabelle...",
     "noTablesMatch": "Nessuna tabella trovata",
     "filterDatabases": "Filtra database...",
@@ -524,7 +528,7 @@
     "darkTheme": "Tema scuro",
     "fontFamily": "Famiglia Font",
     "fonts": {
-      "system": "Sistema",
+      "system": "Predefinito del tema",
       "systemDesc": "Usa il font di default del sistema",
       "custom": "Font Personalizzato",
       "customPlaceholder": "es. Comic Sans MS",
@@ -764,6 +768,13 @@
       "filterAll": "Tutti",
       "filterInstalled": "Installati",
       "filterUpdates": "Aggiornamenti",
+      "kindFilter": "Filtra per tipo",
+      "kindAll": "Tutti i tipi",
+      "kindDrivers": "Driver",
+      "kindThemes": "Temi",
+      "kindTheme": "Tema",
+      "kindDriver": "Driver",
+      "manageThemes": "Gestisci in Aspetto",
       "searchNoResults": "Nessun plugin corrisponde alla ricerca.",
       "version": "Versione",
       "requiresVersion": "Richiede Tabularis ≥ {{version}}",
@@ -844,7 +855,8 @@
       "categories": {
         "editor": "Editor",
         "navigation": "Navigazione",
-        "data_grid": "Griglia dati"
+        "data_grid": "Griglia dati",
+        "notebook": "Notebook"
       },
       "runQuery": "Esegui query",
       "runQueryEditor": "Esegui query (nell'editor)",
@@ -856,6 +868,9 @@
       "toggleRightSidebar": "Attiva/disattiva barra laterale destra",
       "focusTableFilter": "Focalizza il filtro tabelle",
       "openConnections": "Apri connessioni",
+      "openSettings": "Apri impostazioni",
+      "conflict": "Questa scorciatoia è in conflitto con “{{shortcut}}”.",
+      "needsModifier": "Aggiungi un tasto modificatore, come Ctrl o Alt.",
       "newConnection": "Nuova connessione",
       "newTab": "Nuovo tab",
       "closeTab": "Chiudi tab",
@@ -960,6 +975,7 @@
     "badges": {
       "morePlugins": "Altri {{count}} — apri Plugins per vedere tutti gli aggiornamenti",
       "driverUpdate": "Aggiornamento driver disponibile",
+      "themeUpdate": "Aggiornamento tema disponibile",
       "tag": "Aggiornamento",
       "driverTooltip": "{{name}} {{version}} è disponibile. Questo plugin è condiviso tra le connessioni. Apri Plugins → Aggiornamenti per gestirlo.",
       "core_one": "{{count}} aggiornamento core disponibile",
@@ -1176,6 +1192,7 @@
   },
   "dataGrid": {
     "noRowIdentity": "Impossibile modificare le righe: \"{{table}}\" non ha una chiave primaria, quindi la modifica richiede che il risultato includa tutte le colonne della tabella. Seleziona tutte le colonne (es. SELECT *) o aggiungi una chiave primaria.",
+    "resizeRelatedPanel": "Trascina per ridimensionare il pannello",
     "keylessRowNotFound": "Nessuna riga corrisponde ai valori originali durante l'aggiornamento di \"{{column}}\". La tabella non ha una chiave primaria e i dati potrebbero essere cambiati: aggiorna e riprova.",
     "keylessDeleteNotFound": "Nessuna riga corrisponde ai valori originali durante l'eliminazione. La tabella non ha una chiave primaria e i dati potrebbero essere cambiati: aggiorna e riprova.",
     "newRow": "NUOVA",
@@ -1507,6 +1524,7 @@
       "addSqlCell": "Aggiungi Cella SQL",
       "addMarkdownCell": "Aggiungi Cella Markdown",
       "addCell": "Aggiungi",
+      "resizeResult": "Ridimensiona risultato",
       "runAll": "Esegui Tutto",
       "runAllTooltip": "Esegui tutte le celle SQL dall'alto in basso",
       "runCell": "Esegui Cella",
@@ -2416,5 +2434,13 @@
     },
     "title": "Log del test di connessione",
     "showLog": "Mostra log"
+  },
+  "themePackages": {
+    "import": "Importa tema",
+    "registryMismatch": "Il pacchetto appartiene a un altro registro. Modifica esplicitamente il registro configurato prima di aggiornarlo.",
+    "importedTheme": "Tema importato", "manage": "Gestisci temi", "importJSON": "Importa JSON Tabularis", "importVSCode": "Importa da VS Code", "edit": "Modifica tema personale", "localPackage": "Pacchetto locale", "installTitle": "Installa pacchetto tema", "installSubtitle": "Tema dichiarativo dal registro configurato. Nessun codice viene eseguito.", "discover": "Sfoglia i temi in Plugin", "refresh": "Aggiorna elenco", "preview": "Anteprima", "apply": "Applica", "confirm": "Conferma", "duplicate": "Duplica come personale", "exportJSON": "Esporta JSON autonomo", "exportPackage": "Esporta pacchetto autore", "remove": "Elimina", "update": "Aggiorna pacchetto", "disable": "Disabilita pacchetto", "enable": "Abilita pacchetto", "removePackage": "Disinstalla pacchetto", "disabled": "Disabilitato", "file": "File del tema", "name": "Nome del tema", "mode": "Modalità / base", "detectMode": "Rileva (scegli se ambiguo)", "source": "JSON del tema", "search": "Cerca temi", "loading": "Caricamento…", "noThemes": "Nessun tema disponibile nel registro.", "details": "Dettagli / installazione", "readme": "README / schermate", "version": "Versione del pacchetto", "latest": "Ultima versione", "install": "Installa / sostituisci pacchetto", "chooseArchive": "Scegli archivio ZIP", "screenshots": "Schermate (apertura esterna)", "externalMedia": "Immagini e altri contenuti remoti non vengono caricati automaticamente. I collegamenti si aprono nel browser.", "snapshotEditor": "JSON esatto dell’editor", "snapshotEditorHelp": "Questo snapshot indipendente controlla i colori SQL al posto dell’alias legacy. Le modifiche vengono mostrate in anteprima e salvate verificando la revisione originale.", "recover": "Recupera installazioni interrotte", "recoveryExplanation": "Controlla e recupera esplicitamente le operazioni sui temi rimaste incomplete. Può ripristinare installazioni interrotte, senza selezionare temi né cambiare le preferenze salvate.", "recoveryDone": "Controlli di recupero completati. Esamina gli eventuali problemi riportati sotto.", "catalogIssues": "Diagnostica del catalogo", "fileTooLarge": "Il file supera il limite di importazione.", "previewHint": "L'anteprima è temporanea. Annulla ripristina il tema salvato; Applica salva la scelta.", "previewReady": "Anteprima attiva. Controlla applicazione ed editor prima di confermare.", "licenseNotice": "Importare o esportare non concede diritti di redistribuzione. Conserva l'attribuzione e verifica la licenza prima di pubblicare.", "acknowledge": "Comprendo e accetto i limiti di conversione elencati.", "applyAfterSave": "Applica dopo il salvataggio", "savedNotApplied": "Tema salvato, ma selezione fallita. Non importarlo di nuovo: seleziona il tema salvato.", "installHint": "L'installazione sostituisce l'intero pacchetto senza scegliere una variante. Anteprima, importazione locale e selezione non contano come download.", "installedHint": "Pacchetto installato. Chiudi e scegli esplicitamente una variante in Aspetto.", "committedRefreshFailed": "Operazione completata, ma aggiornamento del catalogo fallito. Aggiorna l'elenco prima di riprovare.", "missing": "Selezione salvata non disponibile: {{id}}. Uso un tema offline senza modificare la preferenza.", "downloads": "Download: {{count}}", "downloadsUnavailable": "Conteggio download non disponibile", "installedVersion": "Installata: {{version}}", "minimumVersion": "Richiede Tabularis {{version}} o successivo", "incompatible": "Versione incompatibile o priva di un unico archivio universale.", "packageWarning": "L'operazione riguarda tutte le varianti. Le selezioni salvate vengono conservate e ripristinate quando nuovamente disponibili.", "deleteWarning": "Eliminare il tema personale? Le sue selezioni salvate useranno i temi predefiniti.", "duplicateHint": "Crea una copia personale indipendente e modificabile, senza attivarla.", "exportError": "Esportazione del pacchetto fallita; resta disponibile il JSON autonomo.", "runtimeWarning": "Inserisci la prima versione realmente compatibile. Il numero di una build di sviluppo non garantisce la compatibilità dei vecchi client.", "packageName": "Identificatore del pacchetto (minuscolo)", "minimumRuntime": "Versione minima di Tabularis", "license": "Testo di licenza e attribuzione", "rightsAcknowledged": "Ho verificato i diritti di redistribuzione e l'attribuzione.",
+    "groups": { "builtin": "Integrati · offline", "installed": "Pacchetti installati", "personal": "Temi personali" }, "modes": { "light": "Chiaro", "dark": "Scuro", "high-contrast": "Alto contrasto" },
+    "importErrors": { "unrecognized": "Tema VS Code non riconosciuto.", "modeRequired": "Scegli una modalità e ripeti l'anteprima.", "includeOnly": "I temi con soli riferimenti include non sono importabili. Fornisci i colori effettivi.", "noSupportedData": "Nessun colore o regola SQL supportati.", "invalidColor": "Un colore supportato ha un valore non valido.", "invalidRules": "Regole dei token non valide o eccessive." },
+    "diagnostics": { "unsupportedKey": "Campo non supportato", "unsupportedColor": "Colore non supportato", "unsupportedScope": "Ambito non supportato", "scopeApproximation": "Mappatura SQL approssimata", "unsupportedStyle": "Stile non supportato", "ignoredInclude": "Include non caricato", "ignoredSemanticTokens": "Token semantici ignorati", "unsupportedReference": "Riferimento esterno non caricato", "unsupportedSetting": "Impostazione non supportata", "tokenAlphaFlattened": "Opacità dei token calcolata sullo sfondo di base", "modeApproximation": "Modalità sostituita o approssimata", "diagnosticsTruncated": "Ulteriori diagnostiche omesse" }
   }
 }

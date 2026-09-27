@@ -23,10 +23,10 @@ import {
 import { SettingSection, SettingRow } from "./SettingControls";
 
 const buttonClass =
-  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-blue-400 hover:border-blue-500/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-secondary disabled:hover:border-strong";
+  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-accent hover:border-accent-primary/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-secondary disabled:hover:border-strong";
 
 const primaryButtonClass =
-  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-sm text-white hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-primary text-sm text-inverse hover:bg-accent-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
 interface PendingChoice {
   path: string;
@@ -161,13 +161,13 @@ export function StorageTab() {
           </div>
 
           <p className="mt-3 text-xs text-muted flex items-start gap-1.5">
-            <AlertTriangle size={14} className="shrink-0 mt-0.5 text-amber-500" />
+            <AlertTriangle size={14} className="shrink-0 mt-0.5 text-accent-warning" />
             <span>{t("settings.storage.concurrencyWarning")}</span>
           </p>
         </SettingRow>
 
         {pending && (
-          <div className="mt-2 rounded-lg border border-blue-500/40 bg-blue-500/5 p-4">
+          <div className="mt-2 rounded-lg border border-accent-primary/40 bg-accent-primary/5 p-4">
             <div className="text-xs uppercase tracking-wider text-muted mb-1">
               {t("settings.storage.newFolder")}
             </div>
@@ -221,7 +221,7 @@ export function StorageTab() {
 
         {pendingPath && (
           <div
-            className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3"
+            className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-accent-warning/40 bg-accent-warning/10 px-4 py-3"
             role="status"
           >
             <div className="min-w-0">
@@ -269,7 +269,7 @@ function ModeOption({ checked, onSelect, label, description }: ModeOptionProps) 
       className={clsx(
         "flex items-start gap-2.5 rounded-lg border px-3 py-2 cursor-pointer transition-colors",
         checked
-          ? "border-blue-500/60 bg-blue-500/10"
+          ? "border-accent-primary/60 bg-accent-primary/10"
           : "border-default hover:border-strong",
       )}
     >
@@ -278,7 +278,7 @@ function ModeOption({ checked, onSelect, label, description }: ModeOptionProps) 
         name="storage-new-folder-mode"
         checked={checked}
         onChange={onSelect}
-        className="mt-0.5 accent-blue-500"
+        className="mt-0.5 accent-accent-primary"
       />
       <span className="min-w-0">
         <span className="block text-sm text-primary">{label}</span>

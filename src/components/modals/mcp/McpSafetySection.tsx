@@ -49,7 +49,7 @@ export function McpSafetySection() {
     <>
       <SettingSection
         title={t("mcp.output.title")}
-        icon={<Braces size={14} className="text-blue-400" />}
+        icon={<Braces size={14} className="text-accent" />}
       >
         <SettingRow
           label={t("mcp.output.formatLabel")}
@@ -69,7 +69,7 @@ export function McpSafetySection() {
 
       <SettingSection
         title={t("mcp.safety.readOnlyTitle")}
-        icon={<Lock size={14} className="text-yellow-400" />}
+        icon={<Lock size={14} className="text-accent-warning" />}
       >
         <SettingRow
           label={t("mcp.safety.readOnlyDefault")}
@@ -107,7 +107,7 @@ export function McpSafetySection() {
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleConnection(c.id)}
-                      className="accent-blue-500"
+                      className="accent-accent-primary"
                     />
                     <span className="font-mono text-xs">{c.name}</span>
                   </label>
@@ -120,7 +120,7 @@ export function McpSafetySection() {
 
       <SettingSection
         title={t("mcp.safety.approvalTitle")}
-        icon={<ShieldCheck size={14} className="text-purple-400" />}
+        icon={<ShieldCheck size={14} className="text-accent-secondary" />}
       >
         <SettingRow
           label={t("mcp.safety.approvalMode")}

@@ -161,8 +161,8 @@ export const VisualExplainPage = ({
       {!compactMode && (
         <div className="flex items-center justify-between px-4 py-3 border-b border-default bg-elevated shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 bg-green-900/30 rounded-lg">
-              <FileJson size={18} className="text-green-400" />
+            <div className="p-2 bg-accent-success/15 rounded-lg">
+              <FileJson size={18} className="text-accent-success" />
             </div>
             <div className="min-w-0">
               <h1 className="text-base font-semibold text-primary truncate">
@@ -212,7 +212,7 @@ export const VisualExplainPage = ({
             <p className="text-sm">{t("visualExplainPage.emptyHint")}</p>
             <button
               onClick={handlePickFile}
-              className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 bg-accent-success hover:bg-accent-success/90 text-on-accent-success rounded-lg text-sm font-medium transition-colors"
             >
               <FolderOpen size={14} />
               {t("visualExplainPage.openFile")}

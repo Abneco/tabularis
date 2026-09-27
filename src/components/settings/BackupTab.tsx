@@ -24,7 +24,7 @@ interface BackupStatus {
 const INTERVAL_PRESETS = [360, 720, 1440, 10080];
 
 const textInputClass =
-  "w-64 px-3 py-2 bg-base border border-strong rounded-lg text-sm text-primary placeholder:text-muted focus:border-blue-500 focus:outline-none transition-colors";
+  "w-64 px-3 py-2 bg-base border border-strong rounded-lg text-sm text-primary placeholder:text-muted focus:border-focus focus:outline-none transition-colors";
 
 export function BackupTab() {
   const { t } = useTranslation();
@@ -158,7 +158,7 @@ export function BackupTab() {
           >
             <button
               onClick={() => void handlePickDirectory()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-blue-400 hover:border-blue-500/50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-accent hover:border-accent-primary/50 transition-colors"
             >
               <FolderOpen size={14} />
               {t("settings.backup.chooseDirectory")}
@@ -226,7 +226,7 @@ export function BackupTab() {
                   </span>
                   <button
                     onClick={() => setEditingWebdavPassword(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-blue-400 hover:border-blue-500/50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-accent hover:border-accent-primary/50 transition-colors"
                   >
                     <Pencil size={14} />
                     {t("settings.backup.changePassword")}
@@ -245,7 +245,7 @@ export function BackupTab() {
                   <button
                     onClick={() => void handleSaveWebdavPassword()}
                     disabled={savingWebdav || !webdavPassword}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-50 text-inverse text-sm transition-colors"
                   >
                     {savingWebdav ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -315,7 +315,7 @@ export function BackupTab() {
               </span>
               <button
                 onClick={() => setEditingPassword(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-blue-400 hover:border-blue-500/50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-accent hover:border-accent-primary/50 transition-colors"
               >
                 <Pencil size={14} />
                 {t("settings.backup.changePassword")}
@@ -334,7 +334,7 @@ export function BackupTab() {
               <button
                 onClick={() => void handleSavePassword()}
                 disabled={savingPassword || !password}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-50 text-inverse text-sm transition-colors"
               >
                 {savingPassword ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -436,7 +436,7 @@ export function BackupTab() {
           <button
             onClick={() => void handleBackupNow()}
             disabled={runningBackup || !configured}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-blue-400 hover:border-blue-500/50 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-accent hover:border-accent-primary/50 disabled:opacity-50 transition-colors"
           >
             {runningBackup && <Loader2 size={14} className="animate-spin" />}
             {t("settings.backup.backupNow")}

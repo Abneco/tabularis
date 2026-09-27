@@ -49,6 +49,7 @@
   "common": {
     "save": "I-save",
     "close": "Isara",
+    "resizeColumn": "Baguhin ang laki ng column",
     "cancel": "Kanselahin",
     "delete": "Burahin",
     "edit": "I-edit",
@@ -106,6 +107,8 @@
     "noTables": "Walang nahanap na table",
     "expandTable": "I-expand ang table na {{name}}",
     "collapseTable": "I-collapse ang table na {{name}}",
+    "expandView": "I-expand ang view na {{name}}",
+    "collapseView": "I-collapse ang view na {{name}}",
     "columns": "mga column",
     "parameters": "mga parameter",
     "noParameters": "Walang parameter",
@@ -187,6 +190,7 @@
     "splitHorizontal": "Hatiin nang Pahiga",
     "separateConnections": "Paghiwalayin ang mga Koneksyon",
     "splitGroup": "Hatiin ang Grupo",
+    "resizePanels": "Baguhin ang laki ng mga panel",
     "filterTables": "I-filter ang mga table...",
     "noTablesMatch": "Walang table na tumugma",
     "filterDatabases": "I-filter ang mga database...",
@@ -517,7 +521,7 @@
     "darkTheme": "Dark na Theme",
     "fontFamily": "Font Family",
     "fonts": {
-      "system": "System Default",
+      "system": "Default ng tema",
       "systemDesc": "Ginagamit ang default font ng iyong OS",
       "custom": "Custom Font",
       "customPlaceholder": "hal., Comic Sans MS",
@@ -764,6 +768,13 @@
       "filterAll": "Lahat",
       "filterInstalled": "Naka-install",
       "filterUpdates": "Mga Update",
+      "kindFilter": "I-filter ayon sa uri",
+      "kindAll": "Lahat ng uri",
+      "kindDrivers": "Mga driver",
+      "kindThemes": "Mga tema",
+      "kindTheme": "Tema",
+      "kindDriver": "Driver",
+      "manageThemes": "Pamahalaan sa Hitsura",
       "searchNoResults": "Walang plugin na tumutugma sa iyong paghahanap.",
       "version": "Bersyon",
       "requiresVersion": "Nangangailangan ng Tabularis ≥ {{version}}",
@@ -842,7 +853,8 @@
       "categories": {
         "editor": "Editor",
         "navigation": "Navigation",
-        "data_grid": "Data Grid"
+        "data_grid": "Data Grid",
+        "notebook": "Kuwaderno"
       },
       "runQuery": "Patakbuhin ang query",
       "runQueryEditor": "Patakbuhin ang query (sa editor)",
@@ -854,6 +866,9 @@
       "toggleRightSidebar": "I-toggle ang kanang sidebar",
       "focusTableFilter": "Tumuon sa table filter",
       "openConnections": "Buksan ang mga koneksyon",
+      "openSettings": "Buksan ang settings",
+      "conflict": "Sumasalungat ang shortcut na ito sa “{{shortcut}}”.",
+      "needsModifier": "Magdagdag ng modifier key, gaya ng Ctrl o Alt.",
       "newConnection": "Bagong koneksyon",
       "newTab": "Bagong tab",
       "closeTab": "Isara ang tab",
@@ -957,6 +972,7 @@
     "badges": {
       "morePlugins": "{{count}} pa — buksan ang Plugins para makita ang lahat ng update",
       "driverUpdate": "May available na update ng driver",
+      "themeUpdate": "May available na update ng tema",
       "tag": "Update",
       "driverTooltip": "Available na ang {{name}} {{version}}. Ibinabahagi ang plugin na ito ng iyong mga koneksyon. Buksan ang Plugins → Updates para pamahalaan ito.",
       "core_one": "May {{count}} update sa core",
@@ -1169,6 +1185,7 @@
   },
   "dataGrid": {
     "noRowIdentity": "Hindi ma-edit ang mga row: walang primary key ang \"{{table}}\", kaya kailangang kasama sa resulta ang lahat ng column ng table. Piliin ang lahat ng column (hal. SELECT *) o magdagdag ng primary key.",
+    "resizeRelatedPanel": "I-drag para baguhin ang laki ng panel",
     "keylessRowNotFound": "Walang row na tumugma sa mga orihinal na value habang ina-update ang \"{{column}}\". Walang primary key ang table at maaaring nagbago ang data — i-refresh at subukang muli.",
     "keylessDeleteNotFound": "Walang row na tumugma sa mga orihinal na value habang nagde-delete. Walang primary key ang table at maaaring nagbago ang data — i-refresh at subukang muli.",
     "newRow": "BAGO",
@@ -1505,6 +1522,7 @@
       "addSqlCell": "Magdagdag ng SQL Cell",
       "addMarkdownCell": "Magdagdag ng Markdown Cell",
       "addCell": "Magdagdag",
+      "resizeResult": "Baguhin ang laki ng resulta",
       "runAll": "Patakbuhin Lahat",
       "runAllTooltip": "I-execute ang lahat ng SQL cell mula taas hanggang baba",
       "runCell": "Patakbuhin ang Cell",
@@ -2426,5 +2444,13 @@
         "connection_uri": "Gumagamit ng connection string, hindi pa suportado ng plugin"
       }
     }
+  },
+  "themePackages": {
+    "import": "Mag-import ng tema",
+    "registryMismatch": "Ang package na ito ay mula sa ibang registry. Tahasang palitan ang naka-configure na registry bago ito i-update.",
+    "importedTheme": "Na-import na tema", "manage": "Pamahalaan ang mga tema", "importJSON": "Mag-import ng Tabularis JSON", "importVSCode": "Mag-import mula sa VS Code", "edit": "I-edit ang personal na tema", "localPackage": "Lokal na pakete", "installTitle": "I-install ang theme package", "installSubtitle": "Deklaratibong tema mula sa naka-configure na registry. Walang code na pinapatakbo.", "discover": "Mag-browse ng mga tema sa Plugins", "refresh": "I-refresh", "preview": "Silipin", "apply": "Ilapat", "confirm": "Kumpirmahin", "duplicate": "Kopyahin bilang personal", "exportJSON": "I-export ang hiwalay na JSON", "exportPackage": "I-export ang pakete ng may-akda", "remove": "Tanggalin", "update": "I-update ang pakete", "disable": "I-disable ang pakete", "enable": "I-enable ang pakete", "removePackage": "I-uninstall ang pakete", "disabled": "Naka-disable", "file": "File ng tema", "name": "Pangalan ng tema", "mode": "Mode / batayan", "detectMode": "Awtomatikong tukuyin (pumili kung malabo)", "source": "JSON ng tema", "search": "Maghanap ng mga tema", "loading": "Naglo-load…", "noThemes": "Walang available na tema sa registry na ito.", "details": "Detalye / pag-install", "readme": "README / mga screenshot", "version": "Bersyon ng pakete", "latest": "Pinakabagong release", "install": "I-install / palitan ang pakete", "chooseArchive": "Pumili ng ZIP archive", "screenshots": "Mga screenshot (buksan sa browser)", "externalMedia": "Hindi awtomatikong nilo-load ang mga larawan at ibang remote media. Magbubukas ang mga link sa browser.", "snapshotEditor": "Eksaktong editor JSON", "snapshotEditorHelp": "Ang hiwalay na snapshot na ito ang kumokontrol sa mga kulay ng SQL sa halip na lumang alias. Ipinapakita muna ang pagbabago at sinusuri ang orihinal na rebisyon bago i-save.", "recover": "I-recover ang naantalang pag-install", "recoveryExplanation": "Tahasan na suriin at i-recover ang mga hindi natapos na operasyon ng tema. Maaari nitong ibalik ang naantalang pag-install nang hindi pumipili ng tema o binabago ang naka-save na kagustuhan.", "recoveryDone": "Tapos na ang pagsusuri sa recovery. Tingnan ang anumang natitirang problema sa ibaba.", "catalogIssues": "Mga diagnostic ng katalogo", "fileTooLarge": "Lampas sa limitasyon ng import ang laki ng file.", "previewHint": "Pansamantala ang silip. Ibinabalik ng Kanselahin ang naka-save na tema; sine-save ng Ilapat ang pagpili.", "previewReady": "Aktibo ang silip. Suriin ang app at editor bago kumpirmahin.", "licenseNotice": "Hindi nagbibigay ng karapatang muling ipamahagi ang pag-import o pag-export. Panatilihin ang pagkilala sa may-akda at suriin ang lisensya bago mag-publish.", "acknowledge": "Nauunawaan at tinatanggap ko ang mga nakalistang limitasyon ng conversion.", "applyAfterSave": "Ilapat pagkatapos i-save", "savedNotApplied": "Na-save ang tema ngunit nabigo ang pagpili. Huwag uliting i-import; piliin ang naka-save na tema.", "installHint": "Pinapalitan ng pag-install ang buong pakete ngunit hindi pumipili ng variant. Hindi binibilang na download ang silip, lokal na import, at pagpili.", "installedHint": "Na-install ang pakete. Isara at pumili ng variant sa Hitsura.", "committedRefreshFailed": "Natapos ang operasyon ngunit nabigo ang pag-refresh ng katalogo. I-refresh bago subukang muli.", "missing": "Hindi available ang naka-save na pagpili: {{id}}. Gagamit ng offline na kapalit nang hindi binabago ang kagustuhan.", "downloads": "Mga download: {{count}}", "downloadsUnavailable": "Hindi available ang bilang ng download", "installedVersion": "Naka-install: {{version}}", "minimumVersion": "Kailangan ang Tabularis {{version}} o mas bago", "incompatible": "Hindi compatible ang release o walang eksaktong isang universal archive.", "packageWarning": "Apektado ang lahat ng variant. Pinapanatili ang mga naka-save na pagpili at ibinabalik kapag available muli.", "deleteWarning": "Tanggalin ang personal na tema? Gagamit ng mga default na tema ang mga naka-save nitong pagpili.", "duplicateHint": "Gumawa ng hiwalay at nae-edit na personal na kopya nang hindi ina-activate.", "exportError": "Nabigo ang pag-export ng pakete; available pa rin ang hiwalay na JSON export.", "runtimeWarning": "Ilagay ang unang release na talagang sumusuporta rito. Hindi patunay ng compatibility sa lumang client ang numero ng development build.", "packageName": "Identifier ng pakete (maliliit na titik)", "minimumRuntime": "Pinakamababang bersyon ng Tabularis", "license": "Lisensya at pagkilala sa may-akda", "rightsAcknowledged": "Nasuri ko ang karapatan sa muling pamamahagi at pagkilala sa may-akda.",
+    "groups": { "builtin": "Kasama na · offline", "installed": "Mga naka-install na pakete", "personal": "Mga personal na tema" }, "modes": { "light": "Maliwanag", "dark": "Madilim", "high-contrast": "Mataas na contrast" },
+    "importErrors": { "unrecognized": "Hindi nakilalang VS Code theme.", "modeRequired": "Pumili ng mode at silipin muli.", "includeOnly": "Hindi ma-import ang temang puro include lang. Ibigay ang aktuwal na mga kulay.", "noSupportedData": "Walang suportadong kulay o SQL token rule.", "invalidColor": "Mali ang halaga ng suportadong kulay.", "invalidRules": "Mali o sobra ang mga token rule." },
+    "diagnostics": { "unsupportedKey": "Hindi suportadong field", "unsupportedColor": "Hindi suportadong kulay", "unsupportedScope": "Hindi suportadong saklaw", "scopeApproximation": "Tinatayang SQL mapping", "unsupportedStyle": "Hindi suportadong estilo", "ignoredInclude": "Hindi ni-load ang include", "ignoredSemanticTokens": "Binale-wala ang semantic token", "unsupportedReference": "Hindi ni-load ang panlabas na sanggunian", "unsupportedSetting": "Hindi suportadong setting", "tokenAlphaFlattened": "Kinalkula ang opacity ng token laban sa batayang background", "modeApproximation": "Pinalitan o tinantiya ang mode", "diagnosticsTruncated": "Hindi isinama ang dagdag na diagnostic" }
   }
 }

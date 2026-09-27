@@ -20,13 +20,13 @@ export function ErrorDisplay({ error, t }: ErrorDisplayProps) {
   const handleCopy = () => copy(error);
 
   return (
-    <div className="p-4 text-red-400 font-mono text-sm bg-red-900/10 h-full overflow-auto select-text">
+    <div className="p-4 text-accent-error font-mono text-sm bg-accent-error/5 h-full overflow-auto select-text">
       <div className="flex items-start gap-3">
         <div className="whitespace-pre-wrap flex-1 min-w-0">Error: {brief}</div>
         <button
           type="button"
           onClick={handleCopy}
-          className="inline-flex items-center gap-1 rounded border border-red-400/30 px-2 py-1 text-xs text-red-300/80 hover:bg-red-400/10 hover:text-red-200 transition-colors select-none shrink-0"
+          className="inline-flex items-center gap-1 rounded border border-accent-error/30 px-2 py-1 text-xs text-accent-error/80 hover:bg-accent-error/10 hover:text-accent-error transition-colors select-none shrink-0"
           title={t("common.copyError")}
         >
           {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -38,7 +38,7 @@ export function ErrorDisplay({ error, t }: ErrorDisplayProps) {
           <button
             type="button"
             onClick={() => setShowDetails((v) => !v)}
-            className="mt-2 flex items-center gap-1 text-xs text-red-300/70 hover:text-red-300 transition-colors cursor-pointer"
+            className="mt-2 flex items-center gap-1 text-xs text-accent-error/70 hover:text-accent-error transition-colors cursor-pointer"
           >
             {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             {showDetails
@@ -46,7 +46,7 @@ export function ErrorDisplay({ error, t }: ErrorDisplayProps) {
               : t("editor.showErrorDetails")}
           </button>
           {showDetails && (
-            <div className="mt-2 whitespace-pre-wrap text-red-400/60 border-t border-red-400/20 pt-2">
+            <div className="mt-2 whitespace-pre-wrap text-accent-error/60 border-t border-accent-error/20 pt-2">
               {details}
             </div>
           )}

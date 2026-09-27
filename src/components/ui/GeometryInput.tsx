@@ -174,7 +174,7 @@ export const GeometryInput = ({
             onMouseLeave={() => setShowTooltip(false)}
             className={`flex-shrink-0 p-1.5 rounded transition-colors flex items-center gap-0.5 ${
               isRawSqlMode
-                ? "bg-amber-500/20 text-amber-400 hover:bg-amber-500/30"
+                ? "bg-accent-warning/20 text-accent-warning hover:bg-accent-warning/30"
                 : "bg-secondary/20 text-secondary hover:bg-secondary/30"
             }`}
             title={isRawSqlMode ? t("geometryInput.sqlMode") : t("geometryInput.toggleTooltip")}

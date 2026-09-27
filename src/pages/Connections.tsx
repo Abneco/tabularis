@@ -57,6 +57,7 @@ import {
 } from "../hooks/useBuiltinDriverMigration";
 import { useConnectionCatalogue } from "../hooks/useConnectionCatalogue";
 import { useToast } from "../hooks/useToast";
+import { useEscapeKey } from "../hooks/useEscapeKey";
 import { buildPluginIssueUrl, resolvePluginRepoUrl } from "../utils/pluginIssueReport";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { APP_VERSION } from "../version";
@@ -104,6 +105,8 @@ export const Connections = () => {
   const [isMigrationChecklistOpen, setIsMigrationChecklistOpen] = useState(false);
   const importMenuBtnRef = useRef<HTMLButtonElement>(null);
   const [importMenuPos, setImportMenuPos] = useState({ top: 0, right: 0 });
+  const closeImportMenu = useCallback(() => setIsImportMenuOpen(false), []);
+  useEscapeKey(isImportMenuOpen, closeImportMenu);
 
   // The header clips its overflow, so the dropup menu is portaled to the body
   // and positioned just under the trigger button.
@@ -978,9 +981,8 @@ export const Connections = () => {
             <div
               className="flex items-center gap-2"
               style={{ paddingLeft: 24 + indentPx }}
-              onClick={(e) => e.stopPropagation()}
             >
-              <FolderPlus size={12} className="text-amber-400 shrink-0" />
+              <FolderPlus size={12} className="text-accent-warning shrink-0" />
               <input autoCorrect="off" autoCapitalize="off" autoComplete="off" spellCheck={false}
                 type="text"
                 value={subgroupInputValue}
@@ -998,13 +1000,13 @@ export const Connections = () => {
                 }}
                 placeholder="Subfolder name (use / for nested)"
                 autoFocus
-                className="flex-1 px-2 py-1 bg-elevated border border-strong rounded text-sm text-primary placeholder:text-muted focus:border-amber-500/70 focus:outline-none"
+                className="flex-1 px-2 py-1 bg-elevated border border-strong rounded text-sm text-primary placeholder:text-muted focus:border-accent-warning/70 focus:outline-none"
               />
               <button
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => void confirmInlineSubgroupInput()}
                 disabled={!subgroupInputValue.trim()}
-                className="p-1 rounded bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-1 rounded bg-accent-warning hover:bg-accent-warning/90 text-on-accent-warning disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Plus size={12} />
               </button>
@@ -1085,13 +1087,13 @@ export const Connections = () => {
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="relative flex items-center justify-between px-8 pt-7 pb-6 border-b border-default bg-elevated shrink-0 overflow-hidden">
         {/* Decorative gradients */}
-        <div className="absolute top-0 right-0 w-72 h-full bg-gradient-to-bl from-blue-600/10 via-blue-600/3 to-transparent pointer-events-none" />
-        <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-indigo-600/6 to-transparent pointer-events-none" />
+        <div className="absolute top-0 right-0 w-72 h-full bg-gradient-to-bl from-accent-primary/10 via-accent-primary/3 to-transparent pointer-events-none" />
+        <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-accent-primary/6 to-transparent pointer-events-none" />
 
         <div className="relative">
           <div className="flex items-center gap-1.5 mb-2">
-            <Database size={12} className="text-blue-400" />
-            <span className="text-[10px] font-bold text-blue-400/80 uppercase tracking-[0.15em]">
+            <Database size={12} className="text-accent" />
+            <span className="text-[10px] font-bold text-accent/80 uppercase tracking-[0.15em]">
               Database Manager
             </span>
           </div>
@@ -1109,8 +1111,8 @@ export const Connections = () => {
             {openCount > 0 && (
               <>
                 <span className="w-1 h-1 rounded-full bg-default" />
-                <span className="flex items-center gap-1.5 text-xs text-green-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                <span className="flex items-center gap-1.5 text-xs text-accent-success">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent-success animate-pulse" />
                   {openCount} active
                 </span>
               </>
@@ -1118,13 +1120,13 @@ export const Connections = () => {
           </div>
         </div>
 
-        <div className="relative flex items-stretch shadow-lg shadow-blue-500/20 rounded-xl">
+        <div className="relative flex items-stretch shadow-lg shadow-accent-primary/20 rounded-xl">
           <button
             onClick={() => {
               setEditingConnection(null);
               setIsModalOpen(true);
             }}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white pl-4 pr-3.5 py-2.5 rounded-l-xl font-semibold text-sm transition-colors duration-150"
+            className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse pl-4 pr-3.5 py-2.5 rounded-l-xl font-semibold text-sm transition-colors duration-150"
           >
             <Plus size={15} />
             {t("connections.addConnection")}
@@ -1132,7 +1134,7 @@ export const Connections = () => {
           <button
             ref={importMenuBtnRef}
             onClick={toggleImportMenu}
-            className="flex items-center bg-blue-600 hover:bg-blue-500 text-white px-2 rounded-r-xl border-l border-blue-400/40 transition-colors duration-150"
+            className="flex items-center bg-accent-primary hover:bg-accent-primary/90 text-inverse px-2 rounded-r-xl border-l border-inverse/20 transition-colors duration-150"
             title={t("connections.addConnection")}
             aria-haspopup="menu"
             aria-expanded={isImportMenuOpen}
@@ -1146,8 +1148,9 @@ export const Connections = () => {
             createPortal(
               <>
                 <div
+                  role="presentation"
                   className="fixed inset-0 z-[200]"
-                  onClick={() => setIsImportMenuOpen(false)}
+                  onClick={closeImportMenu}
                 />
                 <div
                   style={{ top: importMenuPos.top, right: importMenuPos.right }}
@@ -1159,9 +1162,9 @@ export const Connections = () => {
                     className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-secondary hover:text-primary hover:bg-surface-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-left"
                   >
                     {isCreatingSqliteDatabase ? (
-                      <Loader2 size={15} className="shrink-0 text-blue-400 animate-spin" />
+                      <Loader2 size={15} className="shrink-0 text-accent animate-spin" />
                     ) : (
-                      <Database size={15} className="shrink-0 text-blue-400" />
+                      <Database size={15} className="shrink-0 text-accent" />
                     )}
                     <span className="flex-1">
                       {t("connections.newSqliteDatabase.menuLabel")}
@@ -1175,7 +1178,7 @@ export const Connections = () => {
                     }}
                     className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-secondary hover:text-primary hover:bg-surface-secondary transition-colors text-left"
                   >
-                    <FolderInput size={15} className="shrink-0 text-blue-400" />
+                    <FolderInput size={15} className="shrink-0 text-accent" />
                     <span className="flex-1">{t("connections.importFromApp.menuLabel")}</span>
                     <BetaBadge />
                   </button>
@@ -1207,8 +1210,8 @@ export const Connections = () => {
 
       {/* ── Selection bar (bulk actions) ──────────────────────────────────── */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-2.5 px-6 py-2.5 bg-elevated border-b border-blue-500/40 shadow-sm shrink-0">
-          <span className="text-sm font-semibold text-blue-300">
+        <div className="flex items-center gap-2.5 px-6 py-2.5 bg-elevated border-b border-accent-primary/40 shadow-sm shrink-0">
+          <span className="text-sm font-semibold text-accent">
             {t("connections.selectedCount", { count: selectedIds.size })}
           </span>
           <div className="flex-1" />
@@ -1217,7 +1220,7 @@ export const Connections = () => {
               setExportSelectionOnly(true);
               setIsExportModalOpen(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-blue-400 hover:border-blue-500/50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-accent hover:border-accent-primary/50 transition-colors"
           >
             <Download size={14} />
             {t("connections.exportSelected")}
@@ -1227,14 +1230,14 @@ export const Connections = () => {
               const r = e.currentTarget.getBoundingClientRect();
               setBulkMoveMenu({ x: r.left, y: r.bottom + 4 });
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-amber-400 hover:border-amber-500/50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-base border border-strong text-sm text-secondary hover:text-accent-warning hover:border-accent-warning/50 transition-colors"
           >
             <FolderInput size={14} />
             {t("connections.moveSelected")}
           </button>
           <button
             onClick={handleBulkDelete}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-sm text-red-400 hover:bg-red-500/20 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-error/10 border border-accent-error/30 text-sm text-accent-error hover:bg-accent-error/20 transition-colors"
           >
             <Trash2 size={14} />
             {t("connections.deleteSelected")}
@@ -1258,8 +1261,8 @@ export const Connections = () => {
               <div className="w-20 h-20 rounded-2xl bg-elevated border border-default flex items-center justify-center shadow-sm">
                 <Database size={32} className="text-muted" />
               </div>
-              <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg">
-                <Plus size={14} className="text-white" />
+              <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-accent-primary flex items-center justify-center shadow-lg">
+                <Plus size={14} className="text-inverse" />
               </div>
             </div>
             <p className="text-base font-bold text-primary mb-1.5">
@@ -1274,7 +1277,7 @@ export const Connections = () => {
                   setEditingConnection(null);
                   setIsModalOpen(true);
                 }}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-blue-500/20 hover:-translate-y-px"
+                className="flex items-center gap-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-accent-primary/20 hover:-translate-y-px"
               >
                 <Plus size={14} />
                 {t("connections.createFirst")}
@@ -1282,7 +1285,7 @@ export const Connections = () => {
               <button
                 onClick={() => void handleCreateSqliteDatabase()}
                 disabled={isCreatingSqliteDatabase}
-                className="flex items-center gap-2 bg-elevated border border-strong hover:border-blue-500/50 text-secondary hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl font-semibold text-sm transition-all hover:-translate-y-px"
+                className="flex items-center gap-2 bg-elevated border border-strong hover:border-accent-primary/50 text-secondary hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-xl font-semibold text-sm transition-all hover:-translate-y-px"
               >
                 {isCreatingSqliteDatabase ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -1293,7 +1296,7 @@ export const Connections = () => {
               </button>
               <button
                 onClick={() => setIsImportAppModalOpen(true)}
-                className="flex items-center gap-2 bg-elevated border border-strong hover:border-blue-500/50 text-secondary hover:text-blue-400 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all hover:-translate-y-px"
+                className="flex items-center gap-2 bg-elevated border border-strong hover:border-accent-primary/50 text-secondary hover:text-accent px-4 py-2.5 rounded-xl font-semibold text-sm transition-all hover:-translate-y-px"
               >
                 <FolderInput size={14} />
                 {t("connections.importFromApp.menuLabel")}
@@ -1315,7 +1318,7 @@ export const Connections = () => {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t("connections.searchPlaceholder")}
-                  className="w-full pl-10 pr-9 py-2.5 bg-elevated border border-strong rounded-xl text-sm text-primary placeholder:text-muted focus:border-blue-500/70 focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-9 py-2.5 bg-elevated border border-strong rounded-xl text-sm text-primary placeholder:text-muted focus:border-focus/70 focus:outline-none transition-colors"
                 />
                 {search && (
                   <button
@@ -1345,12 +1348,12 @@ export const Connections = () => {
                       defaultValue: "Group name (use / for nested)",
                     })}
                     autoFocus
-                    className="w-40 px-3 py-2 bg-elevated border border-strong rounded-xl text-sm text-primary placeholder:text-muted focus:border-amber-500/70 focus:outline-none transition-colors"
+                    className="w-40 px-3 py-2 bg-elevated border border-strong rounded-xl text-sm text-primary placeholder:text-muted focus:border-accent-warning/70 focus:outline-none transition-colors"
                   />
                   <button
                     onClick={() => void handleCreateGroup()}
                     disabled={!newGroupName.trim()}
-                    className="p-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-2 rounded-lg bg-accent-warning hover:bg-accent-warning/90 text-on-accent-warning disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <Plus size={14} />
                   </button>
@@ -1367,7 +1370,7 @@ export const Connections = () => {
               ) : (
                 <button
                   onClick={() => setIsCreatingGroup(true)}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-elevated border border-strong rounded-xl text-sm text-muted hover:text-amber-400 hover:border-amber-500/50 transition-colors shrink-0"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-elevated border border-strong rounded-xl text-sm text-muted hover:text-accent-warning hover:border-accent-warning/50 transition-colors shrink-0"
                   title={t("groups.newGroup")}
                 >
                   <FolderPlus size={14} />
@@ -1384,7 +1387,7 @@ export const Connections = () => {
                     setExportSelectionOnly(false);
                     setIsExportModalOpen(true);
                   }}
-                  className="p-1.5 rounded-lg text-muted hover:text-blue-400 hover:bg-blue-500/10 transition-all duration-150"
+                  className="p-1.5 rounded-lg text-muted hover:text-accent hover:bg-accent-primary/10 transition-all duration-150"
                   title={t("connections.export")}
                 >
                   <Download size={14} />
@@ -1398,7 +1401,7 @@ export const Connections = () => {
                   className={clsx(
                     "p-1.5 rounded-lg transition-all duration-150",
                     viewMode === "grid"
-                      ? "bg-blue-500/15 text-blue-400 shadow-sm"
+                      ? "bg-accent-primary/15 text-accent shadow-sm"
                       : "text-muted hover:text-secondary hover:bg-surface-secondary",
                   )}
                   title={t("connections.gridView")}
@@ -1410,7 +1413,7 @@ export const Connections = () => {
                   className={clsx(
                     "p-1.5 rounded-lg transition-all duration-150",
                     viewMode === "list"
-                      ? "bg-blue-500/15 text-blue-400 shadow-sm"
+                      ? "bg-accent-primary/15 text-accent shadow-sm"
                       : "text-muted hover:text-secondary hover:bg-surface-secondary",
                   )}
                   title={t("connections.listView")}

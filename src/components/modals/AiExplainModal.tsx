@@ -9,6 +9,7 @@ import type { BeforeMount } from "@monaco-editor/react";
 import { MonacoEditor } from "../ui/LazyMonaco";
 import type * as MonacoTypes from "monaco-editor";
 import { loadMonacoTheme } from "../../themes/themeUtils";
+import { getMonacoThemeId } from "../../themes/themeRuntime";
 
 interface AiExplainModalProps {
   isOpen: boolean;
@@ -78,7 +79,7 @@ export const AiExplainModal = ({ isOpen, onClose, query }: AiExplainModalProps) 
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-default">
           <div className="flex items-center gap-2 text-primary font-medium">
-            <BookOpen size={18} className="text-blue-400" />
+            <BookOpen size={18} className="text-accent" />
             <span>AI Query Explanation</span>
           </div>
           <button onClick={onClose} className="text-secondary hover:text-primary transition-colors">
@@ -96,14 +97,14 @@ export const AiExplainModal = ({ isOpen, onClose, query }: AiExplainModalProps) 
 
           {/* Original Query */}
           <div>
-            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+            <div className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                 Query
-            </label>
+            </div>
             <div className="h-32 border border-default rounded-lg overflow-hidden">
                 <MonacoEditor
                     height="100%"
                     language="sql"
-                    theme={editorTheme.id}
+                    theme={getMonacoThemeId(editorTheme.id)}
                     value={query}
                     beforeMount={handleBeforeMount}
                     options={{
@@ -119,9 +120,9 @@ export const AiExplainModal = ({ isOpen, onClose, query }: AiExplainModalProps) 
 
           {/* Explanation */}
           <div>
-            <label className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
+            <div className="block text-xs font-semibold text-muted uppercase tracking-wider mb-2">
                 Explanation
-            </label>
+            </div>
             <div className="bg-base border border-strong rounded-lg p-4 min-h-[150px] text-secondary leading-relaxed whitespace-pre-wrap">
                 {isLoading ? (
                     <div className="flex items-center gap-2 text-muted">

@@ -51,8 +51,8 @@ export const UpdateNotificationModal = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-default bg-base">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-900/30 rounded-lg">
-              <Download size={20} className="text-green-400" />
+            <div className="p-2 bg-accent-success/15 rounded-lg">
+              <Download size={20} className="text-accent-success" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-primary">
@@ -78,7 +78,7 @@ export const UpdateNotificationModal = ({
           {/* Release Info */}
           <div className="bg-surface-secondary/50 p-4 rounded-lg border border-strong">
             <div className="flex items-center gap-2 mb-2">
-              <CheckCircle size={16} className="text-green-400" />
+              <CheckCircle size={16} className="text-accent-success" />
               <span className="text-sm font-medium text-primary">
                 {t("update.version")} {updateInfo.latestVersion}
               </span>
@@ -99,7 +99,7 @@ export const UpdateNotificationModal = ({
               </div>
               <div className="w-full h-2 bg-base rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-500 transition-all duration-300"
+                  className="h-full bg-accent-primary transition-all duration-300"
                   style={{ width: `${downloadProgress}%` }}
                 />
               </div>
@@ -137,7 +137,7 @@ export const UpdateNotificationModal = ({
                   "[&_p]:mb-2 [&_code]:bg-surface-secondary [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono " +
                   "[&_pre]:bg-surface-secondary [&_pre]:p-3 [&_pre]:rounded [&_pre]:overflow-x-auto [&_pre]:mb-2 [&_pre_code]:bg-transparent [&_pre_code]:p-0 " +
                   "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_li]:mb-1 " +
-                  "[&_a]:text-blue-400 [&_a]:underline [&_a]:cursor-pointer [&_blockquote]:border-l-2 [&_blockquote]:border-muted [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted " +
+                  "[&_a]:text-accent [&_a]:underline [&_a]:cursor-pointer [&_blockquote]:border-l-2 [&_blockquote]:border-muted [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted " +
                   "[&_hr]:border-default [&_hr]:my-4 [&_strong]:font-semibold [&_strong]:text-primary [&_em]:italic"
                 }
               >
@@ -192,7 +192,7 @@ export const UpdateNotificationModal = ({
             <button
               onClick={onDownloadAndInstall}
               disabled={isDownloading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-50 text-inverse rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
               {isDownloading && <Loader2 size={16} className="animate-spin" />}
               {isDownloading ? t("update.downloading") : t("update.downloadAndInstall")}

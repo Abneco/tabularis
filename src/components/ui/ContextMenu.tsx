@@ -63,7 +63,7 @@ const MenuRow = ({ item, onClose }: { item: ContextMenuItem; onClose: () => void
         ${depth === 0 ? 'pl-3' : 'pl-0'}
         ${item.disabled
           ? 'text-muted/50 cursor-not-allowed'
-          : `hover:bg-surface-tertiary ${item.danger ? 'text-red-400' : 'text-primary'}`
+          : `hover:bg-surface-tertiary ${item.danger ? 'text-accent-error' : 'text-primary'}`
         }
       `}
     >
@@ -84,7 +84,7 @@ const MenuRow = ({ item, onClose }: { item: ContextMenuItem; onClose: () => void
           ))}
         </span>
       )}
-      {Icon && <Icon size={14} className={`shrink-0 ${item.disabled ? 'text-muted/50' : item.danger ? 'text-red-400' : 'text-secondary'}`} />}
+      {Icon && <Icon size={14} className={`shrink-0 ${item.disabled ? 'text-muted/50' : item.danger ? 'text-accent-error' : 'text-secondary'}`} />}
       <span className="truncate">{item.label}</span>
     </button>
   );

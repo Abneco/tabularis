@@ -56,7 +56,7 @@ export function getConnectionItemClass(isActive: boolean): string {
   // Active state is conveyed by the enlarged driver badge + rail indicator,
   // not by a button background
   return isActive
-    ? 'text-accent-primary'
+    ? 'text-accent'
     : 'text-secondary hover:text-primary';
 }
 

@@ -189,7 +189,7 @@ describe('connectionManager', () => {
   describe('getConnectionItemClass', () => {
     it('should return active classes when isActive is true', () => {
       const result = getConnectionItemClass(true);
-      expect(result).toContain('text-accent-primary');
+      expect(result).toContain('text-accent');
       // Active state must not paint a button background: it is conveyed by
       // the enlarged driver badge + rail indicator
       expect(result).not.toContain('bg-');
@@ -203,7 +203,7 @@ describe('connectionManager', () => {
 
     it('should not return active classes when isActive is false', () => {
       const result = getConnectionItemClass(false);
-      expect(result).not.toContain('text-accent-primary');
+      expect(result).not.toContain('text-accent');
     });
   });
 

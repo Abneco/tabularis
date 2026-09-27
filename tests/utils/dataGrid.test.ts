@@ -570,7 +570,7 @@ describe('dataGrid utils', () => {
     it('should return delete styling for pending-delete rows', () => {
       const result = getCellStateClass({ ...baseParams, isPendingDelete: true });
       expect(result).toContain('line-through');
-      expect(result).toContain('text-red');
+      expect(result).toContain('text-semantic-deleted');
     });
 
     it('should prioritize pending-delete over all other states', () => {
@@ -613,7 +613,7 @@ describe('dataGrid utils', () => {
         isInsertion: true,
         isModified: true,
       });
-      expect(result).toContain('bg-blue');
+      expect(result).toContain('bg-semantic-modified');
       expect(result).toContain('italic');
     });
 
@@ -643,7 +643,7 @@ describe('dataGrid utils', () => {
         isInsertion: true,
         isModified: true,
       });
-      expect(result).toContain('bg-green');
+      expect(result).toContain('bg-semantic-new');
       expect(result).toContain('italic');
     });
 
@@ -652,7 +652,7 @@ describe('dataGrid utils', () => {
         ...baseParams,
         isInsertion: true,
       });
-      expect(result).toContain('bg-green');
+      expect(result).toContain('bg-semantic-new');
       expect(result).toContain('text-secondary');
       expect(result).toContain('italic');
     });
@@ -662,7 +662,7 @@ describe('dataGrid utils', () => {
         ...baseParams,
         isModified: true,
       });
-      expect(result).toContain('bg-blue');
+      expect(result).toContain('bg-semantic-modified');
       expect(result).toContain('italic');
       expect(result).toContain('font-medium');
     });

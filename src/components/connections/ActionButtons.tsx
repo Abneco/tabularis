@@ -23,7 +23,7 @@ const BUTTON_CLASS = 'p-1.5 rounded-lg text-muted transition-colors disabled:opa
 
 /** Hover tints follow the shared tones: primary for edits, success to connect, danger to disconnect/delete. */
 const HOVER = {
-  primary: 'hover:text-accent-primary hover:bg-accent-primary/10',
+  primary: 'hover:text-accent hover:bg-accent-primary/10',
   success: 'hover:text-accent-success hover:bg-accent-success/10',
   danger: 'hover:text-accent-error hover:bg-accent-error/10',
 };

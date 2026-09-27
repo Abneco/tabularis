@@ -501,6 +501,18 @@ fn ensure_single_tunnel(params: &ConnectionParams) -> Result<(), String> {
 }
 
 pub fn resolve_connection_params(params: &ConnectionParams) -> Result<ConnectionParams, String> {
+    let mut resolved = resolve_connection_transport(params)?;
+    // Only file/folder drivers store a path in `database`; for network drivers
+    // it is a schema name and must be passed through untouched.
+    if crate::drivers::registry::is_local_path_driver(&resolved.driver) {
+        resolved.database = crate::fs_path::sanitize_database_selection(&resolved.database);
+    }
+    Ok(resolved)
+}
+
+/// Resolve the tunnel / proxy transport for a connection (K8s, SSM, SSH or a
+/// database-scope proxy) and return params pointing at the local endpoint.
+fn resolve_connection_transport(params: &ConnectionParams) -> Result<ConnectionParams, String> {
     ensure_single_tunnel(params)?;
 
     // Handle K8s tunnel - result is already on localhost; do not re-proxy.
@@ -2756,6 +2768,34 @@ mod tests {
             database: DatabaseSelection::Single("testdb".to_string()),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn resolve_leaves_network_database_names_untouched() {
+        let params = ConnectionParams {
+            database: DatabaseSelection::Single("'quoted_schema'".to_string()),
+            ..base_params()
+        };
+
+        let resolved = resolve_connection_params(&params).expect("resolve");
+        assert_eq!(resolved.database.primary(), "'quoted_schema'");
+    }
+
+    #[test]
+    fn resolve_sanitizes_local_path_driver_databases() {
+        let driver = "__test_resolve_local_path_driver__";
+        crate::drivers::registry::set_local_path_driver(driver, true);
+        let params = ConnectionParams {
+            driver: driver.to_string(),
+            host: None,
+            port: None,
+            database: DatabaseSelection::Single(r#""file:///tmp/my%20data.db""#.to_string()),
+            ..Default::default()
+        };
+
+        let resolved = resolve_connection_params(&params);
+        crate::drivers::registry::set_local_path_driver(driver, false);
+        assert_eq!(resolved.expect("resolve").database.primary(), "/tmp/my data.db");
     }
 
     #[test]

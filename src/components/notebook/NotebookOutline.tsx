@@ -61,7 +61,7 @@ function OutlineAiButton({
           handleClick(e as unknown as React.MouseEvent);
         }
       }}
-      className="p-0.5 text-muted hover:text-purple-300 transition-colors rounded"
+      className="p-0.5 text-muted hover:text-accent-secondary transition-colors rounded"
       title={t("editor.notebook.aiGenerateOutlineNames")}
     >
       {isGenerating ? (
@@ -75,9 +75,9 @@ function OutlineAiButton({
 
 function CellTypeBadge({ cellType }: { cellType: "sql" | "markdown" }) {
   if (cellType === "sql") {
-    return <span className="text-green-400 mr-1">SQL</span>;
+    return <span className="text-accent-success mr-1">SQL</span>;
   }
-  return <span className="text-blue-400 mr-1">MD</span>;
+  return <span className="text-accent mr-1">MD</span>;
 }
 
 export function NotebookOutline({

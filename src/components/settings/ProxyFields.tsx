@@ -18,7 +18,7 @@ import {
 } from "../../types/proxy";
 
 const textInputClass =
-  "w-full max-w-xs px-3 py-2 bg-base border border-strong rounded-lg text-sm text-primary placeholder:text-muted focus:border-blue-500 focus:outline-none transition-colors";
+  "w-full max-w-xs px-3 py-2 bg-base border border-strong rounded-lg text-sm text-primary placeholder:text-muted focus:border-focus focus:outline-none transition-colors";
 
 export interface ProxyFieldsProps {
   /** When set, shows inherit/custom/disabled mode selector (overrides). */
@@ -219,7 +219,7 @@ export function ProxyFields({
                   type="button"
                   disabled={disabled || savingPassword || !password}
                   onClick={() => void handleSavePassword()}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm bg-blue-600 text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm bg-accent-primary text-inverse disabled:opacity-50"
                 >
                   <Save size={14} />
                   {t("common.save")}

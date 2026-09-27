@@ -11,7 +11,7 @@ export interface StatusBadgeProps {
 /** Live connection state as a `success` pill: pulsing dot when active, steady when merely open. */
 export const StatusBadge = ({ isActive, isOpen, isConnecting }: StatusBadgeProps) => {
   const { t } = useTranslation();
-  if (isConnecting) return <Loader2 size={13} className="animate-spin text-accent-primary" />;
+  if (isConnecting) return <Loader2 size={13} className="animate-spin text-accent" />;
   if (isActive) return (
     <Chip tone="success" shape="pill" dot="pulse">{t('connections.active')}</Chip>
   );

@@ -68,7 +68,9 @@ pub fn get_app_data_dir() -> PathBuf {
 }
 
 /// Directory holding installed plugins. Never follows the custom storage
-/// location: plugin binaries are per-platform and must stay local.
+/// location: plugin binaries are per-platform and must stay local. Installed
+/// declarative theme packages live here as well, under `themes/<name>`;
+/// driver installs use `drivers/<name>`. Flat bundles remain a discovery fallback.
 pub fn get_plugins_dir() -> PathBuf {
     get_default_app_data_dir().join("plugins")
 }

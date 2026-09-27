@@ -17,13 +17,15 @@ export default defineConfig({
     include: [
       'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       'tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      // Workspace packages keep their tests next to their own source.
-      'packages/*/tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      // Workspace packages (packages/*) run their own vitest with a node
+      // environment via `pnpm --filter <pkg> test` (see packages.yml). They are
+      // deliberately not included here: the jsdom environment breaks Node-only
+      // tests (Vite rewrites `new URL(x, import.meta.url)` against location).
     ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/**/*.ts', 'src/**/*.tsx', 'packages/*/src/**/*.ts', 'packages/*/src/**/*.tsx'],
+      include: ['src/**/*.ts', 'src/**/*.tsx'],
       exclude: ['src/**/*.test.ts', 'src/**/*.d.ts', 'src/test/**'],
     },
   },

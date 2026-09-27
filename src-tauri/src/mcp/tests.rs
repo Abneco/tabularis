@@ -184,46 +184,6 @@ fn resolve_default_schema_passes_through_unchanged_on_non_postgres_drivers() {
     assert_eq!(resolve_default_schema(&sqlite, None), None);
 }
 
-/// `cooldown_elapsed` gates `resolve_db_driver`'s plugin-directory rescan on
-/// a registry miss (issue #783), so a connection whose driver id is
-/// genuinely wrong can't force a filesystem scan on every call from a tight
-/// retry loop. Exercised on synthetic `Instant`s, not real sleeps.
-#[test]
-fn cooldown_elapsed_is_true_with_no_prior_attempt() {
-    let now = std::time::Instant::now();
-    assert!(cooldown_elapsed(
-        None,
-        now,
-        std::time::Duration::from_secs(2)
-    ));
-}
-
-#[test]
-fn cooldown_elapsed_is_false_immediately_after_an_attempt() {
-    let now = std::time::Instant::now();
-    assert!(!cooldown_elapsed(
-        Some(now),
-        now,
-        std::time::Duration::from_secs(2)
-    ));
-}
-
-#[test]
-fn cooldown_elapsed_is_false_just_before_the_cooldown_ends() {
-    let cooldown = std::time::Duration::from_secs(2);
-    let last = std::time::Instant::now();
-    let now = last + cooldown - std::time::Duration::from_millis(1);
-    assert!(!cooldown_elapsed(Some(last), now, cooldown));
-}
-
-#[test]
-fn cooldown_elapsed_is_true_once_the_cooldown_has_fully_passed() {
-    let cooldown = std::time::Duration::from_secs(2);
-    let last = std::time::Instant::now();
-    let now = last + cooldown;
-    assert!(cooldown_elapsed(Some(last), now, cooldown));
-}
-
 /// `resolve_driver_for_params` used to treat any `Err` from
 /// `get_connection_driver` as a registry miss, including a `for_connection`
 /// failure on a driver that *is* registered (e.g. a `get_connection_metadata`

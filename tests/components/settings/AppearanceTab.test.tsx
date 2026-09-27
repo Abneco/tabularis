@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import React from "react";
 
-const updateSettings = vi.fn();
-const setTheme = vi.fn();
+const updateSettings = vi.fn(async () => undefined);
+const setTheme = vi.fn(async () => undefined);
+let loading = false;
 
 const lightTheme = {
   id: "tabularis-light",
@@ -34,12 +36,8 @@ let themeSettings = {
   customThemes: [],
 };
 
-// Global setup mock only stubs a fixed subset of icons.
-vi.mock("lucide-react", () => ({
-  Monitor: () => null,
-  Code2: () => null,
-  CheckCircle2: () => null,
-}));
+// The unified theme toolbar uses the same icons as its management menus.
+vi.mock("lucide-react", async () => await vi.importActual("lucide-react"));
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -58,6 +56,8 @@ vi.mock("../../../src/hooks/useTheme", () => ({
     allThemes: [lightTheme, darkTheme],
     setTheme,
     settings: themeSettings,
+    isLoading: loading,
+    catalog: { themes: [], issues: [] },
     updateSettings,
   }),
 }));
@@ -72,24 +72,45 @@ describe("AppearanceTab theme mode", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     themeSettings = { ...themeSettings, followSystemTheme: false };
+    loading = false;
+  });
+
+  it("disables theme choices while preferences are hydrating", () => {
+    loading = true; render(<MemoryRouter><AppearanceTab /></MemoryRouter>);
+    expect(screen.getByText("Tabularis Light").closest("button")).toBeDisabled();
+  });
+
+  it("surfaces preference save failures instead of an unhandled promise", async () => {
+    updateSettings.mockRejectedValueOnce(new Error("settings unavailable"));
+    render(<MemoryRouter><AppearanceTab /></MemoryRouter>);
+    fireEvent.click(screen.getByText("settings.themeModeSystem"));
+    expect(await screen.findByRole("alert")).toHaveTextContent("settings unavailable");
   });
 
   it("shows a single theme picker in static mode", () => {
-    render(<AppearanceTab />);
+    render(<MemoryRouter><AppearanceTab /></MemoryRouter>);
     expect(screen.getByText("Tabularis Dark")).toBeTruthy();
     expect(screen.getByText("Tabularis Light")).toBeTruthy();
     expect(screen.queryByText("settings.lightTheme")).toBeNull();
   });
 
+  it("keeps theme management out of the independent SQL editor picker", () => {
+    render(<MemoryRouter><AppearanceTab /></MemoryRouter>);
+    fireEvent.click(screen.getByText("settings.appearance_sqlEditor"));
+    expect(screen.getByRole("button", { name: "settings.appearance_sameAsApp" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "settings.themeSelection" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "themePackages.import", exact: true })).not.toBeInTheDocument();
+  });
+
   it("toggles follow-system via the mode button group", () => {
-    render(<AppearanceTab />);
+    render(<MemoryRouter><AppearanceTab /></MemoryRouter>);
     fireEvent.click(screen.getByText("settings.themeModeSystem"));
     expect(updateSettings).toHaveBeenCalledWith({ followSystemTheme: true });
   });
 
   it("shows filtered light/dark pickers in follow-system mode", () => {
     themeSettings = { ...themeSettings, followSystemTheme: true };
-    render(<AppearanceTab />);
+    render(<MemoryRouter><AppearanceTab /></MemoryRouter>);
     // Light picker: only light themes
     const lightSection = screen.getByText("settings.lightTheme").parentElement!;
     expect(lightSection.textContent).toContain("Tabularis Light");
@@ -102,7 +123,7 @@ describe("AppearanceTab theme mode", () => {
 
   it("updates lightThemeId when a light theme is picked", () => {
     themeSettings = { ...themeSettings, followSystemTheme: true };
-    render(<AppearanceTab />);
+    render(<MemoryRouter><AppearanceTab /></MemoryRouter>);
     const lightSection = screen.getByText("settings.lightTheme").parentElement!;
     fireEvent.click(
       Array.from(lightSection.querySelectorAll("button")).find((b) =>

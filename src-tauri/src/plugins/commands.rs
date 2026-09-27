@@ -30,22 +30,65 @@ pub async fn fetch_plugin_registry(
     let remote =
         crate::plugins::compat::resolve_registry(&base_url, &legacy_url, &installed_ids).await?;
     let platform = registry::get_current_platform();
+    // Themes are declarative packages tracked by the theme catalog, never by
+    // the executable plugin installer. Read the catalog once for the whole list.
+    let themes = InstalledThemes::load(&base_url);
 
     let result: Vec<RegistryPluginWithStatus> = remote
         .plugins
         .into_iter()
+        // Unknown or ambiguous kinds have no install path; keep them out of the
+        // Plugin Center so the kind filter only ever offers drivers and themes.
+        .filter(|plugin| matches!(plugin.kind.as_deref(), None | Some("driver") | Some("theme")))
         .map(|plugin| {
-            let installed_version = installed
-                .iter()
-                .find(|i| i.id == plugin.id)
-                .map(|i| i.version.clone());
+            let (installed_version, platform) = if plugin.kind.as_deref() == Some("theme") {
+                (themes.version_of(&plugin.id), "universal")
+            } else {
+                (
+                    installed
+                        .iter()
+                        .find(|i| i.id == plugin.id)
+                        .map(|i| i.version.clone()),
+                    platform.as_str(),
+                )
+            };
             // `registry_base_url` is stamped in resolve_registry, which still
             // knows whether a plugin came from the API or the legacy registry.
-            to_plugin_with_status(plugin, installed_version, &platform)
+            to_plugin_with_status(plugin, installed_version, platform)
         })
         .collect();
 
     Ok(result)
+}
+
+/// Installed declarative theme packages, resolved from the
+/// host-owned theme catalog so theme status never touches driver discovery.
+struct InstalledThemes {
+    catalog: crate::theme_packages::ThemeCatalog,
+}
+
+impl InstalledThemes {
+    fn load(_base_url: &str) -> Self {
+        Self {
+            catalog: crate::theme_packages::read_theme_catalog(
+                &crate::paths::get_app_config_dir(),
+                &crate::paths::get_default_app_data_dir(),
+                env!("CARGO_PKG_VERSION"),
+            ),
+        }
+    }
+
+    fn version_of(&self, package_name: &str) -> Option<String> {
+        self.catalog
+            .themes
+            .iter()
+            .find(|entry| {
+                entry.origin["kind"] == "installed"
+                    && entry.origin["identity"]["packageName"] == package_name
+            })
+            .and_then(|entry| entry.origin["packageVersion"].as_str())
+            .map(str::to_string)
+    }
 }
 
 /// Builds a `RegistryPluginWithStatus` from a registry plugin + the installed
@@ -114,10 +157,13 @@ async fn resolve_api_install_asset(
     version: Option<&str>,
     platform: &str,
 ) -> Result<(String, Option<String>, String), String> {
+    let detail = crate::plugins::tabularium::fetch_plugin_detail(base, plugin_id).await?;
+    if !matches!(detail.kind.as_deref(), None | Some("driver")) {
+        return Err(super::package_kind::KIND_ERROR.into());
+    }
     let target_version = match version {
         Some(v) => v.to_string(),
         None => {
-            let detail = crate::plugins::tabularium::fetch_plugin_detail(base, plugin_id).await?;
             if !detail.latest_version.is_empty() {
                 detail.latest_version
             } else {
@@ -171,33 +217,40 @@ pub async fn install_plugin(
     //   3. COMPAT(registry-ga): if the API doesn't know the plugin (it lives
     //      only in the legacy registry, not yet migrated), fall back to the
     //      configured legacy `registry.json`'s direct asset.
-    let (download_url, expected_sha256, target_version) =
-        if let Some(res) =
-            crate::plugins::compat::resolve_static_asset(base, &plugin_id, version.as_deref(), &platform)
+    let (download_url, expected_sha256, target_version) = if let Some(res) =
+        crate::plugins::compat::resolve_static_asset(
+            base,
+            &plugin_id,
+            version.as_deref(),
+            &platform,
+        )
+        .await
+    {
+        let asset = res?;
+        (asset.download_url, asset.expected_sha256, asset.version)
+    } else {
+        match resolve_api_install_asset(base, &plugin_id, version.as_deref(), &platform).await {
+            Ok(resolved) => resolved,
+            Err(api_err) => {
+                if api_err == super::package_kind::KIND_ERROR {
+                    return Err(api_err);
+                }
+                // COMPAT(registry-ga): legacy-registry install fallback.
+                let legacy_url = crate::plugins::compat::legacy_registry_url(&config);
+                match crate::plugins::compat::fetch_static_asset(
+                    &legacy_url,
+                    &plugin_id,
+                    version.as_deref(),
+                    &platform,
+                )
                 .await
-        {
-            let asset = res?;
-            (asset.download_url, asset.expected_sha256, asset.version)
-        } else {
-            match resolve_api_install_asset(base, &plugin_id, version.as_deref(), &platform).await {
-                Ok(resolved) => resolved,
-                Err(api_err) => {
-                    // COMPAT(registry-ga): legacy-registry install fallback.
-                    let legacy_url = crate::plugins::compat::legacy_registry_url(&config);
-                    match crate::plugins::compat::fetch_static_asset(
-                        &legacy_url,
-                        &plugin_id,
-                        version.as_deref(),
-                        &platform,
-                    )
-                    .await
-                    {
-                        Ok(asset) => (asset.download_url, asset.expected_sha256, asset.version),
-                        Err(_) => return Err(api_err),
-                    }
+                {
+                    Ok(asset) => (asset.download_url, asset.expected_sha256, asset.version),
+                    Err(_) => return Err(api_err),
                 }
             }
-        };
+        }
+    };
     // Identity/version verification against what the registry advertised
     // happens inside download_and_install, while the bundle is still in its
     // temp dir — a mismatching archive is discarded without ever touching an
@@ -216,8 +269,7 @@ pub async fn install_plugin(
     let plugin_cfg = config.plugins.as_ref().and_then(|m| m.get(&plugin_id));
     let interpreter_override = plugin_cfg.and_then(|c| c.interpreter.clone());
     let settings = plugin_cfg.map(|c| c.settings.clone()).unwrap_or_default();
-    let plugins_dir = installer::get_plugins_dir()?;
-    let plugin_dir = plugins_dir.join(&plugin_id);
+    let plugin_dir = installer::resolve_plugin_dir(&plugin_id)?;
     crate::plugins::manager::load_plugin_from_dir(&plugin_dir, interpreter_override, settings)
         .await
         .map_err(|e| format!("Plugin installed but failed to load: {}", e))?;
@@ -265,11 +317,7 @@ pub async fn enable_plugin(app: AppHandle, plugin_id: String) -> Result<(), Stri
     let plugin_cfg = config.plugins.as_ref().and_then(|m| m.get(&plugin_id));
     let interpreter_override = plugin_cfg.and_then(|c| c.interpreter.clone());
     let settings = plugin_cfg.map(|c| c.settings.clone()).unwrap_or_default();
-    let plugins_dir = installer::get_plugins_dir()?;
-    let plugin_dir = plugins_dir.join(&plugin_id);
-    if !plugin_dir.exists() {
-        return Err(format!("Plugin '{}' is not installed", plugin_id));
-    }
+    let plugin_dir = installer::resolve_plugin_dir(&plugin_id)?;
     crate::plugins::manager::load_plugin_from_dir(&plugin_dir, interpreter_override, settings)
         .await?;
     crate::plugins::connection_metadata::notify_plugin_reload(&app, &plugin_id).await;
@@ -280,8 +328,7 @@ pub async fn enable_plugin(app: AppHandle, plugin_id: String) -> Result<(), Stri
 /// Useful for retrieving setting definitions for disabled plugins.
 #[tauri::command]
 pub async fn get_plugin_manifest(plugin_id: String) -> Result<PluginManifest, String> {
-    let plugins_dir = installer::get_plugins_dir()?;
-    let plugin_dir = plugins_dir.join(&plugin_id);
+    let plugin_dir = installer::resolve_plugin_dir(&plugin_id)?;
 
     let config: ConfigManifest = installer::read_manifest(&plugin_dir)
         .map_err(|e| format!("Failed to read manifest for '{}': {}", plugin_id, e))?;
@@ -312,11 +359,7 @@ pub async fn get_plugin_manifest(plugin_id: String) -> Result<PluginManifest, St
 /// Returns the absolute filesystem path of an installed plugin's directory.
 #[tauri::command]
 pub fn get_plugin_dir(plugin_id: String) -> Result<String, String> {
-    let plugins_dir = installer::get_plugins_dir()?;
-    let plugin_dir = plugins_dir.join(&plugin_id);
-    if !plugin_dir.exists() {
-        return Err(format!("Plugin '{}' is not installed", plugin_id));
-    }
+    let plugin_dir = installer::resolve_plugin_dir(&plugin_id)?;
     plugin_dir
         .to_str()
         .ok_or_else(|| "Plugin path contains invalid UTF-8".to_string())
@@ -362,11 +405,19 @@ pub async fn fetch_tabularium_plugin_preview(
     let mut plugin = crate::plugins::tabularium::fetch_plugin_detail(&base, &slug).await?;
     plugin.registry_base_url = Some(base.trim_end_matches('/').to_string());
 
-    let installed_version = installer::list_installed()?
-        .into_iter()
-        .find(|i| i.id == slug)
-        .map(|i| i.version);
-    let platform = registry::get_current_platform();
+    // Declarative previews must not traverse driver discovery/startup paths.
+    let (installed_version, platform) = if plugin.kind.as_deref() == Some("theme") {
+        crate::theme_packages::registry_key(&base)?;
+        (InstalledThemes::load(&base).version_of(&slug), "universal".to_string())
+    } else {
+        (
+            installer::list_installed()?
+                .into_iter()
+                .find(|i| i.id == slug)
+                .map(|i| i.version),
+            registry::get_current_platform(),
+        )
+    };
 
     // Target = the version the deeplink will install: the pinned version if the
     // link specified one, otherwise the registry's latest.
@@ -415,8 +466,7 @@ pub fn read_plugin_file(plugin_id: String, file_path: String) -> Result<String, 
             "Invalid file path: must be relative and contain no '..' components".to_string(),
         );
     }
-    let plugins_dir = installer::get_plugins_dir()?;
-    let full_path = plugins_dir.join(&plugin_id).join(&file_path);
+    let full_path = installer::resolve_plugin_dir(&plugin_id)?.join(&file_path);
     fs::read_to_string(&full_path).map_err(|e| {
         format!(
             "Failed to read '{}' from plugin '{}': {}",

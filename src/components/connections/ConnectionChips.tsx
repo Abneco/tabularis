@@ -66,7 +66,7 @@ export const ConnectionChips = ({ conn, driverManifest, isDriverEnabled, tags }:
             to="/settings?tab=plugins&filter=updates"
             aria-label={t("update.badges.driverUpdate")}
             {...stopCardEvents}
-            className="inline-flex rounded-full focus-visible:outline focus-visible:outline-accent-primary"
+            className="inline-flex rounded-full focus-visible:outline focus-visible:outline-focus"
           >
             <PluginUpdateIndicator version={driverUpdate.latest_version} />
           </Link>

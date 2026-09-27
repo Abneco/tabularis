@@ -208,7 +208,7 @@ function PluginSettingsForm({ pluginId, manifest }: PluginSettingsFormProps) {
   const renderField = (def: PluginSettingDefinition) => {
     const value = dynamicValues[def.key];
     const inputClass =
-      "bg-base border-default text-primary placeholder:text-muted focus:border-blue-500/50 focus:outline-none";
+      "bg-base border-default text-primary placeholder:text-muted focus:border-focus/50 focus:outline-none";
     const canReset = def.default !== undefined;
     const isDefaultValue = canReset && Object.is(value, def.default);
 
@@ -234,7 +234,7 @@ function PluginSettingsForm({ pluginId, manifest }: PluginSettingsFormProps) {
             onChange={(e) =>
               handleDynamicChange(def.key, e.target.checked)
             }
-            className="w-4 h-4 accent-blue-500"
+            className="w-4 h-4 accent-accent-primary"
           />
           {resetButton}
         </div>
@@ -304,7 +304,7 @@ function PluginSettingsForm({ pluginId, manifest }: PluginSettingsFormProps) {
         {!isBuiltin && repoUrl && (
           <button
             onClick={handleReportIssue}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-secondary hover:text-blue-400 border border-default hover:border-blue-500/50 rounded-lg transition-colors shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-secondary hover:text-accent border border-default hover:border-accent-primary/50 rounded-lg transition-colors shrink-0"
           >
             <ExternalLink size={12} />
             {t("settings.plugins.pluginSettings.reportIssue")}
@@ -331,7 +331,7 @@ function PluginSettingsForm({ pluginId, manifest }: PluginSettingsFormProps) {
                   setInterpreter(e.target.value);
                   setSaved(false);
                 }}
-                className="flex-1 bg-base border border-default rounded-lg px-3 py-2 text-sm text-primary placeholder:text-muted focus:outline-none focus:border-blue-500/50"
+                className="flex-1 bg-base border border-default rounded-lg px-3 py-2 text-sm text-primary placeholder:text-muted focus:outline-none focus:border-focus/50"
               />
               <button
                 onClick={handleBrowse}
@@ -367,7 +367,7 @@ function PluginSettingsForm({ pluginId, manifest }: PluginSettingsFormProps) {
                 {renderField(def)}
               </SettingRow>
               {errors[def.key] && (
-                <p className="text-xs text-red-400 -mt-2 mb-2 pl-0.5">
+                <p className="text-xs text-accent-error -mt-2 mb-2 pl-0.5">
                   {errors[def.key]}
                 </p>
               )}
@@ -380,12 +380,12 @@ function PluginSettingsForm({ pluginId, manifest }: PluginSettingsFormProps) {
       <div className="flex items-center gap-3 pt-2">
         <button
           onClick={handleSave}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
+          className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-lg text-sm font-medium transition-colors"
         >
           {t("common.save")}
         </button>
         {saved && (
-          <span className="text-xs text-green-400 flex items-center gap-1">
+          <span className="text-xs text-accent-success flex items-center gap-1">
             <Check size={12} />
             {t("settings.plugins.pluginSettings.saved")}
           </span>
