@@ -55,17 +55,6 @@ impl Slot {
 
     /// Pin `client` until the tab ends its transaction.
     pub fn pin(&mut self, client: Client) {
-        // Started on the first pin, so an app that never opens a transaction runs no timer.
-        static SWEEPER: std::sync::Once = std::sync::Once::new();
-        SWEEPER.call_once(|| {
-            tokio::spawn(async {
-                let mut timer = tokio::time::interval(SWEEP_INTERVAL);
-                loop {
-                    timer.tick().await;
-                    sweep_idle().await;
-                }
-            });
-        });
         self.0 = Some(PinnedSession {
             client,
             last_used: Instant::now(),
@@ -102,6 +91,17 @@ pub async fn rollback_and_release(client: Client) {
 
 /// Lock `session_id`'s slot, waiting for any run already holding it.
 pub async fn lock(session_id: &str) -> OwnedMutexGuard<Slot> {
+    // Started on first use; the sweep also forgets the empty slots every run leaves behind.
+    static SWEEPER: std::sync::Once = std::sync::Once::new();
+    SWEEPER.call_once(|| {
+        tokio::spawn(async {
+            let mut timer = tokio::time::interval(SWEEP_INTERVAL);
+            loop {
+                timer.tick().await;
+                sweep_idle().await;
+            }
+        });
+    });
     let slot = sessions()
         .lock()
         .await
@@ -160,13 +160,14 @@ pub async fn release(session_id: &str) {
 }
 
 /// Roll back and release every pinned connection. Called on shutdown so no
-/// transaction is left open on the server.
+/// transaction is left open on the server. A session a run still holds is
+/// skipped rather than waited for; its connection closes with the process.
 pub async fn release_all() {
     let slots: Vec<Arc<Mutex<Slot>>> = sessions().lock().await.drain().map(|(_, s)| s).collect();
-    let mut clients = Vec::new();
-    for slot in slots {
-        clients.extend(slot.lock().await.take());
-    }
+    let clients: Vec<Client> = slots
+        .iter()
+        .filter_map(|slot| slot.try_lock().ok().and_then(|mut s| s.take()))
+        .collect();
 
     if clients.is_empty() {
         return;

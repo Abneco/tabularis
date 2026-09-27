@@ -752,11 +752,16 @@ pub fn run() {
                 // Back up the freshest state before the process ends (no-op
                 // unless backups are enabled and due).
                 backup::run_exit_backup(app_handle);
-                // Roll back pinned transactions while the tunnels they run through are still up;
-                // the timeout keeps a run still holding a session from blocking exit.
+                // Roll back pinned transactions while the tunnels they run through are still up.
+                // Only the built-in PostgreSQL driver pins; plugins release in their own shutdown.
                 tauri::async_runtime::block_on(async {
                     let release = crate::drivers::postgres::session::release_all();
-                    let _ = tokio::time::timeout(std::time::Duration::from_secs(3), release).await;
+                    if tokio::time::timeout(std::time::Duration::from_secs(3), release)
+                        .await
+                        .is_err()
+                    {
+                        log::warn!("Releasing pinned PostgreSQL sessions timed out on exit");
+                    }
                 });
                 log::info!("Application exiting, stopping all active tunnels...");
                 crate::ssh_tunnel::stop_all_tunnels();
