@@ -191,17 +191,14 @@ where
         Ok(())
     };
 
-    // A tab inside a transaction exports what it sees, so page through its pinned connection.
-    if session_id.is_some() {
-        return stream_query_via_plugin(driver, params, query, session_id, &mut on_row).await;
-    }
+    // Only PostgreSQL connections pin, so only they receive a session.
     match driver {
         "mysql" => mysql::export::stream_query(params, query, &mut on_row).await,
-        "postgres" => postgres::export::stream_query(params, query, &mut on_row).await,
+        "postgres" => postgres::export::stream_query(params, query, session_id, &mut on_row).await,
         "sqlite" => sqlite::export::stream_query(params, query, &mut on_row).await,
         // External plugin drivers: page through the driver's own paginated
         // `execute_query` and forward every row to the sink.
-        other => stream_query_via_plugin(other, params, query, None, &mut on_row).await,
+        other => stream_query_via_plugin(other, params, query, session_id, &mut on_row).await,
     }
 }
 

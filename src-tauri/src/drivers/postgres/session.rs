@@ -41,6 +41,18 @@ impl Slot {
         self.0.take().map(|s| s.client)
     }
 
+    /// Borrow the pinned connection without unpinning it.
+    pub fn client(&self) -> Option<&Client> {
+        self.0.as_ref().map(|s| &s.client)
+    }
+
+    /// Mark the session as just used, so the idle sweep counts from now.
+    pub fn touch(&mut self) {
+        if let Some(s) = self.0.as_mut() {
+            s.last_used = Instant::now();
+        }
+    }
+
     /// Pin `client` until the tab ends its transaction.
     pub fn pin(&mut self, client: Client) {
         // Started on the first pin, so an app that never opens a transaction runs no timer.
