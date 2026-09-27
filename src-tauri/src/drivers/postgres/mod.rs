@@ -2341,6 +2341,10 @@ impl DatabaseDriver for PostgresDriver {
         session::release(session_id).await;
     }
 
+    async fn session_in_transaction(&self, session_id: &str) -> Option<bool> {
+        Some(session::is_pinned(session_id).await)
+    }
+
     async fn explain_query(
         &self,
         params: &crate::models::ConnectionParams,

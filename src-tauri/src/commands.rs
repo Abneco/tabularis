@@ -4478,6 +4478,7 @@ pub async fn execute_query<R: Runtime>(
     let dropped = crate::sql_database_statements::dropped_database(&sanitized_query);
 
     let drv = driver_for_params(&params).await?;
+    let session_driver = drv.clone();
     let session = session_id.clone();
     let task = tokio::spawn(async move {
         drv.execute_query_in_session(
@@ -4523,10 +4524,14 @@ pub async fn execute_query<R: Runtime>(
         }
         Ok(Err(e)) => {
             log::error!("Query execution failed: {}", e);
+            emit_session_state_after_failure(&app, session_driver.as_ref(), session_id.as_deref())
+                .await;
             Err(e)
         }
         Err(_) => {
             log::warn!("Query was cancelled");
+            emit_session_state_after_failure(&app, session_driver.as_ref(), session_id.as_deref())
+                .await;
             Err("Query cancelled".into())
         }
     }
@@ -4553,6 +4558,25 @@ struct BatchStatementEvent<'a> {
 struct SessionTransactionStateEvent<'a> {
     session_id: &'a str,
     in_transaction: bool,
+}
+
+/// A failed or cancelled run returns no session flag, so ask the driver, or
+/// the tab's TX badge would keep showing a transaction that already ended.
+async fn emit_session_state_after_failure<R: Runtime>(
+    app: &AppHandle<R>,
+    drv: &dyn crate::drivers::driver_trait::DatabaseDriver,
+    session_id: Option<&str>,
+) {
+    let Some(id) = session_id else { return };
+    if let Some(in_transaction) = drv.session_in_transaction(id).await {
+        let _ = app.emit(
+            "session-transaction-state",
+            SessionTransactionStateEvent {
+                session_id: id,
+                in_transaction,
+            },
+        );
+    }
 }
 
 /// Roll back and release the connection pinned to `session_id`.
@@ -4640,6 +4664,7 @@ pub async fn execute_query_batch<R: Runtime>(
             cb
         });
 
+    let session_driver = drv.clone();
     let session = session_id.clone();
     let task = tokio::spawn(async move {
         drv.execute_batch_in_session(
@@ -4696,10 +4721,14 @@ pub async fn execute_query_batch<R: Runtime>(
         }
         Ok(Err(e)) => {
             log::error!("Batch execution failed at setup: {}", e);
+            emit_session_state_after_failure(&app, session_driver.as_ref(), session_id.as_deref())
+                .await;
             Err(e)
         }
         Err(_) => {
             log::warn!("Batch was cancelled");
+            emit_session_state_after_failure(&app, session_driver.as_ref(), session_id.as_deref())
+                .await;
             Err("Query cancelled".into())
         }
     }

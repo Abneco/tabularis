@@ -734,9 +734,16 @@ pub trait DatabaseDriver: Send + Sync {
 
     /// Roll back and release any connection pinned to `session_id`.
     ///
-    /// Called when the owning tab closes and on shutdown. Drivers that do
-    /// not pin connections have nothing to do.
+    /// Called when the owning tab closes. Drivers that do not pin
+    /// connections have nothing to do.
     async fn release_session(&self, _session_id: &str) {}
+
+    /// Whether `session_id` still holds a pinned connection. Used after a
+    /// failed or cancelled run, which returns no flag; `None` when the
+    /// driver cannot tell.
+    async fn session_in_transaction(&self, _session_id: &str) -> Option<bool> {
+        None
+    }
 
     /// Runs EXPLAIN (or EXPLAIN ANALYZE) on the given query and returns a
     /// parsed execution plan tree. Drivers that do not support EXPLAIN can
