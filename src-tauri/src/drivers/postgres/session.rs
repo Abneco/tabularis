@@ -12,17 +12,53 @@
 //! goes idle for too long. A pinned connection is never handed back to the
 //! pool without a `ROLLBACK` first, so an open transaction can never leak
 //! into an unrelated query.
+//!
+//! Each session has its own lock, held for a whole run, so two overlapping
+//! runs from one tab execute one after the other on the same connection
+//! instead of each taking a fresh one.
 
 use std::collections::HashMap;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, OwnedMutexGuard};
+
+type Client = deadpool_postgres::Client;
 
 /// A pooled client held across `execute_batch` calls because the tab that
 /// owns it left an explicit transaction open.
 struct PinnedSession {
-    client: deadpool_postgres::Client,
+    client: Client,
     last_used: Instant,
+}
+
+/// A session's pinned connection, if any. Holding the guard serializes runs.
+#[derive(Default)]
+pub struct Slot(Option<PinnedSession>);
+
+impl Slot {
+    /// Take the pinned connection; the caller must [`Slot::pin`] it again or end its transaction.
+    pub fn take(&mut self) -> Option<Client> {
+        self.0.take().map(|s| s.client)
+    }
+
+    /// Pin `client` until the tab ends its transaction.
+    pub fn pin(&mut self, client: Client) {
+        // Started on the first pin, so an app that never opens a transaction runs no timer.
+        static SWEEPER: std::sync::Once = std::sync::Once::new();
+        SWEEPER.call_once(|| {
+            tokio::spawn(async {
+                let mut timer = tokio::time::interval(SWEEP_INTERVAL);
+                loop {
+                    timer.tick().await;
+                    sweep_idle().await;
+                }
+            });
+        });
+        self.0 = Some(PinnedSession {
+            client,
+            last_used: Instant::now(),
+        });
+    }
 }
 
 /// A pinned connection holds its transaction's locks until the tab ends it.
@@ -33,7 +69,7 @@ const MAX_IDLE: Duration = Duration::from_secs(30 * 60);
 
 const SWEEP_INTERVAL: Duration = Duration::from_secs(60);
 
-type SessionMap = HashMap<String, PinnedSession>;
+type SessionMap = HashMap<String, Arc<Mutex<Slot>>>;
 
 fn sessions() -> &'static Mutex<SessionMap> {
     static SESSIONS: OnceLock<Mutex<SessionMap>> = OnceLock::new();
@@ -46,35 +82,45 @@ fn sessions() -> &'static Mutex<SessionMap> {
 /// client mid-transaction would leave the next borrower inside someone
 /// else's transaction, holding its locks. A failing `ROLLBACK` is ignored:
 /// the connection is already unusable and the pool will discard it.
-pub async fn rollback_and_release(client: deadpool_postgres::Client) {
+pub async fn rollback_and_release(client: Client) {
     if let Err(e) = client.batch_execute("ROLLBACK").await {
         log::warn!("PostgreSQL: ROLLBACK while releasing a pinned session failed: {e}");
     }
 }
 
-/// Take the connection pinned to `session_id`, if any.
-///
-/// The caller owns the returned client and must either hand it back via
-/// [`store`] or end the transaction itself.
-pub async fn take(session_id: &str) -> Option<deadpool_postgres::Client> {
-    sessions().lock().await.remove(session_id).map(|s| s.client)
+/// Lock `session_id`'s slot, waiting for any run already holding it.
+pub async fn lock(session_id: &str) -> OwnedMutexGuard<Slot> {
+    let slot = sessions()
+        .lock()
+        .await
+        .entry(session_id.to_string())
+        .or_default()
+        .clone();
+    slot.lock_owned().await
 }
 
-/// Roll back and release every session idle past [`MAX_IDLE`].
+/// Roll back and release every session idle past [`MAX_IDLE`], and forget
+/// slots nothing holds. A slot in use by a run is skipped.
 pub async fn sweep_idle() {
-    let expired: Vec<deadpool_postgres::Client> = {
-        let mut map = sessions().lock().await;
+    let mut expired = Vec::new();
+    {
         let now = Instant::now();
-        let stale: Vec<String> = map
-            .iter()
-            .filter(|(_, s)| now.duration_since(s.last_used) > MAX_IDLE)
-            .map(|(id, _)| id.clone())
-            .collect();
-        stale
-            .iter()
-            .filter_map(|id| map.remove(id).map(|s| s.client))
-            .collect()
-    };
+        let mut map = sessions().lock().await;
+        map.retain(|_, slot| {
+            let Ok(mut guard) = slot.try_lock() else {
+                return true;
+            };
+            if guard
+                .0
+                .as_ref()
+                .is_some_and(|s| now.duration_since(s.last_used) > MAX_IDLE)
+            {
+                expired.extend(guard.take());
+            }
+            // Only the map holds it and nothing is pinned, so nobody can be waiting on it.
+            guard.0.is_some() || Arc::strong_count(slot) > 1
+        });
+    }
 
     if expired.is_empty() {
         return;
@@ -89,47 +135,12 @@ pub async fn sweep_idle() {
     }
 }
 
-/// Pin `client` to `session_id` until the tab ends its transaction.
-pub async fn store(session_id: &str, client: deadpool_postgres::Client) {
-    // Started on the first pin, so an app that never opens a transaction runs no timer.
-    static SWEEPER: std::sync::Once = std::sync::Once::new();
-    SWEEPER.call_once(|| {
-        tokio::spawn(async {
-            let mut timer = tokio::time::interval(SWEEP_INTERVAL);
-            loop {
-                timer.tick().await;
-                sweep_idle().await;
-            }
-        });
-    });
-
-    let previous = {
-        let mut map = sessions().lock().await;
-        map.insert(
-            session_id.to_string(),
-            PinnedSession {
-                client,
-                last_used: Instant::now(),
-            },
-        )
-    };
-
-    // Only reachable if two batches for one tab overlapped; the older
-    // connection is no longer referenced by anything.
-    if let Some(stale) = previous {
-        rollback_and_release(stale.client).await;
-    }
-}
-
-/// Roll back and release the connection pinned to `session_id`, if any.
+/// Roll back and release the connection pinned to `session_id`, if any,
+/// after any run still in flight for it finishes.
 ///
 /// Called when the tab closes or the user discards the transaction.
 pub async fn release(session_id: &str) {
-    let client = {
-        let mut map = sessions().lock().await;
-        map.remove(session_id).map(|s| s.client)
-    };
-
+    let client = lock(session_id).await.take();
     if let Some(client) = client {
         log::info!("PostgreSQL: releasing pinned session {session_id}");
         rollback_and_release(client).await;
@@ -139,10 +150,11 @@ pub async fn release(session_id: &str) {
 /// Roll back and release every pinned connection. Called on shutdown so no
 /// transaction is left open on the server.
 pub async fn release_all() {
-    let clients: Vec<deadpool_postgres::Client> = {
-        let mut map = sessions().lock().await;
-        map.drain().map(|(_, s)| s.client).collect()
-    };
+    let slots: Vec<Arc<Mutex<Slot>>> = sessions().lock().await.drain().map(|(_, s)| s).collect();
+    let mut clients = Vec::new();
+    for slot in slots {
+        clients.extend(slot.lock().await.take());
+    }
 
     if clients.is_empty() {
         return;
@@ -155,5 +167,13 @@ pub async fn release_all() {
 
 /// Whether `session_id` currently holds a pinned connection.
 pub async fn is_pinned(session_id: &str) -> bool {
-    sessions().lock().await.contains_key(session_id)
+    let slot = sessions().lock().await.get(session_id).cloned();
+    match slot {
+        Some(slot) => slot.lock().await.0.is_some(),
+        None => false,
+    }
 }
+
+#[cfg(test)]
+#[path = "session_tests.rs"]
+mod session_tests;

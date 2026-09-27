@@ -1202,21 +1202,24 @@ pub async fn execute_batch_in_session(
     session_id: Option<&str>,
     on_progress: Option<&crate::drivers::driver_trait::BatchProgressFn>,
 ) -> Result<(Vec<crate::models::BatchStatementResult>, bool), String> {
-    let pinned = match session_id {
-        Some(id) => session::take(id).await,
+    // Held for the whole run, so an overlapping run from the same tab waits its turn.
+    let mut slot = match session_id {
+        Some(id) => Some(session::lock(id).await),
         None => None,
     };
+    let pinned = slot.as_mut().and_then(|s| s.take());
     // A pinned connection only exists because its transaction is still open.
     let mut in_transaction = pinned.is_some();
-    let client = match pinned {
+    let mut in_flight = InFlight(Some(match pinned {
         Some(client) => client,
         None => acquire_pg_client(params, schema).await?,
-    };
+    }));
+    let client = in_flight.0.as_ref().expect("set above");
 
     let mut results = Vec::with_capacity(queries.len());
     for (idx, q) in queries.iter().enumerate() {
         let start = std::time::Instant::now();
-        let outcome = exec_on_pg_client(&client, q, limit, page).await;
+        let outcome = exec_on_pg_client(client, q, limit, page).await;
         in_transaction = crate::drivers::common::transaction_effect(q)
             .in_transaction_after(outcome.is_ok(), in_transaction);
         let res = crate::models::BatchStatementResult::from_outcome(start, outcome);
@@ -1226,9 +1229,10 @@ pub async fn execute_batch_in_session(
         results.push(res);
     }
 
-    match session_id {
-        Some(id) if in_transaction => {
-            session::store(id, client).await;
+    let client = in_flight.0.take().expect("set above");
+    match slot.as_mut() {
+        Some(slot) if in_transaction => {
+            slot.pin(client);
             Ok((results, true))
         }
         _ => {
@@ -1236,6 +1240,19 @@ pub async fn execute_batch_in_session(
                 session::rollback_and_release(client).await;
             }
             Ok((results, false))
+        }
+    }
+}
+
+/// A connection a run is using. If the run is dropped mid-flight (a cancelled
+/// query), the connection is closed rather than returned to the pool, so the
+/// server ends any open transaction instead of the next borrower inheriting it.
+struct InFlight(Option<deadpool_postgres::Client>);
+
+impl Drop for InFlight {
+    fn drop(&mut self) {
+        if let Some(client) = self.0.take() {
+            drop(deadpool_postgres::Client::take(client));
         }
     }
 }
