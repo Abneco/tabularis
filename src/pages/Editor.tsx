@@ -10,7 +10,7 @@ import {
   getLoadedRowsExportLimit,
 } from "../utils/resultExport";
 import { serializePkKey, buildPkMap } from "../utils/dataGrid";
-import { tint } from "../utils/tones";
+import { TONE_SOFT_BG_CLASS, TONE_TEXT_CLASS, tint } from "../utils/tones";
 import {
   buildKeylessUpdatePlan,
   resolveRowIdentity,
@@ -3989,7 +3989,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                     // This tab is holding a pooled connection open, and its
                     // uncommitted changes are invisible to every other tab.
                     <span
-                      className="shrink-0 px-1 rounded text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-400"
+                      className={`shrink-0 px-1 rounded text-[9px] font-semibold uppercase tracking-wide ${TONE_SOFT_BG_CLASS.warning} ${TONE_TEXT_CLASS.warning}`}
                       title={t("editor.transactionOpenHint")}
                       aria-label={t("editor.transactionOpenHint")}
                     >
