@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -57,6 +57,29 @@ fn parse_query_response(value: Value) -> Result<(QueryResult, bool), String> {
     }
     let parsed: QueryResult = serde_json::from_value(value).map_err(|e| e.to_string())?;
     Ok((parsed, false))
+}
+
+/// A session-aware plugin answers a failed statement with its error and the
+/// transaction state it left (a failed `COMMIT` has ended the transaction).
+fn parse_session_error(value: &Value) -> Option<(String, bool)> {
+    let object = value.as_object()?;
+    let error = object.get("error")?.as_str()?;
+    let in_transaction = object.get("in_transaction")?.as_bool().unwrap_or(false);
+    Some((error.to_string(), in_transaction))
+}
+
+/// The last `in_transaction` a plugin reported per session, so a failed or
+/// cancelled run can still be answered by `session_in_transaction`.
+fn plugin_session_states() -> &'static Mutex<HashMap<String, bool>> {
+    static STATES: std::sync::OnceLock<Mutex<HashMap<String, bool>>> = std::sync::OnceLock::new();
+    STATES.get_or_init(Default::default)
+}
+
+fn remember_session_state(session_id: Option<&str>, in_transaction: bool) {
+    if let Some(id) = session_id {
+        let mut states = plugin_session_states().lock().unwrap_or_else(|e| e.into_inner());
+        states.insert(id.to_string(), in_transaction);
+    }
 }
 
 /// Read an `execute_query_batch` response in either supported shape.
@@ -979,7 +1002,13 @@ impl DatabaseDriver for RpcDriver {
                 }),
             )
             .await?;
-        parse_query_response(res)
+        if let Some((error, in_transaction)) = parse_session_error(&res) {
+            remember_session_state(session_id, in_transaction);
+            return Err(error);
+        }
+        let (result, in_transaction) = parse_query_response(res)?;
+        remember_session_state(session_id, in_transaction);
+        Ok((result, in_transaction))
     }
 
     async fn execute_batch_in_session(
@@ -1010,6 +1039,7 @@ impl DatabaseDriver for RpcDriver {
         match res {
             Ok(value) => {
                 let (results, in_transaction) = parse_batch_response(value)?;
+                remember_session_state(session_id, in_transaction);
                 if let Some(cb) = on_progress {
                     for (idx, result) in results.iter().enumerate() {
                         cb(idx, result);
@@ -1031,7 +1061,16 @@ impl DatabaseDriver for RpcDriver {
         }
     }
 
+    async fn session_in_transaction(&self, session_id: &str) -> Option<bool> {
+        let states = plugin_session_states().lock().unwrap_or_else(|e| e.into_inner());
+        states.get(session_id).copied()
+    }
+
     async fn release_session(&self, session_id: &str) {
+        plugin_session_states()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(session_id);
         // Plugins that do not pin connections have no such method, and a
         // failure here must not surface: the caller is closing a tab.
         if let Err(e) = self
@@ -2099,6 +2138,20 @@ mod tests {
             parse_query_response(value).expect("wrapper form is a valid response");
         assert_eq!(result.columns, vec!["id".to_string()]);
         assert!(in_transaction);
+    }
+
+    #[test]
+    fn parse_session_error_reads_a_failed_statement_and_its_state() {
+        let failed = serde_json::json!({ "error": "deferred FK violated", "in_transaction": false });
+        assert_eq!(
+            parse_session_error(&failed),
+            Some(("deferred FK violated".to_string(), false))
+        );
+        // A result wrapper, or a bare result, is not an error.
+        let ok = serde_json::json!({ "result": { "columns": [] }, "in_transaction": true });
+        assert_eq!(parse_session_error(&ok), None);
+        let bare = serde_json::json!({ "columns": ["error"], "rows": [] });
+        assert_eq!(parse_session_error(&bare), None);
     }
 
     #[test]

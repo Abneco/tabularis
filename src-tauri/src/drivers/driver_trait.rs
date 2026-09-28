@@ -742,7 +742,7 @@ pub trait DatabaseDriver: Send + Sync {
     /// failed or cancelled run, which returns no flag. A driver that pins only
     /// while a transaction is open can answer with whether it holds a pinned
     /// connection. `None` means it cannot tell, and the caller leaves the
-    /// reported state as it was (plugin drivers do this for now).
+    /// reported state as it was.
     async fn session_in_transaction(&self, _session_id: &str) -> Option<bool> {
         None
     }
