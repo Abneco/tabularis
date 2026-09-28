@@ -187,12 +187,9 @@ export const DateInput = ({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       // Enter on an empty value commits the date on screen. The parent's own
-      // Enter handling still runs afterwards (focus restore); its commit
-      // re-reads the value just committed, so it is a no-op repeat.
-      if (e.key === "Enter" && isEmpty && onCommitValue) {
-        e.preventDefault();
-        acceptShown();
-      }
+      // Enter handling still runs afterwards for the focus restore; the
+      // commit above already closed the edit, so it does not commit again.
+      if (e.key === "Enter" && isEmpty && onCommitValue) acceptShown();
       onKeyDown?.(e);
     },
     [isEmpty, onCommitValue, acceptShown, onKeyDown],

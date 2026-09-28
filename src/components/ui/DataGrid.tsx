@@ -1238,6 +1238,10 @@ export const DataGrid = React.memo(
           editingCellRef.current = { ...editingCellRef.current, value };
         }
         handleEditCommit();
+        // The commit read the ref synchronously; clear it now so a commit
+        // later in the same event (e.g. the grid's Enter handler) is a no-op
+        // instead of committing the value a second time.
+        editingCellRef.current = null;
       },
       [handleEditCommit],
     );
