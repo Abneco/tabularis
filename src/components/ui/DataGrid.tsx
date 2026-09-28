@@ -162,6 +162,16 @@ interface DataGridProps {
   hasMore?: boolean;
   /** Fetches and copies every row of the result set (not just the page). */
   onCopyAllRows?: () => void;
+  /**
+   * Vertical scroll position to restore on mount (#823). The caller is
+   * expected to key this DataGrid by tab/result identity, which unmounts
+   * and remounts it on tab switches rather than just hiding it, so the
+   * scroll position has to be handed back in rather than surviving on its
+   * own.
+   */
+  initialScrollTop?: number;
+  /** Reports the scroll container's scrollTop on every scroll, so the caller can persist it. */
+  onScrollTopChange?: (scrollTop: number) => void;
 }
 
 // Keys handled by the grid itself when a cell is focused; anything else keeps
@@ -226,6 +236,8 @@ export const DataGrid = React.memo(
     totalRows,
     hasMore,
     onCopyAllRows,
+    initialScrollTop,
+    onScrollTopChange,
   }: DataGridProps) {
     const { t } = useTranslation();
     const { activeSchema, connections } = useDatabase();
@@ -1384,6 +1396,25 @@ export const DataGrid = React.memo(
       return () => ro.disconnect();
     }, []);
 
+    // Restore the scroll position handed back in by the caller (#823). This
+    // grid is keyed by tab/result identity, so switching tabs unmounts and
+    // remounts it rather than just hiding it — plain browser scroll restore
+    // never applies. Runs once on mount only: later prop changes shouldn't
+    // yank the user's own scrolling back to the initial value.
+    useEffect(() => {
+      const el = parentRef.current;
+      if (!el || !initialScrollTop) return;
+      el.scrollTop = initialScrollTop;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const handleScroll = useCallback(
+      (e: React.UIEvent<HTMLDivElement>) => {
+        onScrollTopChange?.(e.currentTarget.scrollTop);
+      },
+      [onScrollTopChange],
+    );
+
     // Memoize table data to prevent unnecessary re-renders
     const tableData = useMemo(
       () => mergedRows.map((r) => r.rowData),
@@ -2527,6 +2558,7 @@ export const DataGrid = React.memo(
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- same focus host: must be reachable with Tab to use the keyboard model
           tabIndex={0}
           onKeyDown={handleGridKeyDown}
+          onScroll={handleScroll}
           className="h-full overflow-auto border border-default rounded bg-elevated relative focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
         >
           <table className="w-full text-left border-collapse">

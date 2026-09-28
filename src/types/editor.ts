@@ -111,6 +111,7 @@ export interface Tab {
   pendingDeletions?: Record<string, unknown>; // Map of stringified PK -> original PK value
   pendingInsertions?: Record<string, PendingInsertion>; // Map of tempId -> pending insertion
   selectedRows?: number[]; // Selected row indices
+  scrollTop?: number; // DataGrid vertical scroll position, restored across tab switches (#823)
   isEditorOpen?: boolean; // Whether the SQL editor is visible
   filterClause?: string; // SQL WHERE clause (without "WHERE")
   sortClause?: string; // SQL ORDER BY clause (without "ORDER BY")

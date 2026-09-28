@@ -1176,6 +1176,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         pendingDeletions: preservePendingChanges?.pendingDeletions,
         pendingInsertions: preservePendingChanges?.pendingInsertions,
         selectedRows: [],
+        scrollTop: undefined,
       });
 
       const shouldRecordHistory =
@@ -2542,6 +2543,14 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     (indices: Set<number>) => {
       if (!activeTabIdRef.current) return;
       updateTab(activeTabIdRef.current, { selectedRows: Array.from(indices) });
+    },
+    [updateTab],
+  );
+
+  const handleScrollTopChange = useCallback(
+    (scrollTop: number) => {
+      if (!activeTabIdRef.current) return;
+      updateTab(activeTabIdRef.current, { scrollTop });
     },
     [updateTab],
   );
@@ -5123,6 +5132,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                       totalRows={activeTab.result?.pagination?.total_rows}
                       hasMore={activeTab.result?.pagination?.has_more}
                       onCopyAllRows={handleCopyAllRows}
+                      initialScrollTop={activeTab.scrollTop}
+                      onScrollTopChange={handleScrollTopChange}
                     />
                   </div>
                   {activeFkQuery && activeConnectionId && (

@@ -1439,3 +1439,67 @@ describe("DataGrid sensitive-column masking (#485)", () => {
     expect(container.querySelector("textarea")).toBeInTheDocument();
   });
 });
+
+describe("DataGrid vertical scroll position across tab switches (#823)", () => {
+  // Editor.tsx keys the <DataGrid> it renders by the active tab's id (plus
+  // sort/filter/result state), so switching tabs fully unmounts the previous
+  // grid and mounts a fresh one for the newly active tab — it does not just
+  // hide it. Editor.tsx is expected to remember the last scrollTop it saw
+  // (via onScrollTopChange) and hand it back as initialScrollTop when the
+  // tab's grid is remounted.
+  it("restores the scrollTop the caller passes back in as initialScrollTop", () => {
+    const columns = ["id"];
+    const data = Array.from({ length: 200 }, (_, i) => [i]);
+
+    const { container, unmount } = render(
+      <DataGrid
+        columns={columns}
+        data={data}
+        selectedRows={new Set()}
+        onSelectionChange={vi.fn()}
+      />,
+    );
+    const scrollEl = container.querySelector(".overflow-auto") as HTMLElement;
+    expect(scrollEl).not.toBeNull();
+
+    fireEvent.scroll(scrollEl, { target: { scrollTop: 400 } });
+    expect(scrollEl.scrollTop).toBe(400);
+
+    // Simulate switching away and back to this tab: the old grid is gone,
+    // a brand new one is mounted in its place.
+    unmount();
+
+    const { container: container2 } = render(
+      <DataGrid
+        columns={columns}
+        data={data}
+        selectedRows={new Set()}
+        onSelectionChange={vi.fn()}
+        initialScrollTop={400}
+      />,
+    );
+    const scrollEl2 = container2.querySelector(
+      ".overflow-auto",
+    ) as HTMLElement;
+
+    expect(scrollEl2.scrollTop).toBe(400);
+  });
+
+  it("reports scroll position changes via onScrollTopChange", () => {
+    const onScrollTopChange = vi.fn();
+    const { container } = render(
+      <DataGrid
+        columns={["id"]}
+        data={Array.from({ length: 200 }, (_, i) => [i])}
+        selectedRows={new Set()}
+        onSelectionChange={vi.fn()}
+        onScrollTopChange={onScrollTopChange}
+      />,
+    );
+    const scrollEl = container.querySelector(".overflow-auto") as HTMLElement;
+
+    fireEvent.scroll(scrollEl, { target: { scrollTop: 250 } });
+
+    expect(onScrollTopChange).toHaveBeenCalledWith(250);
+  });
+});
