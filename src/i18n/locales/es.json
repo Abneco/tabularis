@@ -1183,6 +1183,9 @@
     "placeholder": "PIN o frase de contraseña",
     "waiting": "Esperando tu llave de seguridad — tócala para confirmar."
   },
+  "dateInput": {
+    "useShownValue": "Usar este valor"
+  },
   "dataGrid": {
     "noRowIdentity": "No se pueden editar las filas: \"{{table}}\" no tiene clave primaria, por lo que la edición requiere que el resultado incluya todas las columnas de la tabla. Selecciona todas las columnas (p. ej. SELECT *) o añade una clave primaria.",
     "resizeRelatedPanel": "Arrastra para redimensionar el panel",

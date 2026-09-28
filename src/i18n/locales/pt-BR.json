@@ -1173,6 +1173,9 @@
     "placeholder": "PIN ou frase-senha",
     "waiting": "Aguardando sua chave de segurança — toque nela para confirmar."
   },
+  "dateInput": {
+    "useShownValue": "Usar este valor"
+  },
   "dataGrid": {
     "noRowIdentity": "Não é possível editar as linhas: \"{{table}}\" não tem chave primária, então a edição exige que o resultado inclua todas as colunas da tabela. Selecione todas as colunas (ex.: SELECT *) ou adicione uma chave primária.",
     "resizeRelatedPanel": "Arraste para redimensionar o painel",

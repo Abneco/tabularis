@@ -536,6 +536,9 @@ export function getCellStateClass(params: CellClassParams): string {
 
   const isPlaceholder = isAutoIncrementPlaceholder || isDefaultValuePlaceholder;
 
+  // Edited values keep the primary text color: the tint already marks the
+  // state, and a semantic color on its own tint is unreadable (#826).
+
   if (isPendingDelete) {
     return "text-semantic-deleted/60 line-through decoration-semantic-deleted/30";
   }
@@ -545,7 +548,7 @@ export function getCellStateClass(params: CellClassParams): string {
     if (isModified)
       return isJsonCell
         ? "bg-semantic-modified/25 border-l-2 border-l-semantic-modified"
-        : "bg-semantic-modified/20 text-semantic-modified italic font-medium";
+        : "bg-semantic-modified/20 text-primary italic font-medium";
     return isJsonCell ? "bg-accent-primary/10" : "bg-accent-primary/10 text-secondary italic";
   }
 
@@ -554,14 +557,14 @@ export function getCellStateClass(params: CellClassParams): string {
     if (isModified)
       return isJsonCell
         ? "bg-semantic-new/25 border-l-2 border-l-semantic-new"
-        : "bg-semantic-new/15 text-semantic-new italic";
+        : "bg-semantic-new/15 text-primary italic";
     return isJsonCell ? "bg-semantic-new/5" : "bg-semantic-new/5 text-secondary italic";
   }
 
   if (isModified) {
     return isJsonCell
       ? "bg-semantic-modified/25 border-l-2 border-l-semantic-modified"
-      : "bg-semantic-modified/30 text-semantic-modified italic font-medium";
+      : "bg-semantic-modified/30 text-primary italic font-medium";
   }
 
   return isJsonCell ? "" : "text-secondary";

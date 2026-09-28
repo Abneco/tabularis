@@ -746,6 +746,22 @@ describe('dataGrid utils', () => {
       expect(result).toContain('italic');
       expect(result).toContain('font-medium');
     });
+
+    // #826: a semantic color on its own tint fails WCAG AA in most themes
+    // (#17843f on the light theme's new-row green is ~3.5:1).
+    it.each([
+      { name: 'new row', isInsertion: true, isSelected: false },
+      { name: 'selected new row', isInsertion: true, isSelected: true },
+      { name: 'existing row', isInsertion: false, isSelected: false },
+    ])('renders edited values in the primary text color ($name)', (params) => {
+      const result = getCellStateClass({
+        ...baseParams,
+        ...params,
+        isModified: true,
+      });
+      expect(result).toContain('text-primary');
+      expect(result).not.toMatch(/text-semantic-/);
+    });
   });
 
   describe('buildPkMap', () => {
