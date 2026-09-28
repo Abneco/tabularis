@@ -4667,6 +4667,45 @@ fn emit_session_state<R: Runtime>(
     );
 }
 
+/// Roll back the transactions a connection's tabs left open, for every path
+/// that closes it (disconnect, failed health check). The releases run in the
+/// background, so closing a connection never waits on a tab's in-flight run.
+/// Without `params` the bookkeeping is still cleared and the idle sweep
+/// reclaims the connections.
+pub(crate) async fn release_connection_sessions<R: Runtime>(
+    app: &AppHandle<R>,
+    connection_id: &str,
+    params: Option<&ConnectionParams>,
+) {
+    let open = take_open_sessions(connection_id);
+    if open.is_empty() {
+        return;
+    }
+    for id in &open {
+        let _ = app.emit(
+            "session-transaction-state",
+            SessionTransactionStateEvent {
+                session_id: id,
+                in_transaction: false,
+            },
+        );
+    }
+    let Some(params) = params else {
+        log::warn!("Could not resolve {connection_id} to release its open sessions");
+        return;
+    };
+    match driver_for_params(params).await {
+        Ok(drv) => {
+            tauri::async_runtime::spawn(async move {
+                for id in open {
+                    drv.release_session(&id).await;
+                }
+            });
+        }
+        Err(e) => log::warn!("Could not release open sessions of {connection_id}: {e}"),
+    }
+}
+
 /// A failed or cancelled run returns no session flag, so ask the driver, or
 /// the tab's TX badge would keep showing a transaction that already ended.
 async fn emit_session_state_after_failure<R: Runtime>(
@@ -5859,25 +5898,7 @@ pub async fn disconnect_connection<R: Runtime>(
     let expanded_params = expand_k8s_connection_params(&app, &expanded_params).await?;
     let params = resolve_connection_params_with_id(&expanded_params, &connection_id)?;
 
-    // Roll back the transactions its tabs left open while the connection is still reachable.
-    let open = take_open_sessions(&connection_id);
-    if !open.is_empty() {
-        match driver_for_params(&params).await {
-            Ok(drv) => {
-                for id in &open {
-                    drv.release_session(id).await;
-                    let _ = app.emit(
-                        "session-transaction-state",
-                        SessionTransactionStateEvent {
-                            session_id: id,
-                            in_transaction: false,
-                        },
-                    );
-                }
-            }
-            Err(e) => log::warn!("Could not release open sessions on disconnect: {e}"),
-        }
-    }
+    release_connection_sessions(&app, &connection_id, Some(&params)).await;
 
     // Close the connection pool
     crate::pool_manager::close_pool_with_id(&params, Some(&connection_id)).await;

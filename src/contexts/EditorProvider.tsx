@@ -50,9 +50,10 @@ export const EditorProvider = ({ children }: { children: ReactNode }) => {
     tabsRef.current = tabs;
   }, [tabs]);
 
-  // Every close path ends here, so a tab leaving the list releases its pinned
-  // connection, rolling back any transaction it left open. Clearing the list on
-  // disconnect is skipped: that connection is going away.
+  // Every tab close ends here, so a tab leaving the list releases its pinned
+  // connection, rolling back any transaction it left open. The list cleared with
+  // no active connection is skipped: disconnect and a failed health check release
+  // in the backend, and a detached window reopens the same tabs and continues them.
   const releasedFromTabsRef = useRef<Tab[]>([]);
   useEffect(() => {
     const previous = releasedFromTabsRef.current;
