@@ -20,11 +20,13 @@ vi.mock("../../../src/hooks/useAlert", () => ({
   useAlert: () => ({ showAlert: vi.fn() }),
 }));
 
-const { showToastMock, openRowEditorMock, translationMock } = vi.hoisted(() => ({
-  showToastMock: vi.fn(),
-  openRowEditorMock: vi.fn(),
-  translationMock: vi.fn((key: string) => key),
-}));
+const { showToastMock, openRowEditorMock, translationMock, scrollToIndexMock } =
+  vi.hoisted(() => ({
+    showToastMock: vi.fn(),
+    openRowEditorMock: vi.fn(),
+    translationMock: vi.fn((key: string) => key),
+    scrollToIndexMock: vi.fn(),
+  }));
 
 vi.mock("../../../src/hooks/useToast", () => ({
   useToast: () => ({ showToast: showToastMock }),
@@ -81,7 +83,7 @@ vi.mock("@tanstack/react-virtual", () => ({
         size: 35,
       })),
     getTotalSize: () => count * 35,
-    scrollToIndex: () => {},
+    scrollToIndex: scrollToIndexMock,
   }),
 }));
 
@@ -1501,5 +1503,57 @@ describe("DataGrid vertical scroll position across tab switches (#823)", () => {
     fireEvent.scroll(scrollEl, { target: { scrollTop: 250 } });
 
     expect(onScrollTopChange).toHaveBeenCalledWith(250);
+  });
+
+  // Editor.tsx also remounts this grid when a pending insertion is added,
+  // and separately decides — outside this component's own lifecycle,
+  // because a fresh mount can never observe its own "count changed" —
+  // whether this mount is that kind of insert. It passes that decision in
+  // as scrollToNewInsertion, which must win over any restored offset from
+  // the grid's previous mount: an inserted row should always be scrolled
+  // into view, never left below a stale scroll position.
+  it("scrolls to the newly inserted row instead of restoring initialScrollTop when both are set", () => {
+    scrollToIndexMock.mockClear();
+    const data = Array.from({ length: 200 }, (_, i) => [i]);
+
+    const { container } = render(
+      <DataGrid
+        columns={["id"]}
+        data={data}
+        selectedRows={new Set()}
+        onSelectionChange={vi.fn()}
+        initialScrollTop={5000}
+        scrollToNewInsertion
+      />,
+    );
+
+    expect(scrollToIndexMock).toHaveBeenCalledWith(data.length - 1, {
+      align: "end",
+    });
+
+    // The restore path must not also have run: it directly sets scrollTop,
+    // which would clobber whatever the (mocked) scroll-to-bottom did.
+    const scrollEl = container.querySelector(".overflow-auto") as HTMLElement;
+    expect(scrollEl.scrollTop).toBe(0);
+  });
+
+  it("restores initialScrollTop when there is no new insertion to scroll to", () => {
+    scrollToIndexMock.mockClear();
+    const data = Array.from({ length: 200 }, (_, i) => [i]);
+
+    const { container } = render(
+      <DataGrid
+        columns={["id"]}
+        data={data}
+        selectedRows={new Set()}
+        onSelectionChange={vi.fn()}
+        initialScrollTop={400}
+        scrollToNewInsertion={false}
+      />,
+    );
+
+    expect(scrollToIndexMock).not.toHaveBeenCalled();
+    const scrollEl = container.querySelector(".overflow-auto") as HTMLElement;
+    expect(scrollEl.scrollTop).toBe(400);
   });
 });

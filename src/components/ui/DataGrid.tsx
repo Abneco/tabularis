@@ -172,6 +172,17 @@ interface DataGridProps {
   initialScrollTop?: number;
   /** Reports the scroll container's scrollTop on every scroll, so the caller can persist it. */
   onScrollTopChange?: (scrollTop: number) => void;
+  /**
+   * True when this mount is caused by a genuine new pending insertion (as
+   * opposed to a remount for any other reason, e.g. switching back to a tab
+   * that already had pending insertions). The caller is expected to track
+   * this itself: this grid is keyed by pending-insertion count, so a plain
+   * "did the count go up" check made inside this component would never see
+   * the transition — by the time it could fire, a whole new instance has
+   * already replaced the old one. Read once on mount; takes priority over
+   * `initialScrollTop` so a fresh insert always wins the scroll position.
+   */
+  scrollToNewInsertion?: boolean;
 }
 
 // Keys handled by the grid itself when a cell is focused; anything else keeps
@@ -238,6 +249,7 @@ export const DataGrid = React.memo(
     onCopyAllRows,
     initialScrollTop,
     onScrollTopChange,
+    scrollToNewInsertion,
   }: DataGridProps) {
     const { t } = useTranslation();
     const { activeSchema, connections } = useDatabase();
@@ -1396,18 +1408,6 @@ export const DataGrid = React.memo(
       return () => ro.disconnect();
     }, []);
 
-    // Restore the scroll position handed back in by the caller (#823). This
-    // grid is keyed by tab/result identity, so switching tabs unmounts and
-    // remounts it rather than just hiding it — plain browser scroll restore
-    // never applies. Runs once on mount only: later prop changes shouldn't
-    // yank the user's own scrolling back to the initial value.
-    useEffect(() => {
-      const el = parentRef.current;
-      if (!el || !initialScrollTop) return;
-      el.scrollTop = initialScrollTop;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
     const handleScroll = useCallback(
       (e: React.UIEvent<HTMLDivElement>) => {
         onScrollTopChange?.(e.currentTarget.scrollTop);
@@ -1436,20 +1436,29 @@ export const DataGrid = React.memo(
       overscan: 10,
     });
 
-    // Track insertion count to auto-scroll to bottom when new rows are added
-    const prevInsertionCountRef = useRef(0);
+    // Decide this grid's initial scroll position once, on mount (#823). This
+    // grid is keyed by tab/result identity, so switching tabs — and adding
+    // or removing a pending insertion — unmounts and remounts it rather than
+    // just hiding it; plain browser scroll restore never applies, and a
+    // "count changed since last render" check made in here would never see
+    // the transition, since a fresh instance already exists by the time it
+    // could run. Both values are decided by the caller and read once here:
+    // scrollToNewInsertion wins outright when set, so a just-inserted row
+    // always gets scrolled to and never fights a restored offset that
+    // belonged to the grid's previous mount.
     useEffect(() => {
-      const insertionCount = pendingInsertions
-        ? Object.keys(pendingInsertions).length
-        : 0;
-      if (
-        insertionCount > prevInsertionCountRef.current &&
-        tableRows.length > 0
-      ) {
-        rowVirtualizer.scrollToIndex(tableRows.length - 1, { align: "end" });
+      if (scrollToNewInsertion) {
+        if (tableRows.length > 0) {
+          rowVirtualizer.scrollToIndex(tableRows.length - 1, { align: "end" });
+        }
+        return;
       }
-      prevInsertionCountRef.current = insertionCount;
-    }, [pendingInsertions, tableRows.length, rowVirtualizer]);
+      const el = parentRef.current;
+      if (el && initialScrollTop) {
+        el.scrollTop = initialScrollTop;
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleContextMenu = useCallback(
       (
