@@ -15,6 +15,10 @@ pub struct PluginConfig {
     pub interpreter: Option<String>,
     #[serde(default)]
     pub settings: HashMap<String, serde_json::Value>,
+    /// Per-plugin override of `AppConfig::plugin_call_timeout_seconds`.
+    /// `None` inherits the global value; `0` disables the timeout.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub call_timeout_seconds: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -84,6 +88,9 @@ pub struct AppConfig {
     /// Update channel: "stable" (default) or "nightly". None ⇒ stable.
     pub release_channel: Option<String>,
     pub plugins: Option<HashMap<String, PluginConfig>>,
+    /// Maximum seconds the host waits for a plugin to answer a single call.
+    /// `0` disables the timeout. Default: 120. Overridable per plugin.
+    pub plugin_call_timeout_seconds: Option<u32>,
     pub editor_theme: Option<String>,
     /// Font for query result cells ("inherit" follows the interface font). Default: JetBrains Mono.
     pub result_font_family: Option<String>,
@@ -261,6 +268,7 @@ pub fn get_config_dir<R: tauri::Runtime>(_app: &AppHandle<R>) -> Option<PathBuf>
 }
 
 fn cache_config(config: &AppConfig) {
+    crate::plugins::call_timeout::apply_config(config);
     if let Ok(mut cached) = CONFIG_CACHE.write() {
         *cached = config.clone();
     }
@@ -292,13 +300,14 @@ pub const DEFAULT_MCP_APPROVAL_NOTIFY_SOUND: bool = true;
 /// unreadable.
 pub fn load_config_from_disk() -> AppConfig {
     let path = crate::paths::get_app_config_dir().join("config.json");
-    if !path.exists() {
-        return AppConfig::default();
-    }
-    fs::read_to_string(&path)
+    let config = fs::read_to_string(&path)
         .ok()
         .and_then(|s| serde_json::from_str::<AppConfig>(&s).ok())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    // The MCP subprocess never goes through `cache_config`; keep its plugin
+    // call timeouts in sync with what is on disk.
+    crate::plugins::call_timeout::apply_config(&config);
+    config
 }
 
 /// True when `connection_id` should be treated as read-only by MCP, taking
@@ -452,6 +461,9 @@ pub fn save_config(app: AppHandle, config: AppConfig) -> Result<(), String> {
         }
         if config.plugins.is_some() {
             existing_config.plugins = config.plugins;
+        }
+        if config.plugin_call_timeout_seconds.is_some() {
+            existing_config.plugin_call_timeout_seconds = config.plugin_call_timeout_seconds;
         }
         if config.editor_theme.is_some() {
             existing_config.editor_theme = config.editor_theme;

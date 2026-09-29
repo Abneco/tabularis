@@ -23,11 +23,6 @@ use crate::plugins::rpc::{JsonRpcRequest, JsonRpcResponse, PluginCallError};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-/// Maximum time to wait for a plugin to answer a single JSON-RPC call before
-/// giving up. Generous enough for slow query execution, bounded so a wedged
-/// plugin cannot block the (single-threaded) MCP request loop forever.
-const PLUGIN_CALL_TIMEOUT: Duration = Duration::from_secs(120);
-
 /// The first operation waits for initialization of its own plugin only.
 const PLUGIN_INIT_TIMEOUT: Duration = Duration::from_secs(15);
 
@@ -56,6 +51,8 @@ enum PluginCommand {
 }
 
 pub struct PluginProcess {
+    /// Plugin id used to resolve the configured call timeout.
+    plugin_id: String,
     sender: mpsc::Sender<PluginCommand>,
     next_id: AtomicU64,
     shutdown_tx: tokio::sync::Mutex<Option<oneshot::Sender<()>>>,
@@ -65,7 +62,11 @@ pub struct PluginProcess {
 }
 
 impl PluginProcess {
-    async fn new(executable_path: PathBuf, interpreter: Option<String>) -> Result<Self, String> {
+    async fn new(
+        plugin_id: String,
+        executable_path: PathBuf,
+        interpreter: Option<String>,
+    ) -> Result<Self, String> {
         let (tx, rx) = mpsc::channel::<PluginCommand>(100);
         let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
 
@@ -189,6 +190,7 @@ impl PluginProcess {
         });
 
         Ok(Self {
+            plugin_id,
             sender: tx,
             next_id: AtomicU64::new(1),
             shutdown_tx: tokio::sync::Mutex::new(Some(shutdown_tx)),
@@ -205,32 +207,18 @@ impl PluginProcess {
         }
     }
 
+    /// Sends a JSON-RPC request to the plugin and waits at most the configured
+    /// call timeout (see [`crate::plugins::call_timeout`]) for a response. A
+    /// hung or unresponsive plugin therefore fails this single call instead of
+    /// blocking the caller — and, in the single-threaded MCP request loop,
+    /// every subsequent request — forever, unless the user disabled the limit.
     async fn call(&self, method: &str, params: Value) -> Result<Value, String> {
-        self.call_with_timeout(method, params, PLUGIN_CALL_TIMEOUT)
-            .await
-    }
-
-    /// Sends a JSON-RPC request to the plugin and waits at most `timeout` for a
-    /// response. A hung or unresponsive plugin therefore fails this single call
-    /// instead of blocking the caller — and, in the single-threaded MCP request
-    /// loop, every subsequent request — forever.
-    async fn call_with_timeout(
-        &self,
-        method: &str,
-        params: Value,
-        timeout: Duration,
-    ) -> Result<Value, String> {
-        self.call_detailed(method, params, timeout)
+        self.call_detailed(method, params)
             .await
             .map_err(|e| e.to_string())
     }
 
-    async fn call_detailed(
-        &self,
-        method: &str,
-        params: Value,
-        timeout: Duration,
-    ) -> Result<Value, PluginCallError> {
+    async fn call_detailed(&self, method: &str, params: Value) -> Result<Value, PluginCallError> {
         if let Some(settings) = &self.initialization_settings {
             self.initialized
                 .get_or_init(|| async {
@@ -240,7 +228,7 @@ impl PluginProcess {
                         .send_request(
                             "initialize",
                             json!({ "settings": settings }),
-                            PLUGIN_INIT_TIMEOUT,
+                            Some(PLUGIN_INIT_TIMEOUT),
                         )
                         .await
                     {
@@ -249,14 +237,16 @@ impl PluginProcess {
                 })
                 .await;
         }
+        let timeout = crate::plugins::call_timeout::for_plugin(&self.plugin_id);
         self.send_request(method, params, timeout).await
     }
 
+    /// `timeout: None` waits for the response indefinitely.
     async fn send_request(
         &self,
         method: &str,
         params: Value,
-        timeout: Duration,
+        timeout: Option<Duration>,
     ) -> Result<Value, PluginCallError> {
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
         let req = JsonRpcRequest {
@@ -271,6 +261,12 @@ impl PluginProcess {
             .send(PluginCommand::Call(req, tx))
             .await
             .map_err(|_| "Plugin process channel closed".to_string())?;
+
+        let Some(timeout) = timeout else {
+            return rx
+                .await
+                .unwrap_or_else(|_| Err("Plugin process did not respond".to_string().into()));
+        };
 
         match tokio::time::timeout(timeout, rx).await {
             Ok(Ok(result)) => result,
@@ -307,7 +303,8 @@ impl RpcDriver {
         data_types: Vec<DataTypeInfo>,
         settings: HashMap<String, serde_json::Value>,
     ) -> Result<Self, String> {
-        let mut process = PluginProcess::new(executable_path, interpreter).await?;
+        let mut process =
+            PluginProcess::new(manifest.id.clone(), executable_path, interpreter).await?;
         // Register manifests immediately. Initialize only when this plugin is
         // actually used, so idle plugins cannot delay the GUI or MCP startup.
         process.initialization_settings = Some(settings);
@@ -363,7 +360,7 @@ impl DatabaseDriver for RpcDriver {
         let cell = self.metadata_cache.entry(params).await?;
         let metadata = cell.get_or_try_init(|| async {
             let overrides = match self.process.call_detailed(
-                "get_connection_metadata", json!({ "params": params }), PLUGIN_CALL_TIMEOUT,
+                "get_connection_metadata", json!({ "params": params }),
             ).await {
                 Ok(value) => serde_json::from_value::<ConnectionMetadataOverrides>(value)
                     .map_err(|e| format!("Invalid connection metadata: {}", e))?,
@@ -1497,6 +1494,7 @@ where
     RpcDriver {
         manifest: test_manifest(),
         process: Arc::new(PluginProcess {
+            plugin_id: "test-plugin".to_string(),
             sender: tx,
             next_id: AtomicU64::new(1),
             shutdown_tx: tokio::sync::Mutex::new(Some(shutdown_tx)),
@@ -2331,6 +2329,7 @@ mod tests {
         let driver = RpcDriver {
             manifest,
             process: Arc::new(PluginProcess {
+                plugin_id: "test-plugin".to_string(),
                 sender: tx,
                 next_id: AtomicU64::new(1),
                 shutdown_tx: tokio::sync::Mutex::new(Some(shutdown_tx)),
@@ -2362,6 +2361,7 @@ mod tests {
         let driver = RpcDriver {
             manifest: test_manifest(), // empty type_mappings
             process: Arc::new(PluginProcess {
+                plugin_id: "test-plugin".to_string(),
                 sender: tx,
                 next_id: AtomicU64::new(1),
                 shutdown_tx: tokio::sync::Mutex::new(Some(shutdown_tx)),
