@@ -108,6 +108,7 @@ import { splitQueries, splitStatements, findStatementAtOffset, extractTableName,
 import { resolveRunTarget, type RunContext } from "../utils/runTarget";
 import {
   createResultEntries,
+  clearEntryScrollTops as clearScrollTopsForTab,
   createEntriesFromResultSets,
   updateResultEntry,
   removeResultEntry,
@@ -416,6 +417,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
   // routing it through updateTab would fire EditorProvider's tabs-changed
   // effect (which persists via a Tauri invoke) on every scroll pixel.
   const scrollTopByTabIdRef = useRef<Map<string, number>>(new Map());
+  // Same, for each MultiResultPanel grid, keyed `${tabId}:${entryId}`.
+  const scrollTopByEntryKeyRef = useRef<Map<string, number>>(new Map());
   // Insertion count last seen per tab's DataGrid mount (#823 follow-up).
   // DataGrid remounts on every pendingInsertions size change, so it can't
   // detect the transition itself; tracked here so a real new insertion
@@ -921,16 +924,21 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     [],
   );
 
+  const clearEntryScrollTops = useCallback((tabId: string) => {
+    clearScrollTopsForTab(scrollTopByEntryKeyRef.current, tabId);
+  }, []);
+
   const handleCloseTab = useCallback(
     (tabId: string) => {
       requestTabClosure([tabId], () => {
         delete editorsRef.current[tabId];
         scrollTopByTabIdRef.current.delete(tabId);
+        clearEntryScrollTops(tabId);
         prevInsertionCountByTabIdRef.current.delete(tabId);
         closeTab(tabId);
       });
     },
-    [closeTab, requestTabClosure],
+    [clearEntryScrollTops, closeTab, requestTabClosure],
   );
 
   const handleCloseOtherTabs = useCallback(
@@ -1191,6 +1199,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       // A fresh query's result set can be a different size (or empty), so an
       // old scroll offset from a larger one shouldn't linger (#823).
       scrollTopByTabIdRef.current.delete(targetTabId);
+      clearEntryScrollTops(targetTabId);
 
       const shouldRecordHistory =
         targetTab?.type === "console" || targetTab?.type === "query_builder";
@@ -1350,6 +1359,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       }
     },
     [
+      clearEntryScrollTops,
       activeConnectionId,
       updateTab,
       settings.resultPageSize,
@@ -1417,6 +1427,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         || (isMultiDb ? activeDatabaseName : undefined)
         || undefined;
 
+      // Entry ids are reused per tab, so drop offsets from the previous run.
+      clearEntryScrollTops(targetTabId);
       const entries = createResultEntries(targetTabId, queries);
 
       setIsResultsCollapsed(false);
@@ -1561,6 +1573,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       });
     },
     [
+      clearEntryScrollTops,
       activeConnectionId,
       updateTab,
       patchResultEntry,
@@ -1644,6 +1657,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         settings.resultPageSize,
       );
       const schema = currentTab?.schema ?? activeSchema;
+
+      scrollTopByEntryKeyRef.current.delete(`${targetTabId}:${entryId}`);
 
       // Mark this entry as loading
       if (currentTab?.results) {
@@ -2558,6 +2573,13 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       updateTab(activeTabIdRef.current, { selectedRows: Array.from(indices) });
     },
     [updateTab],
+  );
+
+  const handleEntryScrollTopChange = useCallback(
+    (tabId: string, entryId: string, scrollTop: number) => {
+      scrollTopByEntryKeyRef.current.set(`${tabId}:${entryId}`, scrollTop);
+    },
+    [],
   );
 
   const handleScrollTopChange = useCallback((scrollTop: number) => {
@@ -4661,6 +4683,14 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
             ) : activeTab.results && activeTab.results.length > 0 ? (
               <MultiResultPanel
                 commandTargetRef={dataGridCommandTargetRef}
+                getInitialScrollTop={(entryId) =>
+                  scrollTopByEntryKeyRef.current.get(
+                    `${activeTab.id}:${entryId}`,
+                  )
+                }
+                onScrollTopChange={(entryId, scrollTop) =>
+                  handleEntryScrollTopChange(activeTab.id, entryId, scrollTop)
+                }
                 results={activeTab.results}
                 activeResultId={activeTab.activeResultId}
                 tabId={activeTab.id}
@@ -4674,6 +4704,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                 onRerunEntry={(entryId) => runResultEntryPage(entryId, 1)}
                 onPageChange={runResultEntryPage}
                 onCloseEntry={(entryId) => {
+                  scrollTopByEntryKeyRef.current.delete(
+                    `${activeTab.id}:${entryId}`,
+                  );
                   const { results: newResults, nextActiveId } =
                     removeResultEntry(
                       activeTab.results!,
@@ -4725,6 +4758,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                   });
                 }}
                 onCloseAllEntries={() => {
+                  clearEntryScrollTops(activeTab.id);
                   updateTab(activeTab.id, {
                     results: undefined,
                     activeResultId: undefined,
