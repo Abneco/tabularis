@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useLayoutEffect,
   useRef,
   useCallback,
   useMemo,
@@ -163,24 +164,18 @@ interface DataGridProps {
   /** Fetches and copies every row of the result set (not just the page). */
   onCopyAllRows?: () => void;
   /**
-   * Vertical scroll position to restore on mount (#823). The caller is
-   * expected to key this DataGrid by tab/result identity, which unmounts
-   * and remounts it on tab switches rather than just hiding it, so the
-   * scroll position has to be handed back in rather than surviving on its
-   * own.
+   * Vertical scroll position to restore on mount (#823). The grid is keyed
+   * by tab/result identity and remounts on tab switches, so this has to be
+   * handed back in rather than surviving on its own.
    */
   initialScrollTop?: number;
   /** Reports the scroll container's scrollTop on every scroll, so the caller can persist it. */
   onScrollTopChange?: (scrollTop: number) => void;
   /**
-   * True when this mount is caused by a genuine new pending insertion (as
-   * opposed to a remount for any other reason, e.g. switching back to a tab
-   * that already had pending insertions). The caller is expected to track
-   * this itself: this grid is keyed by pending-insertion count, so a plain
-   * "did the count go up" check made inside this component would never see
-   * the transition — by the time it could fire, a whole new instance has
-   * already replaced the old one. Read once on mount; takes priority over
-   * `initialScrollTop` so a fresh insert always wins the scroll position.
+   * True when this mount is caused by a genuine new pending insertion, not
+   * just a remount from switching tabs. The caller tracks this itself,
+   * since the grid remounts on insertion-count change and can't see the
+   * transition from inside. Read once on mount; wins over `initialScrollTop`.
    */
   scrollToNewInsertion?: boolean;
 }
@@ -1436,29 +1431,36 @@ export const DataGrid = React.memo(
       overscan: 10,
     });
 
-    // Decide this grid's initial scroll position once, on mount (#823). This
-    // grid is keyed by tab/result identity, so switching tabs — and adding
-    // or removing a pending insertion — unmounts and remounts it rather than
-    // just hiding it; plain browser scroll restore never applies, and a
-    // "count changed since last render" check made in here would never see
-    // the transition, since a fresh instance already exists by the time it
-    // could run. Both values are decided by the caller and read once here:
-    // scrollToNewInsertion wins outright when set, so a just-inserted row
-    // always gets scrolled to and never fights a restored offset that
-    // belonged to the grid's previous mount.
-    useEffect(() => {
+    // Decide this grid's initial scroll position once, on mount (#823).
+    // scrollToNewInsertion wins outright when set, so a just-inserted row is
+    // always scrolled to instead of a restored offset from before. The ref
+    // guard (rather than an empty dep array) keeps this mount-only while
+    // still declaring its real dependencies. hasRenderedRows holds it off
+    // until the virtualizer has actually rendered rows: on the first commit
+    // it has none, the scroll container's height isn't measured yet, and a
+    // scroll attempted then just clamps to 0.
+    const hasSetInitialScrollRef = useRef(false);
+    const hasRenderedRows = rowVirtualizer.getVirtualItems().length > 0;
+    useLayoutEffect(() => {
+      if (hasSetInitialScrollRef.current || !hasRenderedRows) return;
+      hasSetInitialScrollRef.current = true;
       if (scrollToNewInsertion) {
         if (tableRows.length > 0) {
           rowVirtualizer.scrollToIndex(tableRows.length - 1, { align: "end" });
         }
         return;
       }
-      const el = parentRef.current;
-      if (el && initialScrollTop) {
-        el.scrollTop = initialScrollTop;
+      if (initialScrollTop) {
+        // Through the virtualizer, not the DOM node directly.
+        rowVirtualizer.scrollToOffset(initialScrollTop);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [
+      scrollToNewInsertion,
+      initialScrollTop,
+      tableRows.length,
+      rowVirtualizer,
+      hasRenderedRows,
+    ]);
 
     const handleContextMenu = useCallback(
       (

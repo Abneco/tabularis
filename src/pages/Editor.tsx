@@ -412,21 +412,14 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
   const isDragging = useRef(false);
   const rafRef = useRef<number | null>(null);
   const editorsRef = useRef<Record<string, Parameters<OnMount>[0]>>({});
-  // DataGrid's scroll offset per tab (#823), kept out of tab/store state on
-  // purpose: routing it through updateTab would fire the tabs-changed effect
-  // in EditorProvider (which persists tabs via a Tauri invoke) on every
-  // scroll pixel. This ref survives DataGrid's unmount/remount across tab
-  // switches without ever touching React state.
+  // DataGrid's scroll offset per tab (#823), kept out of tab/store state:
+  // routing it through updateTab would fire EditorProvider's tabs-changed
+  // effect (which persists via a Tauri invoke) on every scroll pixel.
   const scrollTopByTabIdRef = useRef<Map<string, number>>(new Map());
-  // Insertion count last seen for each tab's DataGrid mount (#823 follow-up).
-  // DataGrid is remounted (via its key below) whenever pendingInsertions'
-  // size changes, so its own "did an insertion just happen" check can never
-  // observe a transition — by the time it would fire, a fresh instance
-  // already exists. Tracking the prior count here, outside that remount,
-  // lets a genuine new insertion still auto-scroll to the bottom without
-  // that same logic firing (and fighting the restored scrollTop above) just
-  // because switching back to a tab remounts the grid with insertions it
-  // already had.
+  // Insertion count last seen per tab's DataGrid mount (#823 follow-up).
+  // DataGrid remounts on every pendingInsertions size change, so it can't
+  // detect the transition itself; tracked here so a real new insertion
+  // still auto-scrolls without firing just from switching tabs.
   const prevInsertionCountByTabIdRef = useRef<Map<string, number>>(new Map());
   const [monacoInstance, setMonacoInstance] = useState<Monaco | null>(null);
 
@@ -2573,11 +2566,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     scrollTopByTabIdRef.current.set(activeTabIdRef.current, scrollTop);
   }, []);
 
-  // See prevInsertionCountByTabIdRef above: derive "did this tab just gain a
-  // new pending insertion" from a value read at render time (safe — it's
-  // never mutated during render) and commit the new count only after the
-  // render that used it has actually been committed, so a discarded/retried
-  // render can't desync the two.
+  // See prevInsertionCountByTabIdRef above. Derived at render time, then
+  // committed only after that render lands, so a discarded/retried render
+  // can't desync the two.
   const activeTabInsertionCount = activeTab?.pendingInsertions
     ? Object.keys(activeTab.pendingInsertions).length
     : 0;
