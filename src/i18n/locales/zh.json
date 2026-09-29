@@ -1122,6 +1122,9 @@
     "placeholder": "PIN 或密码短语",
     "waiting": "正在等待您的安全密钥 — 触摸以确认。"
   },
+  "dateInput": {
+    "useShownValue": "使用此值"
+  },
   "dataGrid": {
     "noRowIdentity": "无法编辑行:\"{{table}}\" 没有主键,因此编辑要求结果包含表的所有列。请选择所有列(例如 SELECT *)或添加主键。",
     "resizeRelatedPanel": "拖动以调整面板大小",

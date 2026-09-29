@@ -1155,6 +1155,9 @@
     "placeholder": "PIN oder Passphrase",
     "waiting": "Warten auf Ihren Sicherheitsschlüssel — zum Bestätigen berühren."
   },
+  "dateInput": {
+    "useShownValue": "Diesen Wert verwenden"
+  },
   "dataGrid": {
     "noRowIdentity": "Zeilen können nicht bearbeitet werden: \"{{table}}\" hat keinen Primärschlüssel, daher muss das Ergebnis alle Spalten der Tabelle enthalten. Wählen Sie alle Spalten aus (z. B. SELECT *) oder fügen Sie einen Primärschlüssel hinzu.",
     "resizeRelatedPanel": "Ziehen, um die Größe des Bereichs zu ändern",

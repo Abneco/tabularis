@@ -1184,6 +1184,9 @@
     "placeholder": "PIN o passphrase",
     "waiting": "Naghihintay sa iyong security key — hawakan ito para kumpirmahin."
   },
+  "dateInput": {
+    "useShownValue": "Gamitin ang value na ito"
+  },
   "dataGrid": {
     "noRowIdentity": "Hindi ma-edit ang mga row: walang primary key ang \"{{table}}\", kaya kailangang kasama sa resulta ang lahat ng column ng table. Piliin ang lahat ng column (hal. SELECT *) o magdagdag ng primary key.",
     "resizeRelatedPanel": "I-drag para baguhin ang laki ng panel",

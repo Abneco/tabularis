@@ -541,6 +541,51 @@ describe("DataGrid keyboard editing", () => {
 
     expect(container.querySelector("textarea")).toHaveValue("");
   });
+
+  it("commits the prefilled date of an empty date cell once on Enter (#826)", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 27, 15, 30, 0));
+    try {
+      const onPendingChange = vi.fn();
+      const { container } = render(
+        <DataGrid
+          columns={["id", "due"]}
+          data={[[1, null]]}
+          tableName="tasks"
+          pkColumns={["id"]}
+          columnMetadata={[
+            {
+              name: "id",
+              data_type: "integer",
+              is_pk: true,
+              is_nullable: false,
+              is_auto_increment: false,
+            },
+            {
+              name: "due",
+              data_type: "date",
+              is_pk: false,
+              is_nullable: true,
+              is_auto_increment: false,
+            },
+          ]}
+          onPendingChange={onPendingChange}
+          selectedRows={new Set()}
+          onSelectionChange={vi.fn()}
+        />,
+      );
+
+      fireEvent.click(cellAt(container, 0, 1));
+      fireEvent.keyDown(gridOf(container), { key: "Enter" });
+      fireEvent.keyDown(container.querySelector("td select")!, { key: "Enter" });
+
+      expect(onPendingChange).toHaveBeenCalledTimes(1);
+      expect(onPendingChange).toHaveBeenCalledWith({ id: 1 }, "due", "2026-09-27");
+      expect(gridOf(container)).toHaveFocus();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("DataGrid select all", () => {

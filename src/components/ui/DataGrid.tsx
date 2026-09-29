@@ -1058,11 +1058,18 @@ export const DataGrid = React.memo(
     const isCommittingRef = useRef(false);
 
     const handleEditCommit = useCallback(async () => {
+      // Clear the ref together with the state: a commit later in the same
+      // event (e.g. the grid's Enter handler after commitEditWithValue) must
+      // see the edit as closed, not commit the value a second time.
+      const closeEditor = () => {
+        editingCellRef.current = null;
+        setEditingCell(null);
+      };
       // Prevent multiple concurrent commits (e.g., from rapid blur events)
       if (isCommittingRef.current) return;
       const editingCell = editingCellRef.current;
       if (!editingCell || !tableName) {
-        setEditingCell(null);
+        closeEditor();
         return;
       }
 
@@ -1074,7 +1081,7 @@ export const DataGrid = React.memo(
         // Safety check: ensure mergedRows has data
         if (!mergedRows || rowIndex >= mergedRows.length) {
           console.warn("Invalid rowIndex in handleEditCommit");
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1088,7 +1095,7 @@ export const DataGrid = React.memo(
             const colName = columns[colIndex];
             onPendingInsertionChange(mergedRow.tempId, colName, value);
           }
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1096,7 +1103,7 @@ export const DataGrid = React.memo(
         const row = mergedRow.rowData;
         if (!row) {
           console.warn("Invalid row data in handleEditCommit");
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1107,13 +1114,13 @@ export const DataGrid = React.memo(
         const isUnchanged = String(value) === String(originalValue);
 
         if (isUnchanged && !onPendingChange) {
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
         // PK Value - check pkIndexMaps is valid
         if (pkIndexMaps.length === 0 || !pkColumns) {
-          setEditingCell(null);
+          closeEditor();
           return;
         }
         const pkMapVal = buildPkMap(pkColumns, row, pkIndexMaps);
@@ -1122,7 +1129,7 @@ export const DataGrid = React.memo(
         if (onPendingChange) {
           // If value matches original, pass undefined to remove the pending change
           onPendingChange(pkMapVal, colName, isUnchanged ? undefined : value);
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1131,7 +1138,7 @@ export const DataGrid = React.memo(
         // Production safety: this path writes immediately, without the
         // staged-changes commit (which has its own guard upstream).
         if (!(await guardProductionWrite(connectionId))) {
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1153,7 +1160,7 @@ export const DataGrid = React.memo(
             kind: "error",
           });
         }
-        setEditingCell(null);
+        closeEditor();
       } finally {
         isCommittingRef.current = false;
       }
