@@ -74,15 +74,15 @@ sudo snap install tabularis                                      # Linux
 | **任意の言語**でプラグイン開発（stdio 経由の JSON-RPC） | ✅ | Java/Eclipse プラグイン | JavaScript プラグイン | ❌ |
 | **ローカルモデル**（Ollama）対応の AI テキストから SQL 変換 | ✅ | クラウドベースの AI アシスタント | ❌ | ❌ |
 | インタラクティブなプラングラフ付き Visual EXPLAIN | ✅ | ✅ | ❌ | ❌ |
-| 標準対応データベース数 | 標準搭載 3 + 公式プラグイン 15 | 100+ | 20+ | 約 10 |
+| 標準対応データベース数 | 標準搭載 3 + 公式プラグイン 21 | 100+ | 20+ | 約 10 |
 
 > 比較は 2026 年 6 月時点のものです。他ツールの機能はその後変わっている可能性があります。数十のドライバーが必要な場合は DBeaver を使ってください。tabularis は、少数のデータベースをしっかりサポートすることに注力しています。
 
 ### 対応データベース
 
-PostgreSQL、MySQL/MariaDB、SQLite は標準搭載されています。それ以外はすべてプラグインです。ここでは各インテグレーションの現状を、ウェブサイトの[ドライバー＆プラグイン対応状況](https://tabularis.dev/#driver-coverage)に合わせて示します。
+PostgreSQL、MySQL/MariaDB、SQLite は標準搭載されています。標準搭載の PostgreSQL ドライバーは非推奨となり、Tabularis が自動でインストールする [PostgreSQL プラグイン](https://github.com/TabularisDB/tabularis-postgresql-plugin)に置き換えられます。それ以外はすべてプラグインです。ここでは各インテグレーションの現状を、ウェブサイトの[ドライバー＆プラグイン対応状況](https://tabularis.dev/#driver-coverage)に合わせて示します。
 
-ClickHouse（提供中）、Cloudflare D1（提供中）、DuckDB（提供中）、Firestore（提供中）、IBM Db2（提供中）、IBM Informix（提供中）、Redis（提供中）、CSV Folder（提供中）、Google Sheets（提供中）、HackerNews（提供中）、Google BigQuery（担当者決定）、LibSQL / Turso（担当者決定）、Meilisearch（担当者決定）、MongoDB（担当者決定）、Oracle（担当者決定）、SQL Server（担当者決定）、Amazon Redshift（計画策定済み）、CockroachDB（計画策定済み）、TiDB（計画策定済み）、DynamoDB（近日対応）、Snowflake（近日対応）、Cassandra（募集中）、Elasticsearch（募集中）、Etcd（募集中）、Firebird（募集中）、ScyllaDB（募集中）、SQL Anywhere（募集中）、SurrealDB（募集中）、Trino / Presto（募集中）。
+[ClickHouse](https://github.com/TabularisDB/tabularis-clickhouse-plugin)（提供中）、[Cloudflare D1](https://github.com/josejorge/tabularis_cloudflare_d1_plugin)（提供中）、[Cloudflare D1 (HTTP API)](https://github.com/GabrielMalava/cloudflare-tabularis)（提供中）、[DM / Dameng](https://github.com/haos666/tabularis-dameng-plugin)（提供中）、[DuckDB](https://github.com/TabularisDB/tabularis-duckdb-plugin)（提供中）、[DynamoDB](https://github.com/TabularisDB/tabularis-dynamodb-plugin)（提供中）、[Elasticsearch](https://github.com/TabularisDB/tabularis-elasticsearch-plugin)（提供中）、[Firestore](https://codeberg.org/NewtTheWolf/firestore-tabularis)（提供中）、[IBM Db2](https://github.com/TabularisDB/tabularis-db2-plugin)（提供中）、[IBM Informix](https://github.com/danielnuld/tabularis-informix-plugin)（提供中）、[LibSQL / Turso](https://github.com/TabularisDB/tabularis-libsql-plugin)（提供中）、[MongoDB](https://github.com/danielnuld/tabularis-mongodb-plugin)（提供中）、[MongoDB Atlas](https://github.com/TabularisDB/tabularis-mongodb-plugin)（提供中）、[Oracle](https://github.com/TabularisDB/tabularis-oracle-plugin)（提供中）、[Redis (Go)](https://github.com/gzamboni/tabularis-redis-plugin-go)（提供中）、[Redis (Rust)](https://github.com/nicholas-papachriston/tabularis-redis-plugin)（提供中）、[SQL Server](https://github.com/TabularisDB/tabularis-sqlserver-plugin)（提供中）、[CSV Folder](https://github.com/TabularisDB/tabularis-csv-plugin)（提供中）、[Google Sheets](https://github.com/TabularisDB/tabularis-google-sheets-plugin)（提供中）、[HackerNews](https://github.com/TabularisDB/tabularis-hackernews-plugin)（提供中）、Google BigQuery（担当者決定）、Meilisearch（担当者決定）、Amazon Redshift（計画策定済み）、CockroachDB（計画策定済み）、TiDB（計画策定済み）、Snowflake（近日対応）、Cassandra（募集中）、Etcd（募集中）、Firebird（募集中）、ScyllaDB（募集中）、SQL Anywhere（募集中）、SurrealDB（募集中）、Trino / Presto（募集中）。
 
 > **提供中**のドライバーは[プラグインレジストリ](https://tabularis.dev/plugins)からインストールできます。それ以外は[バウンティボード](https://tabularis.dev/plugins/bounties)に掲載されています。担当する、スポンサーになる、または[データベースをリクエスト](https://github.com/TabularisDB/tabularis/discussions)してください。
 

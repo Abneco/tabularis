@@ -4,6 +4,7 @@ import React, {
   useRef,
   useCallback,
   useMemo,
+  useImperativeHandle,
 } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -62,6 +63,7 @@ import {
   buildCellRange,
   extendCellRange,
   moveCellPosition,
+  createDataGridResultCommands,
   type RangeExtendKey,
 } from "../../utils/dataGrid";
 import { readText } from "@tauri-apps/plugin-clipboard-manager";
@@ -103,9 +105,15 @@ import type {
   TableColumn,
   ForeignKey,
 } from "../../types/editor";
+import type { ResultCommands } from "../../types/commands";
 import { MemoRow, type RowCtx } from "./DataGridRow";
 
+export interface DataGridCommandTarget {
+  getResultCommands: () => ResultCommands;
+}
+
 interface DataGridProps {
+  ref?: React.Ref<DataGridCommandTarget>;
   columns: string[];
   data: unknown[][];
   tableName?: string | null;
@@ -181,7 +189,8 @@ const RANGE_EXTEND_KEYS = new Set([
 ]);
 
 export const DataGrid = React.memo(
-  ({
+  function DataGrid({
+    ref,
     columns,
     data,
     tableName,
@@ -217,7 +226,7 @@ export const DataGrid = React.memo(
     totalRows,
     hasMore,
     onCopyAllRows,
-  }: DataGridProps) => {
+  }: DataGridProps) {
     const { t } = useTranslation();
     const { activeSchema, connections } = useDatabase();
     const guardProductionWrite = useProductionGuard();
@@ -677,9 +686,9 @@ export const DataGrid = React.memo(
     // True when the result set continues beyond the loaded page and the parent
     // can fetch and copy it in full. The total may be unknown (user hasn't
     // requested a row count) — has_more is enough to offer the full copy.
-    const hasUnloadedRows =
-      !!onCopyAllRows &&
+    const hasRowsBeyondLoadedPage =
       (totalRows != null ? totalRows > mergedRows.length : hasMore === true);
+    const hasUnloadedRows = !!onCopyAllRows && hasRowsBeyondLoadedPage;
 
     // True when the selection covers every loaded row — the toast then says
     // "N of M" so a page-only copy of a larger result is never silent.
@@ -1049,11 +1058,18 @@ export const DataGrid = React.memo(
     const isCommittingRef = useRef(false);
 
     const handleEditCommit = useCallback(async () => {
+      // Clear the ref together with the state: a commit later in the same
+      // event (e.g. the grid's Enter handler after commitEditWithValue) must
+      // see the edit as closed, not commit the value a second time.
+      const closeEditor = () => {
+        editingCellRef.current = null;
+        setEditingCell(null);
+      };
       // Prevent multiple concurrent commits (e.g., from rapid blur events)
       if (isCommittingRef.current) return;
       const editingCell = editingCellRef.current;
       if (!editingCell || !tableName) {
-        setEditingCell(null);
+        closeEditor();
         return;
       }
 
@@ -1065,7 +1081,7 @@ export const DataGrid = React.memo(
         // Safety check: ensure mergedRows has data
         if (!mergedRows || rowIndex >= mergedRows.length) {
           console.warn("Invalid rowIndex in handleEditCommit");
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1079,7 +1095,7 @@ export const DataGrid = React.memo(
             const colName = columns[colIndex];
             onPendingInsertionChange(mergedRow.tempId, colName, value);
           }
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1087,7 +1103,7 @@ export const DataGrid = React.memo(
         const row = mergedRow.rowData;
         if (!row) {
           console.warn("Invalid row data in handleEditCommit");
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1098,13 +1114,13 @@ export const DataGrid = React.memo(
         const isUnchanged = String(value) === String(originalValue);
 
         if (isUnchanged && !onPendingChange) {
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
         // PK Value - check pkIndexMaps is valid
         if (pkIndexMaps.length === 0 || !pkColumns) {
-          setEditingCell(null);
+          closeEditor();
           return;
         }
         const pkMapVal = buildPkMap(pkColumns, row, pkIndexMaps);
@@ -1113,7 +1129,7 @@ export const DataGrid = React.memo(
         if (onPendingChange) {
           // If value matches original, pass undefined to remove the pending change
           onPendingChange(pkMapVal, colName, isUnchanged ? undefined : value);
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1122,7 +1138,7 @@ export const DataGrid = React.memo(
         // Production safety: this path writes immediately, without the
         // staged-changes commit (which has its own guard upstream).
         if (!(await guardProductionWrite(connectionId))) {
-          setEditingCell(null);
+          closeEditor();
           return;
         }
 
@@ -1144,7 +1160,7 @@ export const DataGrid = React.memo(
             kind: "error",
           });
         }
-        setEditingCell(null);
+        closeEditor();
       } finally {
         isCommittingRef.current = false;
       }
@@ -1664,9 +1680,10 @@ export const DataGrid = React.memo(
     const copySelectedOrContextRow = useCallback(async () => {
       if (!contextMenu) return;
 
+      const rowsWithInsertions = mergedRows.map((row) => row.rowData);
       const rows =
         selectedRowIndices.size > 0
-          ? getSelectedRows(data, selectedRowIndices)
+          ? getSelectedRows(rowsWithInsertions, selectedRowIndices)
           : [contextMenu.row];
 
       await copyToClipboard(
@@ -1676,7 +1693,7 @@ export const DataGrid = React.memo(
     }, [
       contextMenu,
       selectedRowIndices,
-      data,
+      mergedRows,
       formatRows,
       copyToClipboard,
       rowsCopiedToast,
@@ -1703,14 +1720,17 @@ export const DataGrid = React.memo(
 
     const copySelectedCells = useCallback(async () => {
       if (selectedRowIndices.size === 0) return;
-      const rows = getSelectedRows(data, selectedRowIndices);
+      const rows = getSelectedRows(
+        mergedRows.map((row) => row.rowData),
+        selectedRowIndices,
+      );
       await copyToClipboard(
         formatRows(rows, true),
         rowsCopiedToast(rows.length),
       );
     }, [
       selectedRowIndices,
-      data,
+      mergedRows,
       formatRows,
       copyToClipboard,
       rowsCopiedToast,
@@ -1721,7 +1741,8 @@ export const DataGrid = React.memo(
     // Copies the selected columns (all loaded rows) in the active copy format.
     const copySelectedColumns = useCallback(async () => {
       if (selectedColIndices.size === 0) return;
-      const projected = projectColumns(data, columns, selectedColIndices);
+      const rows = mergedRows.map((row) => row.rowData);
+      const projected = projectColumns(rows, columns, selectedColIndices);
       await copyToClipboard(
         formatRowsForCopy(projected.rows, projected.columns, copyFormat ?? "csv", {
           withHeaders: true,
@@ -1729,11 +1750,11 @@ export const DataGrid = React.memo(
           csvDelimiter,
           tableName,
         }),
-        rowsCopiedToast(data.length),
+        rowsCopiedToast(rows.length),
       );
     }, [
       selectedColIndices,
-      data,
+      mergedRows,
       columns,
       copyFormat,
       csvIncludeHeaders,
@@ -1779,11 +1800,13 @@ export const DataGrid = React.memo(
     ]);
 
     const copyColumnValues = useCallback(
-      async (colIndex: number) => {        if (colIndex < 0) return;
+      async (colIndex: number) => {
+        if (colIndex < 0) return;
+        const rowsWithInsertions = mergedRows.map((row) => row.rowData);
         const rows =
           selectedRowIndices.size > 0
-            ? getSelectedRows(data, selectedRowIndices)
-            : data;
+            ? getSelectedRows(rowsWithInsertions, selectedRowIndices)
+            : rowsWithInsertions;
         const text = columnValuesForCopy(rows, columns, colIndex, {
           format: copyFormat ?? "csv",
           delimiter: csvDelimiter,
@@ -1794,7 +1817,7 @@ export const DataGrid = React.memo(
       },
       [
         selectedRowIndices,
-        data,
+        mergedRows,
         columns,
         copyFormat,
         csvDelimiter,
@@ -1807,13 +1830,14 @@ export const DataGrid = React.memo(
     const copyColumnValuesAsInClause = useCallback(
       async (colIndex: number) => {
         if (colIndex < 0) return;
+        const rowsWithInsertions = mergedRows.map((row) => row.rowData);
         const rows =
           selectedRowIndices.size > 0
-            ? getSelectedRows(data, selectedRowIndices)
-            : data;
+            ? getSelectedRows(rowsWithInsertions, selectedRowIndices)
+            : rowsWithInsertions;
         await copyToClipboard(columnValuesToInClause(rows, colIndex));
       },
-      [selectedRowIndices, data, copyToClipboard],
+      [selectedRowIndices, mergedRows, copyToClipboard],
     );
 
     const copyCellValue = useCallback(
@@ -1829,6 +1853,54 @@ export const DataGrid = React.memo(
       },
       [mergedRows, columns, columnTypeMap, columnLengthMap, copyToClipboard],
     );
+
+    const copyAllLoadedRows = useCallback(async () => {
+      const rows = mergedRows.map((row) => row.rowData);
+      await copyToClipboard(
+        formatRows(rows, true),
+        rowsCopiedToast(rows.length),
+      );
+    }, [copyToClipboard, formatRows, mergedRows, rowsCopiedToast]);
+
+    const getResultCommands = useCallback(
+      (): ResultCommands =>
+        createDataGridResultCommands({
+          cellRange,
+          focusedCell,
+          selectedRowIndices,
+          selectedColIndices,
+          columns,
+          dataLength: mergedRows.length,
+          totalRows,
+          hasRowsBeyondLoadedPage,
+          onCopyAllRows,
+          copyCellRange,
+          copyCellValue,
+          copySelectedRows: copySelectedCells,
+          copySelectedColumns,
+          copyColumnValuesAsSqlIn: copyColumnValuesAsInClause,
+          copyAllLoadedRows,
+        }),
+      [
+        cellRange,
+        focusedCell,
+        selectedRowIndices,
+        selectedColIndices,
+        onCopyAllRows,
+        hasRowsBeyondLoadedPage,
+        mergedRows.length,
+        totalRows,
+        columns,
+        copyCellRange,
+        copyCellValue,
+        copySelectedCells,
+        copySelectedColumns,
+        copyColumnValuesAsInClause,
+        copyAllLoadedRows,
+      ],
+    );
+
+    useImperativeHandle(ref, () => ({ getResultCommands }), [getResultCommands]);
 
     const copyCellFromContext = useCallback(async () => {
       if (!contextMenu) return;

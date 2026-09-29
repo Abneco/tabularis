@@ -46,6 +46,9 @@ pub mod export;
 pub mod export_crypto;
 #[cfg(test)]
 pub mod export_import_tests;
+pub mod fs_path;
+#[cfg(test)]
+pub mod fs_path_tests;
 pub mod health_check;
 #[cfg(test)]
 pub mod group_tree_tests;

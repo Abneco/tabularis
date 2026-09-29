@@ -65,6 +65,8 @@ import { useLatestAsync } from "../../hooks/useLatestAsync";
 import { K8sAdvancedSettings } from "../ui/K8sAdvancedSettings";
 import { isMultiDatabaseCapable } from "../../utils/database";
 import { updateExtraField } from "../../utils/connections";
+import { normalizeLocalDatabasePath, sanitizeLocalFilePath } from "../../utils/fsPath";
+import { isLocalDriver } from "../../utils/driverCapabilities";
 import { toErrorMessage } from "../../utils/errors";
 import {
   classifyConnectionError,
@@ -280,6 +282,7 @@ export const NewConnectionModal = ({
   // ── form state ──
   const [driver, setDriver] = useState<string>("mysql");
   const activeDriver = drivers.find((d) => d.id === driver) ?? drivers[0];
+  const isLocalPathDriver = isLocalDriver(activeDriver?.capabilities);
   // Capability-driven, not driver-id-driven: a driver whose manifest EXPLICITLY
   // declares the postgres SQL dialect (builtin "postgres" or a plugin like
   // "postgresql") gets Postgres-style SSL mode options. Deliberately requires
@@ -2100,7 +2103,14 @@ export const NewConnectionModal = ({
                 (typeof formData.database === "string"
                   ? formData.database
                   : ""))
-            : formData.database,
+            : isLocalPathDriver
+              ? (normalizeLocalDatabasePath(
+                  typeof formData.database === "string" ||
+                    Array.isArray(formData.database)
+                    ? formData.database
+                    : undefined,
+                ) ?? "")
+              : formData.database,
         };
         const testParams = withInlineK8sPaths(
           testParamsBase,
@@ -2313,7 +2323,14 @@ export const NewConnectionModal = ({
             ? typeof formData.database === "string" && formData.database.trim()
               ? formData.database
               : driver
-            : formData.database,
+            : isLocalPathDriver
+              ? (normalizeLocalDatabasePath(
+                  typeof formData.database === "string" ||
+                    Array.isArray(formData.database)
+                    ? formData.database
+                    : undefined,
+                ) ?? formData.database)
+              : formData.database,
       };
       const params = withInlineK8sPaths(paramsBase, inlinePaths.options);
       const appearancePayload =
@@ -2609,6 +2626,12 @@ export const NewConnectionModal = ({
                 typeof formData.database === "string" ? formData.database : ""
               }
               onChange={(e) => updateField("database", e.target.value)}
+              onBlur={(e) => {
+                const cleaned = sanitizeLocalFilePath(e.target.value);
+                if (cleaned !== e.target.value) {
+                  updateField("database", cleaned);
+                }
+              }}
               autoCorrect="off"
               autoCapitalize="off"
               autoComplete="off"

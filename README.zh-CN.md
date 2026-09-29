@@ -74,15 +74,15 @@ sudo snap install tabularis                                      # Linux
 | 支持**任意语言**编写插件（基于 stdio 的 JSON-RPC） | ✅ | Java/Eclipse 插件 | JavaScript 插件 | ❌ |
 | 支持**本地模型**（Ollama）的 AI text-to-SQL | ✅ | 基于云端的 AI 助手 | ❌ | ❌ |
 | 带交互式计划图的可视化 EXPLAIN | ✅ | ✅ | ❌ | ❌ |
-| 开箱即用支持的数据库 | 3 种内置 + 15 个官方插件 | 100+ | 20+ | 约 10 种 |
+| 开箱即用支持的数据库 | 3 种内置 + 21 个官方插件 | 100+ | 20+ | 约 10 种 |
 
 > 对比数据截至 2026 年 6 月，其他工具的功能此后可能已有变化。如果你需要几十种驱动，请使用 DBeaver——tabularis 专注于把少数几种数据库做好。
 
 ### 数据库支持
 
-PostgreSQL、MySQL/MariaDB 和 SQLite 为内置支持。其余均为插件——下面列出每个集成当前的状态，与网站上的[驱动与插件覆盖](https://tabularis.dev/#driver-coverage)保持一致。
+PostgreSQL、MySQL/MariaDB 和 SQLite 为内置支持。内置 PostgreSQL 驱动已弃用，改由 Tabularis 自动安装的 [PostgreSQL 插件](https://github.com/TabularisDB/tabularis-postgresql-plugin)取代。其余均为插件——下面列出每个集成当前的状态，与网站上的[驱动与插件覆盖](https://tabularis.dev/#driver-coverage)保持一致。
 
-ClickHouse（已发布）、Cloudflare D1（已发布）、DuckDB（已发布）、Firestore（已发布）、IBM Db2（已发布）、IBM Informix（已发布）、Redis（已发布）、CSV Folder（已发布）、Google Sheets（已发布）、HackerNews（已发布）、Google BigQuery（已认领）、LibSQL / Turso（已认领）、Meilisearch（已认领）、MongoDB（已认领）、Oracle（已认领）、SQL Server（已认领）、Amazon Redshift（已规划）、CockroachDB（已规划）、TiDB（已规划）、DynamoDB（即将推出）、Snowflake（即将推出）、Cassandra（开放中）、Elasticsearch（开放中）、Etcd（开放中）、Firebird（开放中）、ScyllaDB（开放中）、SQL Anywhere（开放中）、SurrealDB（开放中）、Trino / Presto（开放中）。
+[ClickHouse](https://github.com/TabularisDB/tabularis-clickhouse-plugin)（已发布）、[Cloudflare D1](https://github.com/josejorge/tabularis_cloudflare_d1_plugin)（已发布）、[Cloudflare D1 (HTTP API)](https://github.com/GabrielMalava/cloudflare-tabularis)（已发布）、[DM / Dameng](https://github.com/haos666/tabularis-dameng-plugin)（已发布）、[DuckDB](https://github.com/TabularisDB/tabularis-duckdb-plugin)（已发布）、[DynamoDB](https://github.com/TabularisDB/tabularis-dynamodb-plugin)（已发布）、[Elasticsearch](https://github.com/TabularisDB/tabularis-elasticsearch-plugin)（已发布）、[Firestore](https://codeberg.org/NewtTheWolf/firestore-tabularis)（已发布）、[IBM Db2](https://github.com/TabularisDB/tabularis-db2-plugin)（已发布）、[IBM Informix](https://github.com/danielnuld/tabularis-informix-plugin)（已发布）、[LibSQL / Turso](https://github.com/TabularisDB/tabularis-libsql-plugin)（已发布）、[MongoDB](https://github.com/danielnuld/tabularis-mongodb-plugin)（已发布）、[MongoDB Atlas](https://github.com/TabularisDB/tabularis-mongodb-plugin)（已发布）、[Oracle](https://github.com/TabularisDB/tabularis-oracle-plugin)（已发布）、[Redis (Go)](https://github.com/gzamboni/tabularis-redis-plugin-go)（已发布）、[Redis (Rust)](https://github.com/nicholas-papachriston/tabularis-redis-plugin)（已发布）、[SQL Server](https://github.com/TabularisDB/tabularis-sqlserver-plugin)（已发布）、[CSV Folder](https://github.com/TabularisDB/tabularis-csv-plugin)（已发布）、[Google Sheets](https://github.com/TabularisDB/tabularis-google-sheets-plugin)（已发布）、[HackerNews](https://github.com/TabularisDB/tabularis-hackernews-plugin)（已发布）、Google BigQuery（已认领）、Meilisearch（已认领）、Amazon Redshift（已规划）、CockroachDB（已规划）、TiDB（已规划）、Snowflake（即将推出）、Cassandra（开放中）、Etcd（开放中）、Firebird（开放中）、ScyllaDB（开放中）、SQL Anywhere（开放中）、SurrealDB（开放中）、Trino / Presto（开放中）。
 
 > 标记为**已发布**的驱动可从[插件注册表](https://tabularis.dev/plugins)安装。其余均在[悬赏看板](https://tabularis.dev/plugins/bounties)上——你可以认领、赞助，或[申请新数据库](https://github.com/TabularisDB/tabularis/discussions)。
 

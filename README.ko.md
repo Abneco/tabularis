@@ -74,15 +74,15 @@ sudo snap install tabularis                                      # Linux
 | **모든 언어**로 작성 가능한 플러그인 (stdio 기반 JSON-RPC) | ✅ | Java/Eclipse 플러그인 | JavaScript 플러그인 | ❌ |
 | **로컬 모델**(Ollama)을 사용하는 AI text-to-SQL | ✅ | 클라우드 기반 AI 어시스턴트 | ❌ | ❌ |
 | 인터랙티브 플랜 그래프가 있는 Visual EXPLAIN | ✅ | ✅ | ❌ | ❌ |
-| 기본 제공 데이터베이스 | 내장 3종 + 공식 플러그인 15종 | 100종 이상 | 20종 이상 | 약 10종 |
+| 기본 제공 데이터베이스 | 내장 3종 + 공식 플러그인 21종 | 100종 이상 | 20종 이상 | 약 10종 |
 
 > 2026년 6월 기준 비교이며, 다른 도구의 기능은 이후 변경되었을 수 있습니다. 수십 종의 드라이버가 필요하다면 DBeaver를 사용하세요 — tabularis는 소수의 데이터베이스를 제대로 지원하는 데 집중합니다.
 
 ### 데이터베이스 지원
 
-PostgreSQL, MySQL/MariaDB, SQLite는 기본 내장되어 있습니다. 그 외 모든 것은 플러그인이며, 웹사이트의 [드라이버 및 플러그인 커버리지](https://tabularis.dev/#driver-coverage)를 반영해 각 통합의 현재 상태를 아래에 정리했습니다.
+PostgreSQL, MySQL/MariaDB, SQLite는 기본 내장되어 있습니다. 내장 PostgreSQL 드라이버는 더 이상 권장되지 않으며, Tabularis가 자동으로 설치하는 [PostgreSQL 플러그인](https://github.com/TabularisDB/tabularis-postgresql-plugin)으로 대체됩니다. 그 외 모든 것은 플러그인이며, 웹사이트의 [드라이버 및 플러그인 커버리지](https://tabularis.dev/#driver-coverage)를 반영해 각 통합의 현재 상태를 아래에 정리했습니다.
 
-ClickHouse (출시됨), Cloudflare D1 (출시됨), DM / Dameng (출시됨), DuckDB (출시됨), Firestore (출시됨), IBM Db2 (출시됨), IBM Informix (출시됨), Redis (출시됨), CSV Folder (출시됨), Google Sheets (출시됨), HackerNews (출시됨), Google BigQuery (예정), LibSQL / Turso (예정), Meilisearch (예정), MongoDB (예정), Oracle (예정), SQL Server (예정), Amazon Redshift (계획됨), CockroachDB (계획됨), TiDB (계획됨), DynamoDB (곧 출시), Snowflake (곧 출시), Cassandra (오픈), Elasticsearch (오픈), Etcd (오픈), Firebird (오픈), ScyllaDB (오픈), SQL Anywhere (오픈), SurrealDB (오픈), Trino / Presto (오픈).
+[ClickHouse](https://github.com/TabularisDB/tabularis-clickhouse-plugin) (출시됨), [Cloudflare D1](https://github.com/josejorge/tabularis_cloudflare_d1_plugin) (출시됨), [Cloudflare D1 (HTTP API)](https://github.com/GabrielMalava/cloudflare-tabularis) (출시됨), [DM / Dameng](https://github.com/haos666/tabularis-dameng-plugin) (출시됨), [DuckDB](https://github.com/TabularisDB/tabularis-duckdb-plugin) (출시됨), [DynamoDB](https://github.com/TabularisDB/tabularis-dynamodb-plugin) (출시됨), [Elasticsearch](https://github.com/TabularisDB/tabularis-elasticsearch-plugin) (출시됨), [Firestore](https://codeberg.org/NewtTheWolf/firestore-tabularis) (출시됨), [IBM Db2](https://github.com/TabularisDB/tabularis-db2-plugin) (출시됨), [IBM Informix](https://github.com/danielnuld/tabularis-informix-plugin) (출시됨), [LibSQL / Turso](https://github.com/TabularisDB/tabularis-libsql-plugin) (출시됨), [MongoDB](https://github.com/danielnuld/tabularis-mongodb-plugin) (출시됨), [MongoDB Atlas](https://github.com/TabularisDB/tabularis-mongodb-plugin) (출시됨), [Oracle](https://github.com/TabularisDB/tabularis-oracle-plugin) (출시됨), [Redis (Go)](https://github.com/gzamboni/tabularis-redis-plugin-go) (출시됨), [Redis (Rust)](https://github.com/nicholas-papachriston/tabularis-redis-plugin) (출시됨), [SQL Server](https://github.com/TabularisDB/tabularis-sqlserver-plugin) (출시됨), [CSV Folder](https://github.com/TabularisDB/tabularis-csv-plugin) (출시됨), [Google Sheets](https://github.com/TabularisDB/tabularis-google-sheets-plugin) (출시됨), [HackerNews](https://github.com/TabularisDB/tabularis-hackernews-plugin) (출시됨), Google BigQuery (예정), Meilisearch (예정), Amazon Redshift (계획됨), CockroachDB (계획됨), TiDB (계획됨), Snowflake (곧 출시), Cassandra (오픈), Etcd (오픈), Firebird (오픈), ScyllaDB (오픈), SQL Anywhere (오픈), SurrealDB (오픈), Trino / Presto (오픈).
 
 > **출시됨** 상태의 드라이버는 [플러그인 레지스트리](https://tabularis.dev/plugins)에서 설치할 수 있습니다. 그 외 모든 것은 [바운티 보드](https://tabularis.dev/plugins/bounties)에 있습니다 — 직접 맡거나, 후원하거나, [데이터베이스를 요청](https://github.com/TabularisDB/tabularis/discussions)하세요.
 
