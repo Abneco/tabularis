@@ -412,6 +412,15 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
   const isDragging = useRef(false);
   const rafRef = useRef<number | null>(null);
   const editorsRef = useRef<Record<string, Parameters<OnMount>[0]>>({});
+  // DataGrid's scroll offset per tab (#823), kept out of tab/store state:
+  // routing it through updateTab would fire EditorProvider's tabs-changed
+  // effect (which persists via a Tauri invoke) on every scroll pixel.
+  const scrollTopByTabIdRef = useRef<Map<string, number>>(new Map());
+  // Insertion count last seen per tab's DataGrid mount (#823 follow-up).
+  // DataGrid remounts on every pendingInsertions size change, so it can't
+  // detect the transition itself; tracked here so a real new insertion
+  // still auto-scrolls without firing just from switching tabs.
+  const prevInsertionCountByTabIdRef = useRef<Map<string, number>>(new Map());
   const [monacoInstance, setMonacoInstance] = useState<Monaco | null>(null);
 
   const [selectableQueries, setSelectableQueries] = useState<string[]>([]);
@@ -916,6 +925,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     (tabId: string) => {
       requestTabClosure([tabId], () => {
         delete editorsRef.current[tabId];
+        scrollTopByTabIdRef.current.delete(tabId);
+        prevInsertionCountByTabIdRef.current.delete(tabId);
         closeTab(tabId);
       });
     },
@@ -1177,6 +1188,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         pendingInsertions: preservePendingChanges?.pendingInsertions,
         selectedRows: [],
       });
+      // A fresh query's result set can be a different size (or empty), so an
+      // old scroll offset from a larger one shouldn't linger (#823).
+      scrollTopByTabIdRef.current.delete(targetTabId);
 
       const shouldRecordHistory =
         targetTab?.type === "console" || targetTab?.type === "query_builder";
@@ -2545,6 +2559,31 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     },
     [updateTab],
   );
+
+  const handleScrollTopChange = useCallback((scrollTop: number) => {
+    if (!activeTabIdRef.current) return;
+    // Kept in a plain ref, not tab state — see scrollTopByTabIdRef above.
+    scrollTopByTabIdRef.current.set(activeTabIdRef.current, scrollTop);
+  }, []);
+
+  // See prevInsertionCountByTabIdRef above. Derived at render time, then
+  // committed only after that render lands, so a discarded/retried render
+  // can't desync the two.
+  const activeTabInsertionCount = activeTab?.pendingInsertions
+    ? Object.keys(activeTab.pendingInsertions).length
+    : 0;
+  const scrollToNewInsertion =
+    !!activeTab &&
+    activeTabInsertionCount >
+      (prevInsertionCountByTabIdRef.current.get(activeTab.id) ?? 0);
+  useEffect(() => {
+    if (activeTab) {
+      prevInsertionCountByTabIdRef.current.set(
+        activeTab.id,
+        activeTabInsertionCount,
+      );
+    }
+  }, [activeTab, activeTabInsertionCount]);
 
   const handleDeleteRows = useCallback(() => {
     if (
@@ -5123,6 +5162,11 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                       totalRows={activeTab.result?.pagination?.total_rows}
                       hasMore={activeTab.result?.pagination?.has_more}
                       onCopyAllRows={handleCopyAllRows}
+                      initialScrollTop={scrollTopByTabIdRef.current.get(
+                        activeTab.id,
+                      )}
+                      onScrollTopChange={handleScrollTopChange}
+                      scrollToNewInsertion={scrollToNewInsertion}
                     />
                   </div>
                   {activeFkQuery && activeConnectionId && (

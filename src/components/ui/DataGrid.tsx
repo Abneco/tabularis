@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useLayoutEffect,
   useRef,
   useCallback,
   useMemo,
@@ -162,6 +163,21 @@ interface DataGridProps {
   hasMore?: boolean;
   /** Fetches and copies every row of the result set (not just the page). */
   onCopyAllRows?: () => void;
+  /**
+   * Vertical scroll position to restore on mount (#823). The grid is keyed
+   * by tab/result identity and remounts on tab switches, so this has to be
+   * handed back in rather than surviving on its own.
+   */
+  initialScrollTop?: number;
+  /** Reports the scroll container's scrollTop on every scroll, so the caller can persist it. */
+  onScrollTopChange?: (scrollTop: number) => void;
+  /**
+   * True when this mount is caused by a genuine new pending insertion, not
+   * just a remount from switching tabs. The caller tracks this itself,
+   * since the grid remounts on insertion-count change and can't see the
+   * transition from inside. Read once on mount; wins over `initialScrollTop`.
+   */
+  scrollToNewInsertion?: boolean;
 }
 
 // Keys handled by the grid itself when a cell is focused; anything else keeps
@@ -226,6 +242,9 @@ export const DataGrid = React.memo(
     totalRows,
     hasMore,
     onCopyAllRows,
+    initialScrollTop,
+    onScrollTopChange,
+    scrollToNewInsertion,
   }: DataGridProps) {
     const { t } = useTranslation();
     const { activeSchema, connections } = useDatabase();
@@ -1391,6 +1410,13 @@ export const DataGrid = React.memo(
       return () => ro.disconnect();
     }, []);
 
+    const handleScroll = useCallback(
+      (e: React.UIEvent<HTMLDivElement>) => {
+        onScrollTopChange?.(e.currentTarget.scrollTop);
+      },
+      [onScrollTopChange],
+    );
+
     // Memoize table data to prevent unnecessary re-renders
     const tableData = useMemo(
       () => mergedRows.map((r) => r.rowData),
@@ -1412,20 +1438,36 @@ export const DataGrid = React.memo(
       overscan: 10,
     });
 
-    // Track insertion count to auto-scroll to bottom when new rows are added
-    const prevInsertionCountRef = useRef(0);
-    useEffect(() => {
-      const insertionCount = pendingInsertions
-        ? Object.keys(pendingInsertions).length
-        : 0;
-      if (
-        insertionCount > prevInsertionCountRef.current &&
-        tableRows.length > 0
-      ) {
-        rowVirtualizer.scrollToIndex(tableRows.length - 1, { align: "end" });
+    // Decide this grid's initial scroll position once, on mount (#823).
+    // scrollToNewInsertion wins outright when set, so a just-inserted row is
+    // always scrolled to instead of a restored offset from before. The ref
+    // guard (rather than an empty dep array) keeps this mount-only while
+    // still declaring its real dependencies. hasRenderedRows holds it off
+    // until the virtualizer has actually rendered rows: on the first commit
+    // it has none, the scroll container's height isn't measured yet, and a
+    // scroll attempted then just clamps to 0.
+    const hasSetInitialScrollRef = useRef(false);
+    const hasRenderedRows = rowVirtualizer.getVirtualItems().length > 0;
+    useLayoutEffect(() => {
+      if (hasSetInitialScrollRef.current || !hasRenderedRows) return;
+      hasSetInitialScrollRef.current = true;
+      if (scrollToNewInsertion) {
+        if (tableRows.length > 0) {
+          rowVirtualizer.scrollToIndex(tableRows.length - 1, { align: "end" });
+        }
+        return;
       }
-      prevInsertionCountRef.current = insertionCount;
-    }, [pendingInsertions, tableRows.length, rowVirtualizer]);
+      if (initialScrollTop) {
+        // Through the virtualizer, not the DOM node directly.
+        rowVirtualizer.scrollToOffset(initialScrollTop);
+      }
+    }, [
+      scrollToNewInsertion,
+      initialScrollTop,
+      tableRows.length,
+      rowVirtualizer,
+      hasRenderedRows,
+    ]);
 
     const handleContextMenu = useCallback(
       (
@@ -2534,6 +2576,7 @@ export const DataGrid = React.memo(
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- same focus host: must be reachable with Tab to use the keyboard model
           tabIndex={0}
           onKeyDown={handleGridKeyDown}
+          onScroll={handleScroll}
           className="h-full overflow-auto border border-default rounded bg-elevated relative focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
         >
           <table className="w-full text-left border-collapse">
