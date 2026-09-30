@@ -1076,7 +1076,6 @@ impl DatabaseDriver for RpcDriver {
             .call_detailed(
                 "get_table_query_template",
                 json!({ "params": params, "request": request }),
-                PLUGIN_CALL_TIMEOUT,
             )
             .await
         {
