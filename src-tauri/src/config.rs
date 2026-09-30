@@ -300,14 +300,29 @@ pub const DEFAULT_MCP_APPROVAL_NOTIFY_SOUND: bool = true;
 /// unreadable.
 pub fn load_config_from_disk() -> AppConfig {
     let path = crate::paths::get_app_config_dir().join("config.json");
-    let config = fs::read_to_string(&path)
-        .ok()
-        .and_then(|s| serde_json::from_str::<AppConfig>(&s).ok())
-        .unwrap_or_default();
+    let (config, trusted) = parse_config_file(fs::read_to_string(&path));
     // The MCP subprocess never goes through `cache_config`; keep its plugin
-    // call timeouts in sync with what is on disk.
-    crate::plugins::call_timeout::apply_config(&config);
+    // call timeouts in sync with what is on disk. A transient read or parse
+    // failure must not reset them to the defaults, so the last-known-good
+    // snapshot is kept in that case.
+    if trusted {
+        crate::plugins::call_timeout::apply_config(&config);
+    }
     config
+}
+
+/// Turns the result of reading `config.json` into a config plus whether it
+/// reflects what the user actually configured. A missing file is trusted
+/// (the defaults are the real config), a read or parse error is not.
+fn parse_config_file(read: std::io::Result<String>) -> (AppConfig, bool) {
+    match read {
+        Ok(content) => match serde_json::from_str::<AppConfig>(&content) {
+            Ok(config) => (config, true),
+            Err(_) => (AppConfig::default(), false),
+        },
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => (AppConfig::default(), true),
+        Err(_) => (AppConfig::default(), false),
+    }
 }
 
 /// True when `connection_id` should be treated as read-only by MCP, taking
@@ -1313,5 +1328,34 @@ mod tests {
         // we just confirm the call returns a valid AppConfig (Default fallback
         // path is exercised indirectly via parse failures + missing file).
         let _ = load_config_from_disk();
+    }
+
+    #[test]
+    fn parse_config_file_trusts_valid_content() {
+        let (config, trusted) =
+            parse_config_file(Ok(r#"{"pluginCallTimeoutSeconds":0}"#.to_string()));
+        assert!(trusted);
+        assert_eq!(config.plugin_call_timeout_seconds, Some(0));
+    }
+
+    #[test]
+    fn parse_config_file_trusts_missing_file() {
+        let missing = std::io::Error::from(std::io::ErrorKind::NotFound);
+        let (config, trusted) = parse_config_file(Err(missing));
+        assert!(trusted);
+        assert_eq!(config.plugin_call_timeout_seconds, None);
+    }
+
+    #[test]
+    fn parse_config_file_distrusts_read_errors() {
+        let denied = std::io::Error::from(std::io::ErrorKind::PermissionDenied);
+        let (_, trusted) = parse_config_file(Err(denied));
+        assert!(!trusted);
+    }
+
+    #[test]
+    fn parse_config_file_distrusts_malformed_content() {
+        let (_, trusted) = parse_config_file(Ok("{ truncated".to_string()));
+        assert!(!trusted);
     }
 }
