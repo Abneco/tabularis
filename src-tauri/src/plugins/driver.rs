@@ -18,7 +18,9 @@ use crate::models::{
     TriggerInfo, ViewInfo,
 };
 use crate::plugins::connection_metadata::{ConnectionMetadataCache, ConnectionMetadataOverrides};
-use crate::plugins::rpc::{JsonRpcRequest, JsonRpcResponse, PluginCallError};
+use crate::plugins::rpc::{
+    cancel_notification_line, JsonRpcRequest, JsonRpcResponse, PluginCallError,
+};
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -46,7 +48,8 @@ enum PluginCommand {
         oneshot::Sender<Result<Value, PluginCallError>>,
     ),
     /// Drop the pending entry for `id` because the caller stopped waiting
-    /// (timed out). Prevents an unbounded leak of orphaned response senders.
+    /// (timed out), and send the plugin a `cancel` notification for it.
+    /// Prevents an unbounded leak of orphaned response senders.
     Cancel(u64),
 }
 
@@ -145,7 +148,19 @@ impl PluginProcess {
                             Some(PluginCommand::Cancel(id)) => {
                                 // Caller timed out; drop the orphaned sender so
                                 // pending_requests does not grow without bound.
-                                pending_requests.remove(&id);
+                                // If it was still pending, ask the plugin to stop
+                                // the work too, so e.g. a SQL statement does not
+                                // keep running on the server after the error.
+                                if pending_requests.remove(&id).is_some() {
+                                    let line = cancel_notification_line(id);
+                                    if let Err(e) = stdin.write_all(line.as_bytes()).await {
+                                        log::warn!(
+                                            "Failed to send cancel for plugin request {}: {}",
+                                            id,
+                                            e
+                                        );
+                                    }
+                                }
                             }
                             None => {
                                 // Channel closed without explicit shutdown — kill the process anyway.
@@ -2411,3 +2426,7 @@ mod table_query_template_tests;
 #[cfg(test)]
 #[path = "startup_tests.rs"]
 mod startup_tests;
+
+#[cfg(test)]
+#[path = "cancel_tests.rs"]
+mod cancel_tests;
