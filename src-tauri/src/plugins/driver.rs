@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -34,6 +34,77 @@ const PLUGIN_INIT_TIMEOUT: Duration = Duration::from_secs(15);
 /// Flag to create the process without a console window on Windows.
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+/// Read an `execute_query` response in either supported shape.
+///
+/// A plugin written before session pinning answers with the `QueryResult`
+/// itself. One that supports it answers with an object carrying that result
+/// plus whether the session is still inside an explicit transaction. Both
+/// stay valid permanently, so core and plugin can be updated in either
+/// order.
+///
+/// The wrapper is recognised by its `in_transaction` key: a bare
+/// `QueryResult` has no such field, while its own `rows`/`columns` live one
+/// level down under `result`. A non-bool flag reads as `false`, as in
+/// [`parse_batch_response`].
+fn parse_query_response(value: Value) -> Result<(QueryResult, bool), String> {
+    if let Some(object) = value.as_object() {
+        if let (Some(result), Some(flag)) = (object.get("result"), object.get("in_transaction")) {
+            let parsed: QueryResult =
+                serde_json::from_value(result.clone()).map_err(|e| e.to_string())?;
+            return Ok((parsed, flag.as_bool().unwrap_or(false)));
+        }
+    }
+    let parsed: QueryResult = serde_json::from_value(value).map_err(|e| e.to_string())?;
+    Ok((parsed, false))
+}
+
+/// A session-aware plugin answers a failed statement with its error and the
+/// transaction state it left (a failed `COMMIT` has ended the transaction).
+fn parse_session_error(value: &Value) -> Option<(String, bool)> {
+    let object = value.as_object()?;
+    let error = object.get("error")?.as_str()?;
+    let in_transaction = object.get("in_transaction")?.as_bool().unwrap_or(false);
+    Some((error.to_string(), in_transaction))
+}
+
+/// The last `in_transaction` a plugin reported per session, so a failed or
+/// cancelled run can still be answered by `session_in_transaction`.
+fn plugin_session_states() -> &'static Mutex<HashMap<String, bool>> {
+    static STATES: std::sync::OnceLock<Mutex<HashMap<String, bool>>> = std::sync::OnceLock::new();
+    STATES.get_or_init(Default::default)
+}
+
+fn remember_session_state(session_id: Option<&str>, in_transaction: bool) {
+    if let Some(id) = session_id {
+        let mut states = plugin_session_states().lock().unwrap_or_else(|e| e.into_inner());
+        states.insert(id.to_string(), in_transaction);
+    }
+}
+
+/// Read an `execute_query_batch` response in either supported shape.
+///
+/// A plugin written before session pinning answers with a bare array of
+/// per-statement results. One that supports it answers with an object
+/// carrying the same array plus whether the session is still inside an
+/// explicit transaction. Both stay valid permanently so the two repos can
+/// be updated in either order.
+fn parse_batch_response(value: Value) -> Result<(Vec<BatchStatementResult>, bool), String> {
+    if let Some(object) = value.as_object() {
+        if let Some(results) = object.get("results") {
+            let statements: Vec<BatchStatementResult> =
+                serde_json::from_value(results.clone()).map_err(|e| e.to_string())?;
+            let in_transaction = object
+                .get("in_transaction")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+            return Ok((statements, in_transaction));
+        }
+    }
+    let statements: Vec<BatchStatementResult> =
+        serde_json::from_value(value).map_err(|e| e.to_string())?;
+    Ok((statements, false))
+}
 
 /// Heuristic for the JSON-RPC "method not found" error (code -32601). Only
 /// the error *message* survives the response plumbing, so optional-method
@@ -905,6 +976,111 @@ impl DatabaseDriver for RpcDriver {
                 Ok(results)
             }
             Err(e) => Err(e),
+        }
+    }
+
+    async fn execute_query_in_session(
+        &self,
+        params: &ConnectionParams,
+        query: &str,
+        limit: Option<u32>,
+        page: u32,
+        schema: Option<&str>,
+        session_id: Option<&str>,
+    ) -> Result<(QueryResult, bool), String> {
+        let res = self
+            .process
+            .call(
+                "execute_query",
+                json!({
+                    "params": params,
+                    "query": query,
+                    "limit": limit,
+                    "page": page,
+                    "schema": schema,
+                    "session_id": session_id
+                }),
+            )
+            .await?;
+        if let Some((error, in_transaction)) = parse_session_error(&res) {
+            remember_session_state(session_id, in_transaction);
+            return Err(error);
+        }
+        let (result, in_transaction) = parse_query_response(res)?;
+        remember_session_state(session_id, in_transaction);
+        Ok((result, in_transaction))
+    }
+
+    async fn execute_batch_in_session(
+        &self,
+        params: &ConnectionParams,
+        queries: &[String],
+        limit: Option<u32>,
+        page: u32,
+        schema: Option<&str>,
+        session_id: Option<&str>,
+        on_progress: Option<&BatchProgressFn>,
+    ) -> Result<(Vec<BatchStatementResult>, bool), String> {
+        let res = self
+            .process
+            .call(
+                "execute_query_batch",
+                json!({
+                    "params": params,
+                    "queries": queries,
+                    "limit": limit,
+                    "page": page,
+                    "schema": schema,
+                    "session_id": session_id
+                }),
+            )
+            .await;
+
+        match res {
+            Ok(value) => {
+                let (results, in_transaction) = parse_batch_response(value)?;
+                remember_session_state(session_id, in_transaction);
+                if let Some(cb) = on_progress {
+                    for (idx, result) in results.iter().enumerate() {
+                        cb(idx, result);
+                    }
+                }
+                Ok((results, in_transaction))
+            }
+            // A plugin built before session pinning existed ignores
+            // `session_id` and answers with a bare array, which
+            // `parse_batch_response` already accepts. Only a missing
+            // `execute_query_batch` reaches the per-statement fallback.
+            Err(e) if is_method_not_found(&e) => {
+                let results = self
+                    .execute_batch(params, queries, limit, page, schema, on_progress)
+                    .await?;
+                Ok((results, false))
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    async fn session_in_transaction(&self, session_id: &str) -> Option<bool> {
+        let states = plugin_session_states().lock().unwrap_or_else(|e| e.into_inner());
+        states.get(session_id).copied()
+    }
+
+    async fn release_session(&self, session_id: &str) {
+        plugin_session_states()
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .remove(session_id);
+        // Plugins that do not pin connections have no such method, and a
+        // failure here must not surface: the caller is closing a tab.
+        if let Err(e) = self
+            .process
+            .call("release_session", json!({ "session_id": session_id }))
+            .await
+        {
+            if !is_method_not_found(&e) {
+                log::warn!("Plugin driver: release_session({session_id}) failed: {e}");
+            }
         }
     }
 
@@ -1955,6 +2131,120 @@ mod tests {
             *seen.lock().expect("progress lock"),
             vec![(0, true), (1, false)]
         );
+    }
+
+    #[test]
+    fn parse_query_response_accepts_a_bare_query_result() {
+        // The shape a plugin built before session pinning answers with.
+        let value = serde_json::json!({
+            "columns": ["id"],
+            "rows": [[1]],
+            "affected_rows": 0,
+            "pagination": null
+        });
+        let (result, in_transaction) =
+            parse_query_response(value).expect("bare QueryResult is a valid response");
+        assert_eq!(result.columns, vec!["id".to_string()]);
+        assert!(!in_transaction);
+    }
+
+    #[test]
+    fn parse_query_response_reads_the_session_aware_wrapper() {
+        let value = serde_json::json!({
+            "result": {
+                "columns": ["id"],
+                "rows": [[1]],
+                "affected_rows": 0,
+                "pagination": null
+            },
+            "in_transaction": true
+        });
+        let (result, in_transaction) =
+            parse_query_response(value).expect("wrapper form is a valid response");
+        assert_eq!(result.columns, vec!["id".to_string()]);
+        assert!(in_transaction);
+    }
+
+    #[test]
+    fn parse_session_error_reads_a_failed_statement_and_its_state() {
+        let failed = serde_json::json!({ "error": "deferred FK violated", "in_transaction": false });
+        assert_eq!(
+            parse_session_error(&failed),
+            Some(("deferred FK violated".to_string(), false))
+        );
+        // A result wrapper, or a bare result, is not an error.
+        let ok = serde_json::json!({ "result": { "columns": [] }, "in_transaction": true });
+        assert_eq!(parse_session_error(&ok), None);
+        let bare = serde_json::json!({ "columns": ["error"], "rows": [] });
+        assert_eq!(parse_session_error(&bare), None);
+    }
+
+    #[test]
+    fn parse_query_response_reads_a_null_flag_as_false() {
+        let value = serde_json::json!({
+            "result": {
+                "columns": ["id"],
+                "rows": [[1]],
+                "affected_rows": 0,
+                "pagination": null
+            },
+            "in_transaction": null
+        });
+        let (result, in_transaction) =
+            parse_query_response(value).expect("a null flag still marks the wrapper");
+        assert_eq!(result.columns, vec!["id".to_string()]);
+        assert!(!in_transaction);
+    }
+
+    #[test]
+    fn parse_query_response_treats_a_result_column_as_a_bare_result() {
+        // A query selecting a column literally named "result" must not be
+        // mistaken for the wrapper, which is why the wrapper is recognised
+        // by `in_transaction` being present too.
+        let value = serde_json::json!({
+            "columns": ["result"],
+            "rows": [["ok"]],
+            "affected_rows": 0,
+            "pagination": null,
+            "result": "not a wrapper"
+        });
+        let (result, in_transaction) =
+            parse_query_response(value).expect("a result column is not a wrapper");
+        assert_eq!(result.columns, vec!["result".to_string()]);
+        assert!(!in_transaction);
+    }
+
+    #[test]
+    fn parse_batch_response_accepts_a_bare_array() {
+        // The shape a plugin built before session pinning answers with.
+        let value = serde_json::json!([
+            { "result": null, "error": "boom", "execution_time_ms": 1.5 }
+        ]);
+        let (results, in_transaction) =
+            parse_batch_response(value).expect("bare array is a valid response");
+        assert_eq!(results.len(), 1);
+        assert!(!in_transaction);
+    }
+
+    #[test]
+    fn parse_batch_response_reads_the_session_aware_object() {
+        let value = serde_json::json!({
+            "results": [{ "result": null, "error": "boom", "execution_time_ms": 1.5 }],
+            "in_transaction": true
+        });
+        let (results, in_transaction) =
+            parse_batch_response(value).expect("object form is a valid response");
+        assert_eq!(results.len(), 1);
+        assert!(in_transaction);
+    }
+
+    #[test]
+    fn parse_batch_response_defaults_in_transaction_to_false() {
+        let value = serde_json::json!({ "results": [] });
+        let (results, in_transaction) =
+            parse_batch_response(value).expect("object without the flag is valid");
+        assert!(results.is_empty());
+        assert!(!in_transaction);
     }
 
     #[tokio::test]

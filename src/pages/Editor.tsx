@@ -10,7 +10,7 @@ import {
   getLoadedRowsExportLimit,
 } from "../utils/resultExport";
 import { serializePkKey, buildPkMap } from "../utils/dataGrid";
-import { tint } from "../utils/tones";
+import { TONE_SOFT_BG_CLASS, TONE_TEXT_CLASS, tint } from "../utils/tones";
 import {
   buildKeylessUpdatePlan,
   resolveRowIdentity,
@@ -304,6 +304,34 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
   useEffect(() => {
     setActiveFkQuery(null);
   }, [activeTabId]);
+
+  // Tabs that left an explicit transaction open. Such a tab holds a pooled
+  // connection until it commits, rolls back or closes, so the state is shown
+  // on the tab and the connection is released when it goes away.
+  const [transactionTabIds, setTransactionTabIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const transactionTabIdsRef = useRef<ReadonlySet<string>>(transactionTabIds);
+  transactionTabIdsRef.current = transactionTabIds;
+
+  useEffect(() => {
+    const unlisten = listen<{ session_id: string; in_transaction: boolean }>(
+      "session-transaction-state",
+      (event) => {
+        const { session_id: sessionId, in_transaction: inTransaction } = event.payload;
+        setTransactionTabIds((prev) => {
+          if (prev.has(sessionId) === inTransaction) return prev;
+          const next = new Set(prev);
+          if (inTransaction) next.add(sessionId);
+          else next.delete(sessionId);
+          return next;
+        });
+      },
+    );
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, []);
 
   useEffect(() => {
     const unlisten = listen<ExportProgress>("export_progress", (event) => {
@@ -911,11 +939,21 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
 
   const requestTabClosure = useCallback(
     (tabIds: string[], action: () => void) => {
-      if (!hasUnsavedSqlFileTabs(tabsRef.current, tabIds)) {
+      // EditorProvider releases a closed tab's session once it leaves the list.
+      const close = () => {
+        setTransactionTabIds((prev) => {
+          if (!tabIds.some((id) => prev.has(id))) return prev;
+          const next = new Set(prev);
+          for (const id of tabIds) next.delete(id);
+          return next;
+        });
         action();
+      };
+      if (!hasUnsavedSqlFileTabs(tabsRef.current, tabIds)) {
+        close();
         return;
       }
-      pendingTabCloseActionRef.current = action;
+      pendingTabCloseActionRef.current = close;
       setHasPendingSqlFileClose(true);
     },
     [],
@@ -1216,6 +1254,10 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
           query: textToRun,
           limit: pageSize,
           page: pageNum,
+          // One statement at a time is how a transaction is driven: BEGIN,
+          // the changes, a verifying SELECT, COMMIT. Without the session the
+          // run would land on a different pooled connection each time.
+          sessionId: targetTabId,
           ...(schema ? { schema } : {}),
         });
         const end = performance.now();
@@ -1509,6 +1551,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
             limit: pageSize,
             page: 1,
             batchId,
+            // The tab is the session: a transaction it leaves open keeps
+            // this tab's connection so the next run continues it.
+            sessionId: targetTabId,
             ...(schema ? { schema } : {}),
           },
         );
@@ -1661,6 +1706,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
           query: entry.query,
           limit: pageSize,
           page: pageNum,
+          // Paging within the tab has to read through the tab's own
+          // transaction, or it shows pre-transaction rows.
+          sessionId: targetTabId,
           ...(schema ? { schema } : {}),
         });
         const end = performance.now();
@@ -1767,6 +1815,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
           connectionId: activeConnectionId,
           query: countTarget,
           schema: tab.schema ?? activeSchema,
+          // Inside a transaction, count what the tab sees, uncommitted rows included.
+          sessionId: transactionTabIdsRef.current.has(tab.id) ? tab.id : undefined,
         });
         const latest = tabsRef.current.find((t) => t.id === tab.id) ?? tab;
         if (!latest.result?.pagination) return;
@@ -3707,6 +3757,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         format,
         csvDelimiter: format === "csv" ? csvDelimiter : undefined,
         ...databaseParam,
+        // Inside a transaction, export what the tab sees, uncommitted rows included.
+        sessionId:
+          activeTab && transactionTabIds.has(activeTab.id) ? activeTab.id : undefined,
       });
 
       // Success: update modal state instead of showing toast
@@ -3763,6 +3816,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         // a large practical cap; the toast reports the actual rows fetched.
         limit: totalRows ?? 1_000_000,
         page: 1,
+        // Copying every row must see what the tab's own transaction sees.
+        sessionId: activeTab.id,
         ...(schema ? { schema } : {}),
       });
       const text = formatRowsForCopy(res.rows, res.columns ?? columns, copyFormat, {
@@ -3907,6 +3962,12 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
           onDrop={handleTabsDrop}
           className="flex flex-1 overflow-x-auto no-scrollbar h-full relative"
         >
+          {/* Always mounted, so a screen reader announces when the active tab opens a transaction. */}
+          <span role="status" className="sr-only">
+            {activeTabId && transactionTabIds.has(activeTabId)
+              ? t("editor.transactionOpenHint")
+              : ""}
+          </span>
           {tabs.map((tab, index) => (
             <div
               key={tab.id}
@@ -4018,6 +4079,17 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                   {tab.type === "console" && isMultiDb && (
                     <span className="text-muted shrink-0">
                       ({tab.schema || selectedDatabases[0]})
+                    </span>
+                  )}
+                  {transactionTabIds.has(tab.id) && (
+                    // This tab is holding a pooled connection open, and its
+                    // uncommitted changes are invisible to every other tab.
+                    <span
+                      className={`shrink-0 px-1 rounded text-[9px] font-semibold uppercase tracking-wide ${TONE_SOFT_BG_CLASS.warning} ${TONE_TEXT_CLASS.warning}`}
+                      title={t("editor.transactionOpenHint")}
+                      aria-label={t("editor.transactionOpenHint")}
+                    >
+                      {t("editor.transactionOpen")}
                     </span>
                   )}
                 </span>
