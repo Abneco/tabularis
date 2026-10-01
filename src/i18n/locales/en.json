@@ -750,6 +750,9 @@
     "erDiagramDefaultLayout": "Default Layout",
     "erDiagramDefaultLayoutDesc": "Choose the default layout direction for ER diagrams",
     "plugins": {
+      "runtimeTitle": "Plugin runtime",
+      "callTimeout": "Call timeout",
+      "callTimeoutDesc": "Maximum time Tabularis waits for a plugin to answer a single request (queries included). Set 0 to disable the limit. Each plugin can override this value in its own settings.",
       "title": "Plugins",
       "overviewTitle": "Plugin Center",
       "overviewDesc": "Install extensions, manage plugin drivers, and keep runtime settings under control.",
@@ -823,6 +826,10 @@
         "configure": "Configure Interpreter"
       },
       "pluginSettings": {
+        "callTimeout": "Call timeout",
+        "callTimeoutDesc": "Overrides the global plugin call timeout for this plugin only. Set 0 to disable the limit, leave blank to inherit the global value.",
+        "callTimeoutPlaceholder": "Inherit global ({{seconds}} s)",
+        "callTimeoutInherit": "Inherit global value",
         "title": "Plugin Settings",
         "interpreter": "Interpreter",
         "interpreterDesc": "Optional. Specify the executable used to run this plugin (e.g. python3 on macOS/Linux, python or a full path on Windows). Leave blank to use the default.",

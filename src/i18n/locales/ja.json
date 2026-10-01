@@ -719,6 +719,9 @@
     "erDiagramDefaultLayout": "デフォルトレイアウト",
     "erDiagramDefaultLayoutDesc": "ER 図のデフォルトのレイアウト方向を選択します",
     "plugins": {
+      "runtimeTitle": "プラグインランタイム",
+      "callTimeout": "呼び出しタイムアウト",
+      "callTimeoutDesc": "Tabularis がプラグインからの単一リクエスト(クエリを含む)の応答を待つ最大時間です。0 で制限を無効にします。各プラグインは個別の設定でこの値を上書きできます。",
       "title": "プラグイン",
       "overviewTitle": "プラグインセンター",
       "overviewDesc": "拡張機能のインストール、プラグインドライバの管理、実行時設定のコントロールを行います。",
@@ -792,6 +795,10 @@
         "configure": "インタプリタを設定"
       },
       "pluginSettings": {
+        "callTimeout": "呼び出しタイムアウト",
+        "callTimeoutDesc": "このプラグインに限り、グローバルの呼び出しタイムアウトを上書きします。0 で制限を無効化、空欄でグローバル値を継承します。",
+        "callTimeoutPlaceholder": "グローバルを継承 ({{seconds}} 秒)",
+        "callTimeoutInherit": "グローバル値を継承",
         "title": "プラグイン設定",
         "interpreter": "インタプリタ",
         "interpreterDesc": "任意。このプラグインの実行に使用する実行ファイルを指定します (例: macOS/Linux では python3、Windows では python またはフルパス)。空欄の場合はデフォルトが使用されます。",
