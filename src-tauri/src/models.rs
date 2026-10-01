@@ -2,6 +2,9 @@ use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 
+mod table_query_template;
+pub use table_query_template::{TableQueryTemplateKind, TableQueryTemplateRequest};
+
 /// Returns the set of group IDs that form the subtree rooted at `root_id`,
 /// including the root itself. Walks `parent_id` pointers transitively so
 /// any number of nesting levels is collected. The caller is expected to
@@ -255,6 +258,18 @@ pub struct ConnectionParams {
     pub k8s_kubectl_path: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub k8s_kubeconfig_path: Option<String>,
+    // AWS SSM port forwarding (mutually exclusive with SSH and Kubernetes).
+    // Forwards to `host`:`port` the same way the SSH tunnel does; a loopback
+    // host means the managed node itself.
+    #[serde(default)]
+    pub ssm_enabled: Option<bool>,
+    /// Managed node the session is opened against, e.g. `i-0abc...`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ssm_target: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ssm_profile: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ssm_region: Option<String>,
     /// SQL run on every new physical connection in the pool (e.g. `SET` /
     /// `set_config` for session-scoped settings such as bypassing RLS).
     /// Statements are separated by `;`. Runs per pooled connection so the

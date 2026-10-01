@@ -349,12 +349,7 @@ pub async fn restart_plugin_process(
         .and_then(|mut m| m.remove(&plugin_id));
     let interpreter_override = plugin_cfg.as_ref().and_then(|c| c.interpreter.clone());
     let settings = plugin_cfg.map(|c| c.settings).unwrap_or_default();
-    let plugins_dir = installer::get_plugins_dir()
-        .map_err(|e| format!("Could not locate plugins directory: {}", e))?;
-    let plugin_dir = plugins_dir.join(&plugin_id);
-    if !plugin_dir.exists() {
-        return Err(format!("Plugin '{}' is not installed", plugin_id));
-    }
+    let plugin_dir = installer::resolve_plugin_dir(&plugin_id)?;
     load_plugin_from_dir(&plugin_dir, interpreter_override, settings)
         .await
         .map_err(|e| format!("Failed to restart plugin '{}': {}", plugin_id, e))?;

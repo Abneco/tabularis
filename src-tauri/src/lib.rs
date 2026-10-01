@@ -46,6 +46,9 @@ pub mod export;
 pub mod export_crypto;
 #[cfg(test)]
 pub mod export_import_tests;
+pub mod fs_path;
+#[cfg(test)]
+pub mod fs_path_tests;
 pub mod health_check;
 #[cfg(test)]
 pub mod group_tree_tests;
@@ -94,6 +97,7 @@ pub mod saved_queries;
 #[cfg(test)]
 pub mod saved_queries_tests;
 pub mod ssh_tunnel;
+pub mod ssm_tunnel;
 pub mod sqlite_database;
 #[cfg(test)]
 pub mod sqlite_database_tests;
@@ -101,6 +105,7 @@ mod system_theme;
 pub mod task_manager;
 pub mod theme_commands;
 pub mod theme_models;
+pub mod theme_packages;
 pub mod updater;
 pub mod window_decorations;
 pub mod drivers {
@@ -490,6 +495,8 @@ pub fn run() {
             commands::get_k8s_resources_cmd,
             commands::get_k8s_resource_ports_cmd,
             commands::validate_k8s_path_cmd,
+            // AWS SSM
+            commands::test_ssm_connection_cmd,
             // Connection Groups
             commands::get_connection_groups,
             commands::get_connections_with_groups,
@@ -538,6 +545,7 @@ pub fn run() {
             commands::read_file_as_data_url,
             commands::execute_query,
             commands::execute_query_batch,
+            commands::release_query_session,
             commands::get_server_now,
             commands::explain_query_plan,
             commands::count_query,
@@ -624,6 +632,7 @@ pub fn run() {
             commands::get_ai_schema_context,
             commands::get_schema_snapshot,
             // DDL generation
+            commands::get_table_query_template,
             commands::get_create_table_sql,
             commands::get_add_column_sql,
             commands::get_alter_column_sql,
@@ -667,6 +676,22 @@ pub fn run() {
             ai_commands::list_pending_approvals,
             ai_commands::decide_pending_approval,
             // Themes
+            theme_packages::commands::preview_theme_document,
+            theme_packages::commands::preview_local_theme_package,
+            theme_packages::commands::install_local_theme_package,
+            theme_packages::commands::fetch_theme_registry,
+            theme_packages::commands::fetch_theme_package_detail,
+            theme_packages::commands::install_registry_theme,
+            theme_packages::commands::cancel_theme_install,
+            theme_packages::commands::set_theme_package_enabled,
+            theme_packages::commands::uninstall_theme_package,
+            theme_packages::commands::recover_theme_packages,
+            theme_commands::get_theme_catalog,
+            theme_commands::create_personal_theme,
+            theme_commands::create_personal_snapshot,
+            theme_commands::update_personal_theme,
+            theme_commands::update_personal_snapshot,
+            theme_commands::duplicate_personal_theme,
             theme_commands::get_all_themes,
             theme_commands::get_theme,
             theme_commands::save_custom_theme,
@@ -748,9 +773,21 @@ pub fn run() {
                 // Back up the freshest state before the process ends (no-op
                 // unless backups are enabled and due).
                 backup::run_exit_backup(app_handle);
-                log::info!("Application exiting, stopping all active SSH tunnels...");
+                // Roll back pinned transactions while the tunnels they run through are still up.
+                // Only the built-in PostgreSQL driver pins; plugins release in their own shutdown.
+                tauri::async_runtime::block_on(async {
+                    let release = crate::drivers::postgres::session::release_all();
+                    if tokio::time::timeout(std::time::Duration::from_secs(3), release)
+                        .await
+                        .is_err()
+                    {
+                        log::warn!("Releasing pinned PostgreSQL sessions timed out on exit");
+                    }
+                });
+                log::info!("Application exiting, stopping all active tunnels...");
                 crate::ssh_tunnel::stop_all_tunnels();
                 crate::proxy::stop_all_forwards();
+                crate::ssm_tunnel::stop_all_tunnels();
             }
         });
 }

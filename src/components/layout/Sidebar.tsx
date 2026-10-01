@@ -308,7 +308,7 @@ export const Sidebar = () => {
           <div className="relative mb-2">
             <button
               onClick={() => openUrl(DISCORD_URL)}
-              className="flex items-center justify-center w-12 h-12 rounded-lg transition-colors relative group text-secondary hover:bg-surface-secondary hover:text-indigo-400"
+              className="flex items-center justify-center w-12 h-12 rounded-lg transition-colors relative group text-secondary hover:bg-surface-secondary hover:text-accent"
             >
               <RailIndicator isActive={false} className="-left-2" />
               <div className="relative">
@@ -394,7 +394,7 @@ export const Sidebar = () => {
               }}
               className={`rounded-lg p-2 transition-colors group relative ${
                 sidebarTab === tab.id
-                  ? "text-accent-primary bg-accent-primary/10"
+                  ? "text-accent bg-accent-primary/10"
                   : "text-muted hover:text-secondary hover:bg-surface-secondary"
               }`}
               title={tab.label}

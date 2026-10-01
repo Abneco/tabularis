@@ -62,8 +62,8 @@ export const SchemaModal = ({ isOpen, onClose, target }: SchemaModalProps) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-default bg-base">
           <div className="flex items-center gap-3">
-            <div className="bg-blue-900/30 p-2 rounded-lg">
-              <Table2 size={20} className="text-blue-400" />
+            <div className="bg-accent-primary/15 p-2 rounded-lg">
+              <Table2 size={20} className="text-accent" />
             </div>
             <div className="select-text selection:bg-accent-primary! selection:text-inverse!">
               <h2 className="text-lg font-semibold text-primary">{t('schema.title', { table: tableName })}</h2>
@@ -104,12 +104,12 @@ export const SchemaModal = ({ isOpen, onClose, target }: SchemaModalProps) => {
                 {columns.map(col => (
                   <tr key={col.name} className="border-b border-default hover:bg-surface-secondary/30">
                     <td className="px-4 py-2.5 text-sm text-primary font-mono">{col.name}</td>
-                    <td className="px-4 py-2.5 text-sm text-blue-300 font-mono">{col.data_type}</td>
+                    <td className="px-4 py-2.5 text-sm text-accent font-mono">{col.data_type}</td>
                     <td className="px-4 py-2.5 text-xs text-secondary text-center">
                       {col.is_nullable ? t('schema.yes') : t('schema.no')}
                     </td>
                     <td className="px-4 py-2.5 text-center">
-                      {col.is_pk && <Key size={14} className="text-yellow-500 mx-auto" />}
+                      {col.is_pk && <Key size={14} className="text-semantic-pk mx-auto" />}
                     </td>
                     <td className="px-4 py-2.5 text-xs text-secondary whitespace-pre-wrap max-w-[320px]">
                       {col.comment || <span className="text-muted">—</span>}

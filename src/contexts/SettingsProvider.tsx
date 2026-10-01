@@ -9,11 +9,7 @@ import {
   DEFAULT_SETTINGS,
   type Settings,
 } from "./SettingsContext";
-import {
-  applyResultFontToDocument,
-  getFontCSS,
-  stripSessionFields,
-} from "../utils/settings";
+import { applyResultFontToDocument, stripSessionFields, applyFontToDocument } from "../utils/settings";
 
 const LANGUAGE_APPLICATION_TIMEOUT_MS = 3000;
 
@@ -184,18 +180,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         }
 
         // IMMEDIATELY apply font settings from backend config BEFORE setting state
-        // This prevents flash if localStorage cache was stale
-        const fontFamily = getFontCSS(finalSettings.fontFamily);
-        const fontSize = finalSettings.fontSize || 14;
-
-        // Apply immediately to override any stale cache from pre-load script
-        document.documentElement.style.setProperty("--font-base", fontFamily);
-        document.documentElement.style.setProperty(
-          "--font-size-base",
-          `${fontSize}px`,
-        );
-        document.body.style.fontFamily = fontFamily;
-        document.body.style.fontSize = `${fontSize}px`;
+        // This prevents flash if localStorage cache was stale. The default
+        // choice leaves the base font to the theme.
+        applyFontToDocument(finalSettings.fontFamily, finalSettings.fontSize || 14);
         applyResultFontToDocument(finalSettings.resultFontFamily);
 
         const languageAlreadyApplied = isLanguageApplied(finalSettings.language);
@@ -323,13 +310,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   // Apply font family
   useEffect(() => {
     if (isLoading) return;
-    const fontFamily = getFontCSS(settings.fontFamily);
-
-    // Apply to CSS variable
-    document.documentElement.style.setProperty("--font-base", fontFamily);
-
-    // ALSO apply directly to body as fallback
-    document.body.style.fontFamily = fontFamily;
+    applyFontToDocument(settings.fontFamily, settings.fontSize);
 
     // Cache for next startup
     try {

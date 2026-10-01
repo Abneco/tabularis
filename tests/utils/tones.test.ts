@@ -5,6 +5,7 @@ import {
   TONE_DOT_CLASS,
   TONE_SOFT_BG_CLASS,
   TONE_TEXT_CLASS,
+  tint,
   toneStyle,
   type Tone,
 } from "../../src/utils/tones";
@@ -47,5 +48,11 @@ describe("tones", () => {
     expect(TONE_DOT_CLASS.update).toBe("bg-accent-primary");
     expect(TONE_ACCENT.update).not.toBe(TONE_ACCENT.warning);
     expect(TONE_ACCENT.update).not.toBe(TONE_ACCENT.danger);
+  });
+  describe("tint", () => {
+    it("mixes any color, including a theme variable, over transparent", () => {
+      expect(tint("var(--accent-primary)", 19)).toBe("color-mix(in srgb, var(--accent-primary) 19%, transparent)");
+      expect(tint("#3b82f6", 50)).toBe("color-mix(in srgb, #3b82f6 50%, transparent)");
+    });
   });
 });

@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { X, Save } from 'lucide-react';
 import type { BeforeMount } from "@monaco-editor/react";
 import { MonacoEditor } from "../ui/LazyMonaco";
 import { useTranslation } from 'react-i18next';
 import { useEditorTheme } from '../../hooks/useEditorTheme';
 import { loadMonacoTheme } from '../../themes/themeUtils';
+import { getMonacoThemeId } from '../../themes/themeRuntime';
 import { Modal } from '../ui/Modal';
 import { Select } from '../ui/Select';
 
@@ -22,6 +23,7 @@ interface QueryModalProps {
 export const QueryModal = ({ isOpen, onClose, onSave, initialName = '', initialSql = '', initialDatabase, databases, title = 'Save Query' }: QueryModalProps) => {
   const { t } = useTranslation();
   const [name, setName] = useState(initialName);
+  const nameId = useId();
   const [sql, setSql] = useState(initialSql);
   const [database, setDatabase] = useState<string | null>(initialDatabase ?? null);
   const [error, setError] = useState('');
@@ -75,12 +77,12 @@ export const QueryModal = ({ isOpen, onClose, onSave, initialName = '', initialS
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">Name</label>
-            <input autoCorrect="off" autoCapitalize="off" autoComplete="off" spellCheck={false}
+            <label htmlFor={nameId} className="block text-sm font-medium text-secondary mb-1">Name</label>
+            <input id={nameId} autoCorrect="off" autoCapitalize="off" autoComplete="off" spellCheck={false}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-base border border-strong rounded px-3 py-2 text-primary focus:outline-none focus:border-blue-500"
+              className="w-full bg-base border border-strong rounded px-3 py-2 text-primary focus:outline-none focus:border-focus"
               placeholder="My Query"
               autoFocus
             />
@@ -100,12 +102,12 @@ export const QueryModal = ({ isOpen, onClose, onSave, initialName = '', initialS
           )}
 
           <div>
-            <label className="block text-sm font-medium text-secondary mb-1">SQL</label>
+            <div className="block text-sm font-medium text-secondary mb-1">SQL</div>
             <div className="h-64 w-full border border-strong rounded overflow-hidden">
                 <MonacoEditor
                     height="100%"
                     defaultLanguage="sql"
-                    theme={editorTheme.id}
+                    theme={getMonacoThemeId(editorTheme.id)}
                     beforeMount={handleBeforeMount}
                     value={sql}
                     onChange={(val) => setSql(val || '')}
@@ -122,7 +124,7 @@ export const QueryModal = ({ isOpen, onClose, onSave, initialName = '', initialS
             </div>
           </div>
 
-          {error && <div className="text-red-400 text-sm">{error}</div>}
+          {error && <div className="text-accent-error text-sm">{error}</div>}
 
           <div className="flex justify-end gap-2 pt-2">
             <button
@@ -135,7 +137,7 @@ export const QueryModal = ({ isOpen, onClose, onSave, initialName = '', initialS
             <button
               type="submit"
               disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded font-medium disabled:opacity-50 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded font-medium disabled:opacity-50 transition-colors"
             >
               <Save size={16} />
               {isSaving ? 'Saving...' : 'Save'}

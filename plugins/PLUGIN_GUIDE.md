@@ -41,21 +41,28 @@ A Tabularis plugin is distributed as a `.zip` file. When extracted into the plug
 
 ```text
 plugins/
-└── duckdb/
-    ├── .tabularium  (or legacy manifest.json)
-    └── duckdb-plugin  (or duckdb-plugin.exe on Windows)
+└── drivers/
+    └── duckdb/
+        ├── .tabularium  (or legacy manifest.json)
+        └── duckdb-plugin  (or duckdb-plugin.exe on Windows)
 ```
+
+Installations and updates always use `plugins/<kind-folder>/<name>/`, mapping `theme` to `themes`, `driver` to `drivers`, and otherwise keeping the kind unchanged. Legacy or manually copied `plugins/<name>/` bundles are a discovery fallback; the kind-scoped copy wins. An absent manifest `kind` means `driver`; declarative themes use `theme` and are never started as drivers.
 
 ### The `.tabularium` manifest
 
-One manifest tells Tabularis everything about your plugin — and, when you publish, tells the Tabularium registry how to list it. Its canonical name is **`.tabularium`**; the host still reads a legacy `manifest.json` as a fallback. In a `.tabularium`, `name` is the lowercase slug that identifies the plugin (legacy manifests may keep a separate `id` and a display `name`). When publishing, the registry resolves the manifest from your **release assets** — upload `.tabularium` as a standalone asset (GitHub silently renames the dotfile to `default.tabularium`; the registry accepts both names).
+One manifest tells Tabularis everything about your plugin — and, when you publish, tells the Tabularium registry how to list it. Its canonical name is **`.tabularium`**; the host still reads a legacy `manifest.json` as a fallback. With Tabularium 0.14.0+, use `id` as the stable lowercase identifier and `name` as the human-readable display name. Existing manifests without `id` remain supported: their `name` continues to supply the identifier. When publishing, the registry resolves the manifest from your **release assets** — upload `.tabularium` as a standalone asset (GitHub silently renames the dotfile to `default.tabularium`; the registry accepts both names).
 
 > **JSON Schema available:** point `$schema` at the registry's live merged schema (as below) for IDE autocompletion and validation, or at the local [`plugins/manifest.schema.json`](./manifest.schema.json) for legacy `manifest.json` files.
 
 ```json
 {
   "$schema": "https://registry.tabularis.dev/manifest.schema.json?kind=driver",
-  "name": "duckdb",
+  "id": "duckdb",
+  "name": "DuckDB",
+  "kind": "driver",
+  "engine": "duckdb",
+  "paradigms": ["sql"],
   "version": "1.0.0",
   "description": "DuckDB file-based analytical database",
   "default_port": null,
@@ -90,8 +97,9 @@ One manifest tells Tabularis everything about your plugin — and, when you publ
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Lowercase slug identifying the plugin (e.g., `"duckdb"`). Must match the folder name and the registry pattern `^[a-z][a-z0-9-]*$`; it becomes the registry slug and is pinned at first submit. |
-| `id` | string | Legacy identifier from `manifest.json`-era plugins. Optional — when absent, identity falls back to `name`. Omit in new `.tabularium` manifests; the registry ignores it. |
+| `name` | string | Human-readable display name (e.g., `"SQLite JDBC"`, 1–120 characters). Without `id`, this remains the legacy lowercase identifier (1–64 characters). |
+| `id` | string | Stable identifier used in saved connections, the plugin folder and registry URLs; 1–64 characters matching `^[a-z][a-z0-9-]*$`. Recommended for new manifests. Must equal the existing registry slug when migrating. |
+| `engine` | string | Shared database engine (e.g., `"sqlite"` for `"jdbc-sqlite"`). Groups alternative drivers under the same engine; omit only when the plugin should form its own group. |
 | `version` | string | Plugin version (semver, **no leading `v`**). Must equal the release tag with any `v` prefix stripped — the registry rejects tag/manifest mismatches. |
 | `description` | string | Short description shown in the plugins list. Optional for the registry; max **280 chars**. |
 | `default_port` | number \| null | Default TCP port. Use `null` for file-based databases. |
@@ -99,6 +107,10 @@ One manifest tells Tabularis everything about your plugin — and, when you publ
 | `capabilities` | object | Feature flags (see below). |
 | `data_types` | array | List of supported data types (see below). |
 | `type_mappings` | object \| null | Optional map of generic inferred type names to driver-specific types. Used during paste/import to map generic types (e.g. `DATETIME`) to driver-native equivalents (e.g. `TIMESTAMP`). See [Type Mappings](#type-mappings) below. |
+
+### Migrating display names
+
+Upgrade the registry before publishing the new format. Add `id` equal to the **existing registry slug**, then change `name` to the display name. Do not rename installed-plugin folders, saved driver IDs or registry entries, and do not rewrite historical release archives. For JDBC, use `id: "jdbc-sqlite"`, `name: "SQLite JDBC"`, `engine: "sqlite"` in both the source manifest and generator. Known/shared engine cards retain their engine title; standalone plugin cards use the display name.
 
 ### Capabilities
 
@@ -115,6 +127,7 @@ One manifest tells Tabularis everything about your plugin — and, when you publ
 | `connection_string` | bool | Set `false` to hide the connection string import UI for this driver. Defaults to `true` for network drivers. `file_based` and `folder_based` drivers skip the import UI automatically regardless of this flag. |
 | `connection_string_example` | string | Optional placeholder example shown in the connection string import field (e.g. `"clickhouse://user:pass@localhost:9000/db"`). Also accepted as camelCase `connectionStringExample`. |
 | `identifier_quote` | string | Character used to quote SQL identifiers. Use `"\""` for ANSI standard or `` "`" `` for MySQL style. |
+| `table_query_templates` | bool | Opts the Generate SQL dialog into the optional `get_table_query_template` RPC for SELECT/UPDATE/DELETE previews. Defaults to `false`; older plugins and built-in drivers keep the existing host templates. See [Table Query Templates](#table-query-templates). |
 | `sql_dialect` | string | Optional statement-splitting dialect: `postgres`, `mysql`, `mssql`, `sqlite`, `oracle`, or `generic`. Oracle-like plugins, including DM/Dameng, should use `"oracle"`. |
 | `alter_primary_key` | bool | `true` if the database supports altering primary keys after table creation. |
 | `manage_tables` | bool | `true` to enable table and column management UI (Create Table, Add/Modify/Drop Column, Drop Table). Does not control index or FK operations. Defaults to `true`. |
@@ -659,6 +672,21 @@ The `params.params` object is a `ConnectionParams` — the same values the user 
 | `-32601` | Method not found |
 | `-32602` | Invalid params |
 | `-32603` | Internal error |
+
+### Cancel Notification (Optional)
+
+When a call exceeds the configured plugin call timeout, Tabularis stops waiting and reports the error to the user. Right after that it writes a JSON-RPC **notification** (no top-level `id`) naming the abandoned request:
+
+```json
+{ "jsonrpc": "2.0", "method": "cancel", "params": { "id": 1 } }
+```
+
+`params.id` is the `id` of the original request. Handling it is optional, but recommended for drivers that run statements on a server: without it a timed-out `execute_query` keeps running there (and a `DELETE` or `UPDATE` still takes effect) even though the user already saw an error.
+
+- **Do not reply.** A notification has no response; writing one would put an unexpected line on `stdout`.
+- **Ignore unknown ids** (already finished, already cancelled, or not cancellable). A late or duplicate cancel must never be treated as an error.
+- **Keep reading `stdin` while a request runs.** A plugin that processes requests strictly one at a time only sees the cancel after the long call has finished.
+- No cancel is sent when the timeout is disabled (`0`): the call simply waits.
 
 ---
 
@@ -1290,6 +1318,66 @@ Return foreign keys for all tables at once.
 
 ---
 
+### Table Query Templates
+
+`get_table_query_template` is an **optional, additive** RPC, called only when
+`capabilities.table_query_templates` is `true`. It returns a SQL preview and
+**must not execute** the generated statement.
+
+**Params:**
+
+```json
+{
+  "params": { "driver": "sqlserver", "connection_id": "..." },
+  "request": {
+    "table": "orders",
+    "schema": "sales",
+    "kind": "select",
+    "columns": ["id", "status"],
+    "limit": 100
+  }
+}
+```
+
+`params` is the usual resolved `ConnectionParams`. `request.kind` is `select`,
+`update` or `delete`. Table, schema and column names are **unquoted identifiers**,
+not SQL fragments; the driver must quote and escape them. `columns` defaults to
+`[]`: SELECT uses `*`, UPDATE produces an editable column placeholder. `schema`
+and `limit` may be omitted or null. `limit` is an unsigned 32-bit explicit SELECT
+row limit (including zero); UPDATE/DELETE reject a non-null limit. SELECT All
+passes no limit; SELECT Fields passes 100. UPDATE/DELETE templates must include
+`WHERE 1 = 0` to prevent accidental broad writes. UPDATE values use the host
+editor's named placeholders (`:value_1`, etc.), not driver-native bind markers.
+
+**Result:** a string, for example
+`"SELECT TOP (100) [id], [status] FROM [sales].[orders];"`.
+
+Compatibility:
+
+- Missing/false capability: no new RPC is sent; legacy generation is unchanged.
+- Remote JSON-RPC error **code** `-32601`: the host falls back to its legacy
+  template. Transport errors, other remote errors and malformed results are
+  surfaced, not silently replaced with another SQL dialect.
+- The Tauri command returns `string | null`; null is the host's fallback signal,
+  **not** a valid plugin success result.
+- Existing RPC signatures, built-in driver behavior and CREATE TABLE generation
+  are unchanged. This is not a replacement for the existing DDL methods.
+- Older hosts ignore the new manifest capability and never call the method.
+  Plugins need not raise `min_runtime_version` solely for this optional feature.
+- The capability is a static manifest opt-in, not a connection-metadata override.
+
+Registry rollout: add an optional boolean `table_query_templates` (default
+false) to the driver kind's `capabilities.properties` in Tabularium for schema
+validation and generated documentation. Do not make it required. The registry
+only distributes the manifest and release; it does not route the RPC. No change
+to registry endpoints, release formats or the Tabularium SDK is needed. Register
+the property before publishing: Tabularium ingestion uses lenient validation with
+AJV `removeAdditional: 'all'`, which strips undeclared capability keys even when
+the capabilities schema otherwise allows additional properties. Refresh an
+already-ingested manifest after updating the schema.
+
+---
+
 ### DDL Generation
 
 These methods generate SQL statements. Tabularis may display the SQL to the user before executing it. When `get_tables` / `get_columns` return comments, the host preserves them in generated inspection SQL for MySQL-family dialects and dialects that use `COMMENT ON` (currently PostgreSQL and Oracle). Other dialects continue to receive the existing DDL without comments; no manifest change is required.
@@ -1481,9 +1569,9 @@ You should see a valid JSON-RPC response on stdout.
 ### Installing Locally
 
 1. Create the plugin directory in Tabularis's data folder:
-   - **Linux:** `~/.local/share/tabularis/plugins/myplugin/`
-   - **macOS:** `~/Library/Application Support/tabularis/plugins/myplugin/`
-   - **Windows:** `%APPDATA%\tabularis\plugins\myplugin\`
+   - **Linux:** `~/.local/share/tabularis/plugins/drivers/myplugin/`
+   - **macOS:** `~/Library/Application Support/tabularis/plugins/drivers/myplugin/`
+   - **Windows:** `%APPDATA%\tabularis\plugins\drivers\myplugin\`
 2. Place your `.tabularium` (or legacy `manifest.json`) and the compiled executable in that directory.
 3. On Linux/macOS, make the executable runnable: `chmod +x myplugin`
 4. Restart Tabularis (or install via Settings to hot-reload without restart).

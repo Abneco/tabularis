@@ -2,16 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://tabularis.dev/schemas/tabularium-extensions.json",
   "title": "Tabularis extensions for the Tabularium manifest",
-  "description": "JSON-Schema fragment that registers Tabularis-specific fields on top of Tabularium's core manifest. Paste this into your Tabularium admin panel under /admin/manifest as the global extension. The registry merges it with the core schema and serves the result at /manifest.schema.json, so plugin authors get autocomplete for the whole manifest from a single URL.\n\nNaming rules enforced by Tabularium:\n  * field names match /^[A-Za-z_][A-Za-z0-9_-]*$/\n  * cannot shadow a core field (name, description, kind, tags, license, icon, screenshots, readme, readmes, documentation_url, homepage, support, min_runtime_version, category)\n  * type whitelist: string | number | integer | boolean | array | object\n  * no $ref, max depth 6, max 32 properties per object\n\nFor the runtime manifest.json that ships inside the plugin zip, see plugins/manifest.schema.json.",
+  "description": "JSON-Schema fragment that registers Tabularis-specific fields on top of Tabularium's core manifest. Paste this into your Tabularium admin panel under /admin/manifest as the global extension. The registry merges it with the core schema and serves the result at /manifest.schema.json, so plugin authors get autocomplete for the whole manifest from a single URL.\n\nNaming rules enforced by Tabularium:\n  * field names match /^[A-Za-z_][A-Za-z0-9_-]*$/\n  * cannot shadow a core field (id, name, version, description, kind, tags, license, icon, screenshots, readme, readmes, documentation_url, homepage, support, min_runtime_version, category)\n  * type whitelist: string | number | integer | boolean | array | object\n  * no $ref, max depth 6, max 32 properties per object\n\nFor the runtime manifest.json that ships inside the plugin zip, see plugins/manifest.schema.json.",
   "type": "object",
   "properties": {
-    "id": {
-      "type": "string",
-      "pattern": "^[a-z0-9][a-z0-9-]*$",
-      "minLength": 1,
-      "maxLength": 64,
-      "description": "Stable driver identifier used as `ConnectionParams.driver` and as the on-disk plugin folder name (e.g. \"duckdb\", \"firestore\"). Must match the registry slug."
-    },
     "version": {
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+(?:[-+].+)?$",
@@ -121,6 +114,11 @@
         "inline_pk": {
           "type": "boolean",
           "description": "Primary key is declared inline in the column definition (e.g. SQLite `AUTOINCREMENT`)."
+        },
+        "table_query_templates": {
+          "type": "boolean",
+          "default": false,
+          "description": "Generate SQL SELECT/UPDATE/DELETE previews through the optional get_table_query_template RPC."
         },
         "no_connection_required": {
           "type": "boolean",

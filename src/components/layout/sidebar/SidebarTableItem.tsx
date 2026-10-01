@@ -19,6 +19,7 @@ import { groupIndexes } from "../../../utils/indexes";
 import type { TableColumn, ForeignKey, Index } from "../../../types/schema";
 import type { ContextMenuData } from "../../../types/sidebar";
 import type { DriverCapabilities } from "../../../types/plugins";
+import { onActivationKey } from "../../../utils/keyboardEvents";
 
 interface SidebarTableItemProps {
   table: { name: string; comment?: string | null };
@@ -151,7 +152,7 @@ const SidebarTableItemImpl = ({
           const ghost = document.createElement('div');
           ghost.id = '__drag-ghost__';
           ghost.textContent = table.name;
-          ghost.style.cssText = 'position:fixed;pointer-events:none;background:#1e40af;color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+          ghost.style.cssText = 'position:fixed;pointer-events:none;background:var(--accent-primary);color:var(--text-inverse);padding:4px 10px;border-radius:var(--radius-base);font-size:12px;font-weight:500;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.5);';
           ghost.style.left = e.clientX + 12 + 'px';
           ghost.style.top = e.clientY + 12 + 'px';
           document.body.appendChild(ghost);
@@ -168,11 +169,14 @@ const SidebarTableItemImpl = ({
           document.addEventListener('pointermove', move);
           document.addEventListener('pointerup', up);
         }}
+        role="button"
+        tabIndex={0}
         onClick={() => onTableClick(table.name)}
+        onKeyDown={onActivationKey(() => onTableClick(table.name))}
         onDoubleClick={() => onTableDoubleClick(table.name)}
         onContextMenu={(e) => handleContextMenu(e, "table", table.name)}
         className={clsx(
-          "flex items-center gap-1 pl-1 pr-3 py-1.5 text-sm cursor-pointer group select-none transition-colors border-l-2",
+          "flex items-center gap-1 pl-1 pr-3 py-1.5 text-sm cursor-pointer group select-none transition-colors border-l-2 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus",
           activeTable === table.name
             ? "bg-[color-mix(in_srgb,var(--accent-primary)_20%,transparent)] text-accent border-focus"
             : "text-secondary hover:bg-surface-secondary border-transparent hover:text-primary",
@@ -221,7 +225,7 @@ const SidebarTableItemImpl = ({
                     e.preventDefault();
                   }}
                 >
-                  <Folder size={12} className="text-blue-400/70" />
+                  <Folder size={12} className="text-accent/70" />
                   <span>{t("sidebar.columns")}</span>
                   <span className="ml-auto text-[10px] opacity-50">
                     {columns.length}
@@ -258,7 +262,7 @@ const SidebarTableItemImpl = ({
                       setExpandKeys(!expandKeys);
                     }}
                   >
-                    <Folder size={12} className="text-yellow-500/70" />
+                    <Folder size={12} className="text-accent-warning/70" />
                     <span>{t("sidebar.keys")}</span>
                     <span className="ml-auto text-[10px] opacity-50">
                       {keys.length}
@@ -278,7 +282,7 @@ const SidebarTableItemImpl = ({
                           <Key
                             size={12}
                             className={
-                              k.is_primary ? "text-yellow-500" : "text-secondary"
+                              k.is_primary ? "text-semantic-pk" : "text-semantic-index"
                             }
                           />
                           <span className="truncate flex-1 min-w-0">{k.name}</span>
@@ -293,14 +297,11 @@ const SidebarTableItemImpl = ({
               <div className="flex flex-col">
                 <div
                   className="flex items-center gap-2 px-2 py-1 text-xs text-muted hover:text-secondary cursor-pointer select-none"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
                   onContextMenu={canManage !== false ? (e) =>
                     handleContextMenu(e, "folder_fks", "foreign keys")
                   : undefined}
                 >
-                  <Folder size={12} className="text-purple-400/70" />
+                  <Folder size={12} className="text-accent-secondary/70" />
                   <span>{t("sidebar.foreignKeys")}</span>
                   <span className="ml-auto text-[10px] opacity-50">
                     {foreignKeys.length}
@@ -316,7 +317,7 @@ const SidebarTableItemImpl = ({
                         handleContextMenu(e, "foreign_key", fk.name)
                       : undefined}
                     >
-                      <LinkIcon size={12} className="text-purple-400 shrink-0" />
+                      <LinkIcon size={12} className="text-accent-secondary shrink-0" />
                       <span className="truncate flex-1 min-w-0">{fk.name}</span>
                     </div>
                   ))}

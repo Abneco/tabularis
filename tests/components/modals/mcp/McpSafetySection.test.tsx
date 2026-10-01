@@ -31,7 +31,7 @@ describe("McpSafetySection output format", () => {
     render(<McpSafetySection />);
 
     expect(screen.getByRole("button", { name: "JSON" }).className).toContain(
-      "bg-blue-600",
+      "bg-accent-primary",
     );
   });
 

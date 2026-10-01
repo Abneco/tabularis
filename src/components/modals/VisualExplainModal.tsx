@@ -106,8 +106,8 @@ export const VisualExplainModal = ({
       <div className="bg-elevated border border-strong rounded-xl shadow-2xl w-[90vw] h-[85vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-default bg-base">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-900/30 rounded-lg">
-              <Network size={20} className="text-green-400" />
+            <div className="p-2 bg-accent-success/15 rounded-lg">
+              <Network size={20} className="text-accent-success" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-primary">
@@ -179,7 +179,7 @@ export const VisualExplainModal = ({
             <button
               onClick={() => runExplain({ connectionId, query, analyze, schema })}
               disabled={isLoading || !query.trim() || !connectionId}
-              className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 bg-accent-success hover:bg-accent-success/90 disabled:opacity-50 text-on-accent-success rounded-lg text-sm font-medium transition-colors"
             >
               <RefreshCw size={14} className={isLoading ? "animate-spin" : ""} />
               {t("editor.visualExplain.rerun")}

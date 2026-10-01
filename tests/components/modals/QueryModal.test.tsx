@@ -74,7 +74,7 @@ describe("QueryModal", () => {
     }
   });
 
-  it("uses theme-aware hover text for secondary actions but keeps the save button white", () => {
+  it("uses theme-aware colors for secondary actions and the save button", () => {
     render(
       <QueryModal isOpen={true} onClose={mockOnClose} onSave={mockOnSave} />,
     );
@@ -87,8 +87,9 @@ describe("QueryModal", () => {
       expect(button).not.toHaveClass("hover:text-white");
     }
     expect(screen.getByRole("button", { name: "Save" })).toHaveClass(
-      "bg-blue-600",
-      "text-white",
+      "bg-accent-primary",
+      "hover:bg-accent-primary/90",
+      "text-inverse",
     );
   });
 

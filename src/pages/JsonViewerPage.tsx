@@ -63,7 +63,7 @@ export const JsonViewerPage = () => {
     <div className="w-screen h-screen flex flex-col bg-base text-primary">
       <div className="flex-1 min-h-0 p-4">
         {displayError ? (
-          <p className="text-red-400 text-sm">{displayError}</p>
+          <p className="text-accent-error text-sm">{displayError}</p>
         ) : session ? (
           <JsonInput
             value={currentValue}
@@ -92,7 +92,7 @@ export const JsonViewerPage = () => {
             <button
               type="button"
               onClick={handleSave}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-lg text-sm font-medium transition-colors"
             >
               {t("jsonViewer.save")}
             </button>
@@ -101,7 +101,7 @@ export const JsonViewerPage = () => {
           <button
             type="button"
             onClick={handleClose}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
+            className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-lg text-sm font-medium transition-colors"
           >
             {t("jsonViewer.close")}
           </button>

@@ -38,7 +38,7 @@ export const PostgresPluginMigrationBanner = ({
   const { t } = useTranslation();
 
   return (
-    <div className="mx-6 mt-4 p-3.5 bg-blue-900/20 border border-blue-900/40 rounded-xl flex items-start gap-3 text-blue-400 shrink-0">
+    <div className="mx-6 mt-4 p-3.5 bg-accent-primary/10 border border-accent-primary/20 rounded-xl flex items-start gap-3 text-accent shrink-0">
       <AlertTriangle size={15} className="mt-0.5 shrink-0" />
       <div className="flex-1 min-w-0">
         {variant === "nudge" ? (
@@ -55,7 +55,7 @@ export const PostgresPluginMigrationBanner = ({
         {variant === "nudge" && onReview && (
           <button
             onClick={onReview}
-            className="mt-2 text-xs text-blue-400/90 hover:text-blue-300 transition-colors underline underline-offset-2"
+            className="mt-2 text-xs text-accent/90 hover:text-accent transition-colors underline underline-offset-2"
           >
             {t("migration.banner.reviewConnections")}
           </button>
@@ -63,7 +63,7 @@ export const PostgresPluginMigrationBanner = ({
       </div>
       <button
         onClick={onDismiss}
-        className="text-blue-400/50 hover:text-blue-400 transition-colors shrink-0 mt-0.5"
+        className="text-accent/50 hover:text-accent transition-colors shrink-0 mt-0.5"
         aria-label={t("common.dismiss")}
       >
         <X size={14} />

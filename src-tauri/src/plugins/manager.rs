@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -153,7 +152,7 @@ pub async fn load_plugins_with_configs(
         }
     };
 
-    let entries = match fs::read_dir(&plugins_dir) {
+    let entries = match super::layout::driver_directories(&plugins_dir) {
         Ok(e) => e,
         Err(e) => {
             log::error!("Failed to read plugins directory: {}", e);
@@ -161,11 +160,7 @@ pub async fn load_plugins_with_configs(
         }
     };
 
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if !path.is_dir() {
-            continue;
-        }
+    for path in entries {
 
         if let Some(enabled) = enabled_ids {
             if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {

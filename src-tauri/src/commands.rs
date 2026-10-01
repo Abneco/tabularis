@@ -412,17 +412,117 @@ fn resolve_k8s_params(params: &ConnectionParams) -> Result<ConnectionParams, Str
     Ok(new_params)
 }
 
-pub fn resolve_connection_params(params: &ConnectionParams) -> Result<ConnectionParams, String> {
-    // K8s and SSH are mutually exclusive
-    if params.k8s_enabled.unwrap_or(false) && params.ssh_enabled.unwrap_or(false) {
-        return Err(
-            "Kubernetes and SSH tunnel cannot both be enabled for the same connection".to_string()
-        );
+/// Resolve AWS SSM tunnel params synchronously. Like SSH, the session forwards
+/// to the connection's own host/port; unlike SSH there is no saved-connection
+/// indirection, so every field is inline.
+fn resolve_ssm_params(params: &ConnectionParams) -> Result<ConnectionParams, String> {
+    let target = params
+        .ssm_target
+        .as_deref()
+        .map(str::trim)
+        .filter(|t| !t.is_empty())
+        .ok_or("Missing AWS SSM target")?;
+    let profile = params.ssm_profile.as_deref();
+    let region = params.ssm_region.as_deref();
+    let remote_host = params.host.as_deref().unwrap_or("localhost");
+    let remote_port = params.port.unwrap_or(DEFAULT_MYSQL_PORT);
+
+    let map_key =
+        crate::ssm_tunnel::build_tunnel_key(target, profile, region, remote_host, remote_port);
+
+    {
+        let mut tunnels = crate::ssm_tunnel::get_tunnels().lock().unwrap();
+        if let Some(tunnel) = tunnels.get(&map_key) {
+            if tunnel.is_alive() {
+                log::debug!("Reusing existing SSM tunnel on port {}", tunnel.local_port);
+                let mut new_params = params.clone();
+                new_params.ssm_enabled = Some(false);
+                new_params.host = Some("127.0.0.1".to_string());
+                new_params.port = Some(tunnel.local_port);
+                return Ok(new_params);
+            }
+            log::info!(
+                "Discarding dead SSM tunnel on port {}; the session ended",
+                tunnel.local_port
+            );
+            tunnels.remove(&map_key);
+        }
     }
 
-    // Handle K8s tunnel — result is already on localhost; do not re-proxy.
+    log::info!(
+        "Creating new SSM tunnel to {}:{} via {}",
+        remote_host,
+        remote_port,
+        target
+    );
+
+    let tunnel =
+        crate::ssm_tunnel::SsmTunnel::new(target, profile, region, remote_host, remote_port)
+            .map_err(|e| {
+                eprintln!("[Connection Error] SSM Tunnel setup failed: {}", e);
+                e
+            })?;
+
+    let local_port = tunnel.local_port;
+    log::info!("SSM tunnel created successfully on port {}", local_port);
+
+    {
+        let mut tunnels = crate::ssm_tunnel::get_tunnels().lock().unwrap();
+        tunnels.insert(map_key, tunnel);
+    }
+
+    let mut new_params = params.clone();
+    new_params.ssm_enabled = Some(false);
+    new_params.host = Some("127.0.0.1".to_string());
+    new_params.port = Some(local_port);
+    Ok(new_params)
+}
+
+/// SSH, Kubernetes and AWS SSM each rewrite host/port to a local tunnel, so at
+/// most one of them can be active for a connection.
+fn ensure_single_tunnel(params: &ConnectionParams) -> Result<(), String> {
+    let enabled: Vec<&str> = [
+        ("SSH", params.ssh_enabled),
+        ("Kubernetes", params.k8s_enabled),
+        ("AWS SSM", params.ssm_enabled),
+    ]
+    .into_iter()
+    .filter(|(_, on)| on.unwrap_or(false))
+    .map(|(name, _)| name)
+    .collect();
+
+    if enabled.len() > 1 {
+        return Err(format!(
+            "{} tunnels cannot both be enabled for the same connection",
+            enabled.join(" and ")
+        ));
+    }
+    Ok(())
+}
+
+pub fn resolve_connection_params(params: &ConnectionParams) -> Result<ConnectionParams, String> {
+    let mut resolved = resolve_connection_transport(params)?;
+    // Only file/folder drivers store a path in `database`; for network drivers
+    // it is a schema name and must be passed through untouched.
+    if crate::drivers::registry::is_local_path_driver(&resolved.driver) {
+        resolved.database = crate::fs_path::sanitize_database_selection(&resolved.database);
+    }
+    Ok(resolved)
+}
+
+/// Resolve the tunnel / proxy transport for a connection (K8s, SSM, SSH or a
+/// database-scope proxy) and return params pointing at the local endpoint.
+fn resolve_connection_transport(params: &ConnectionParams) -> Result<ConnectionParams, String> {
+    ensure_single_tunnel(params)?;
+
+    // Handle K8s tunnel - result is already on localhost; do not re-proxy.
     if params.k8s_enabled.unwrap_or(false) {
         return resolve_k8s_params(params);
+    }
+
+    // Handle AWS SSM tunnel
+    if params.ssm_enabled.unwrap_or(false) {
+        return resolve_ssm_params(params);
     }
 
     let connection_id = params.connection_id.as_deref();
@@ -978,6 +1078,21 @@ pub async fn get_routine_definition<R: Runtime>(
     let drv = driver_for_params(&params).await?;
     drv.get_routine_definition(&params, &routine_name, &routine_type, schema.as_deref())
         .await
+}
+
+/// Preview generation only; the returned SQL is never executed here.
+#[tauri::command]
+pub async fn get_table_query_template<R: Runtime>(
+    app: AppHandle<R>,
+    connection_id: String,
+    request: crate::models::TableQueryTemplateRequest,
+) -> Result<Option<String>, String> {
+    let saved_conn = find_connection_by_id(&app, &connection_id)?;
+    let expanded_params = expand_ssh_connection_params(&app, &saved_conn.params).await?;
+    let expanded_params = expand_k8s_connection_params(&app, &expanded_params).await?;
+    let params = resolve_connection_params_with_id(&expanded_params, &connection_id)?;
+    let drv = driver_for_params(&params).await?;
+    drv.get_table_query_template(&params, &request).await
 }
 
 #[tauri::command]
@@ -2289,6 +2404,32 @@ pub async fn validate_k8s_path_cmd<R: Runtime>(
     crate::k8s_tunnel::validate_k8s_path(&path, &kind)
 }
 
+// ---------------------------------------------------------------------------
+// AWS SSM
+// ---------------------------------------------------------------------------
+
+#[tauri::command]
+pub async fn test_ssm_connection_cmd<R: Runtime>(
+    _app: AppHandle<R>,
+    target: String,
+    profile: Option<String>,
+    region: Option<String>,
+    host: String,
+    port: u16,
+) -> Result<String, String> {
+    tokio::task::spawn_blocking(move || {
+        crate::ssm_tunnel::test_ssm_connection(
+            &target,
+            profile.as_deref(),
+            region.as_deref(),
+            &host,
+            port,
+        )
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// Expand K8s connection params by loading saved config and creating/reusing a tunnel.
 pub async fn expand_k8s_connection_params<R: Runtime>(
     app: &AppHandle<R>,
@@ -2298,12 +2439,7 @@ pub async fn expand_k8s_connection_params<R: Runtime>(
         return Ok(params.clone());
     }
 
-    // Mutual exclusion: K8s and SSH cannot both be active
-    if params.ssh_enabled.unwrap_or(false) {
-        return Err(
-            "Kubernetes and SSH tunnel cannot both be enabled for the same connection".to_string()
-        );
-    }
+    ensure_single_tunnel(params)?;
 
     // Resolve K8s params from saved connection if using connection_id
     let (context, namespace, resource_type, resource_name, port, kubectl_path, kubeconfig_path) =
@@ -2494,10 +2630,13 @@ pub async fn test_connection<R: Runtime>(
 
     let ssh_enabled = expanded_params.ssh_enabled.unwrap_or(false);
     let k8s_enabled = expanded_params.k8s_enabled.unwrap_or(false);
+    let ssm_enabled = expanded_params.ssm_enabled.unwrap_or(false);
     let tunnel_step = if ssh_enabled {
         Some("sshTunnel")
     } else if k8s_enabled {
         Some("k8sForward")
+    } else if ssm_enabled {
+        Some("ssmForward")
     } else {
         None
     };
@@ -2522,6 +2661,14 @@ pub async fn test_connection<R: Runtime>(
             "k8sForward",
             "start",
             expanded_params.k8s_resource_name.clone(),
+        );
+    } else if ssm_enabled {
+        emit_test_progress(
+            &app,
+            progress_id,
+            "ssmForward",
+            "start",
+            expanded_params.ssm_target.clone(),
         );
     }
 
@@ -2636,6 +2783,34 @@ mod tests {
             database: DatabaseSelection::Single("testdb".to_string()),
             ..Default::default()
         }
+    }
+
+    #[test]
+    fn resolve_leaves_network_database_names_untouched() {
+        let params = ConnectionParams {
+            database: DatabaseSelection::Single("'quoted_schema'".to_string()),
+            ..base_params()
+        };
+
+        let resolved = resolve_connection_params(&params).expect("resolve");
+        assert_eq!(resolved.database.primary(), "'quoted_schema'");
+    }
+
+    #[test]
+    fn resolve_sanitizes_local_path_driver_databases() {
+        let driver = "__test_resolve_local_path_driver__";
+        crate::drivers::registry::set_local_path_driver(driver, true);
+        let params = ConnectionParams {
+            driver: driver.to_string(),
+            host: None,
+            port: None,
+            database: DatabaseSelection::Single(r#""file:///tmp/my%20data.db""#.to_string()),
+            ..Default::default()
+        };
+
+        let resolved = resolve_connection_params(&params);
+        crate::drivers::registry::set_local_path_driver(driver, false);
+        assert_eq!(resolved.expect("resolve").database.primary(), "/tmp/my data.db");
     }
 
     #[test]
@@ -3283,6 +3458,63 @@ mod tests {
             let result = resolve_connection_params(&params);
             assert!(result.is_err());
             assert!(result.unwrap_err().contains("SSH User"));
+        }
+    }
+
+    mod resolve_ssm_params_tests {
+        use super::*;
+
+        fn create_ssm_params(target: &str) -> ConnectionParams {
+            ConnectionParams {
+                driver: "mysql".to_string(),
+                host: Some("db.internal".to_string()),
+                port: Some(3306),
+                username: Some("root".to_string()),
+                database: DatabaseSelection::Single("testdb".to_string()),
+                ssm_enabled: Some(true),
+                ssm_target: Some(target.to_string()),
+                ..Default::default()
+            }
+        }
+
+        #[test]
+        fn test_ssm_requires_target() {
+            let mut params = create_ssm_params("i-0abc");
+            params.ssm_target = Some("   ".to_string());
+            let result = resolve_ssm_params(&params);
+            assert!(result.is_err());
+            assert!(result.unwrap_err().contains("AWS SSM target"));
+        }
+
+        #[test]
+        fn test_ssm_and_ssh_mutual_exclusion() {
+            let mut params = create_ssm_params("i-0abc");
+            params.ssh_enabled = Some(true);
+            let result = resolve_connection_params(&params);
+            assert!(result.is_err());
+            assert!(result
+                .unwrap_err()
+                .contains("SSH and AWS SSM tunnels cannot both be enabled"));
+        }
+
+        #[test]
+        fn test_ssm_and_k8s_mutual_exclusion() {
+            let mut params = create_ssm_params("i-0abc");
+            params.k8s_enabled = Some(true);
+            let result = resolve_connection_params(&params);
+            assert!(result.is_err());
+            assert!(result
+                .unwrap_err()
+                .contains("Kubernetes and AWS SSM tunnels cannot both be enabled"));
+        }
+
+        #[test]
+        fn test_disabled_ssm_leaves_params_untouched() {
+            let mut params = create_ssm_params("i-0abc");
+            params.ssm_enabled = Some(false);
+            let result = resolve_connection_params(&params).unwrap();
+            assert_eq!(result.host, Some("db.internal".to_string()));
+            assert_eq!(result.port, Some(3306));
         }
     }
 
@@ -4281,6 +4513,7 @@ pub async fn execute_query<R: Runtime>(
     limit: Option<u32>,
     page: Option<u32>,
     schema: Option<String>,
+    session_id: Option<String>,
 ) -> Result<QueryResult, String> {
     log::info!(
         "Executing query on connection: {} | Query: {}",
@@ -4300,13 +4533,16 @@ pub async fn execute_query<R: Runtime>(
     let dropped = crate::sql_database_statements::dropped_database(&sanitized_query);
 
     let drv = driver_for_params(&params).await?;
+    let session_driver = drv.clone();
+    let session = session_id.clone();
     let task = tokio::spawn(async move {
-        drv.execute_query(
+        drv.execute_query_in_session(
             &params,
             &sanitized_query,
             limit,
             page.unwrap_or(1),
             schema.as_deref(),
+            session.as_deref(),
         )
         .await
     });
@@ -4319,11 +4555,17 @@ pub async fn execute_query<R: Runtime>(
     unregister_abort_handle(&state.handles, &connection_id, &abort_handle);
 
     match result {
-        Ok(Ok(query_result)) => {
+        Ok(Ok((query_result, in_transaction))) => {
             log::info!(
                 "Query executed successfully, returned {} rows",
                 query_result.rows.len()
             );
+            // Driving a transaction one statement at a time is the whole
+            // point, so this path reports session state exactly as a batch
+            // does.
+            if let Some(id) = session_id.as_deref() {
+                emit_session_state(&app, &connection_id, id, in_transaction);
+            }
             if let Some(database) = &dropped {
                 emit_database_dropped(&app, &connection_id, database);
             }
@@ -4331,10 +4573,24 @@ pub async fn execute_query<R: Runtime>(
         }
         Ok(Err(e)) => {
             log::error!("Query execution failed: {}", e);
+            emit_session_state_after_failure(
+                &app,
+                &connection_id,
+                session_driver.as_ref(),
+                session_id.as_deref(),
+            )
+            .await;
             Err(e)
         }
         Err(_) => {
             log::warn!("Query was cancelled");
+            emit_session_state_after_failure(
+                &app,
+                &connection_id,
+                session_driver.as_ref(),
+                session_id.as_deref(),
+            )
+            .await;
             Err("Query cancelled".into())
         }
     }
@@ -4351,6 +4607,152 @@ struct BatchStatementEvent<'a> {
     batch_id: &'a str,
     index: usize,
     statement: &'a BatchStatementResult,
+}
+
+/// Payload for the `session-transaction-state` event, emitted after a batch
+/// that carried a `session_id` so the owning tab can show whether it is
+/// still inside an explicit transaction — and therefore still holding a
+/// pooled connection.
+#[derive(serde::Serialize, Clone)]
+struct SessionTransactionStateEvent<'a> {
+    session_id: &'a str,
+    in_transaction: bool,
+}
+
+/// Sessions last reported inside a transaction, per connection id, so a
+/// disconnect can release them through the driver.
+fn open_sessions() -> &'static Mutex<HashMap<String, std::collections::HashSet<String>>> {
+    static OPEN: std::sync::OnceLock<Mutex<HashMap<String, std::collections::HashSet<String>>>> =
+        std::sync::OnceLock::new();
+    OPEN.get_or_init(Default::default)
+}
+
+fn note_session_state(connection_id: &str, session_id: &str, in_transaction: bool) {
+    let mut open = open_sessions().lock().unwrap_or_else(|e| e.into_inner());
+    if in_transaction {
+        open.entry(connection_id.to_string())
+            .or_default()
+            .insert(session_id.to_string());
+    } else if let Some(ids) = open.get_mut(connection_id) {
+        ids.remove(session_id);
+        if ids.is_empty() {
+            open.remove(connection_id);
+        }
+    }
+}
+
+fn take_open_sessions(connection_id: &str) -> Vec<String> {
+    let mut open = open_sessions().lock().unwrap_or_else(|e| e.into_inner());
+    open.remove(connection_id)
+        .map(|ids| ids.into_iter().collect())
+        .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod open_sessions_tests {
+    use super::{note_session_state, take_open_sessions};
+
+    #[test]
+    fn disconnect_takes_only_that_connections_open_sessions() {
+        note_session_state("os-conn-a", "tab-1", true);
+        note_session_state("os-conn-a", "tab-2", true);
+        note_session_state("os-conn-a", "tab-2", false);
+        note_session_state("os-conn-b", "tab-3", true);
+
+        assert_eq!(take_open_sessions("os-conn-a"), vec!["tab-1".to_string()]);
+        assert!(take_open_sessions("os-conn-a").is_empty());
+        assert_eq!(take_open_sessions("os-conn-b"), vec!["tab-3".to_string()]);
+    }
+}
+
+/// Tell the UI whether a tab is inside a transaction, and remember it for disconnect.
+fn emit_session_state<R: Runtime>(
+    app: &AppHandle<R>,
+    connection_id: &str,
+    session_id: &str,
+    in_transaction: bool,
+) {
+    note_session_state(connection_id, session_id, in_transaction);
+    let _ = app.emit(
+        "session-transaction-state",
+        SessionTransactionStateEvent {
+            session_id,
+            in_transaction,
+        },
+    );
+}
+
+/// Roll back the transactions a connection's tabs left open, for every path
+/// that closes it (disconnect, failed health check). The releases run in the
+/// background, so closing a connection never waits on a tab's in-flight run.
+/// Without `params` the bookkeeping is still cleared and the idle sweep
+/// reclaims the connections.
+pub(crate) async fn release_connection_sessions<R: Runtime>(
+    app: &AppHandle<R>,
+    connection_id: &str,
+    params: Option<&ConnectionParams>,
+) {
+    let open = take_open_sessions(connection_id);
+    if open.is_empty() {
+        return;
+    }
+    for id in &open {
+        let _ = app.emit(
+            "session-transaction-state",
+            SessionTransactionStateEvent {
+                session_id: id,
+                in_transaction: false,
+            },
+        );
+    }
+    let Some(params) = params else {
+        log::warn!("Could not resolve {connection_id} to release its open sessions");
+        return;
+    };
+    match driver_for_params(params).await {
+        Ok(drv) => {
+            tauri::async_runtime::spawn(async move {
+                for id in open {
+                    drv.release_session(&id).await;
+                }
+            });
+        }
+        Err(e) => log::warn!("Could not release open sessions of {connection_id}: {e}"),
+    }
+}
+
+/// A failed or cancelled run returns no session flag, so ask the driver, or
+/// the tab's TX badge would keep showing a transaction that already ended.
+async fn emit_session_state_after_failure<R: Runtime>(
+    app: &AppHandle<R>,
+    connection_id: &str,
+    drv: &dyn crate::drivers::driver_trait::DatabaseDriver,
+    session_id: Option<&str>,
+) {
+    let Some(id) = session_id else { return };
+    if let Some(in_transaction) = drv.session_in_transaction(id).await {
+        emit_session_state(app, connection_id, id, in_transaction);
+    }
+}
+
+/// Roll back and release the connection pinned to `session_id`.
+///
+/// Called when an editor tab closes, so an abandoned transaction cannot
+/// hold its locks until the idle sweep reclaims it.
+#[tauri::command]
+pub async fn release_query_session<R: Runtime>(
+    app: AppHandle<R>,
+    connection_id: String,
+    session_id: String,
+) -> Result<(), String> {
+    let saved_conn = find_connection_by_id(&app, &connection_id)?;
+    let expanded_params = expand_ssh_connection_params(&app, &saved_conn.params).await?;
+    let expanded_params = expand_k8s_connection_params(&app, &expanded_params).await?;
+    let params = resolve_connection_params_with_id(&expanded_params, &connection_id)?;
+    let drv = driver_for_params(&params).await?;
+    drv.release_session(&session_id).await;
+    note_session_state(&connection_id, &session_id, false);
+    Ok(())
 }
 
 /// Runs a sequence of statements that share a single physical database
@@ -4375,6 +4777,7 @@ pub async fn execute_query_batch<R: Runtime>(
     page: Option<u32>,
     schema: Option<String>,
     batch_id: Option<String>,
+    session_id: Option<String>,
 ) -> Result<Vec<BatchStatementResult>, String> {
     log::info!(
         "Executing query batch on connection: {} | {} statement(s)",
@@ -4418,13 +4821,16 @@ pub async fn execute_query_batch<R: Runtime>(
             cb
         });
 
+    let session_driver = drv.clone();
+    let session = session_id.clone();
     let task = tokio::spawn(async move {
-        drv.execute_batch(
+        drv.execute_batch_in_session(
             &params,
             &sanitized_queries,
             limit,
             page.unwrap_or(1),
             schema.as_deref(),
+            session.as_deref(),
             progress.as_deref(),
         )
         .await
@@ -4438,7 +4844,13 @@ pub async fn execute_query_batch<R: Runtime>(
     unregister_abort_handle(&state.handles, &connection_id, &abort_handle);
 
     match result {
-        Ok(Ok(batch_results)) => {
+        Ok(Ok((batch_results, in_transaction))) => {
+            // The tab holds a pooled connection for as long as its
+            // transaction is open, so the UI has to be able to show it and
+            // release it on close.
+            if let Some(id) = session_id.as_deref() {
+                emit_session_state(&app, &connection_id, id, in_transaction);
+            }
             let success_count = batch_results.iter().filter(|r| r.result.is_some()).count();
             log::info!(
                 "Batch executed: {} succeeded, {} failed (of {} total)",
@@ -4460,10 +4872,24 @@ pub async fn execute_query_batch<R: Runtime>(
         }
         Ok(Err(e)) => {
             log::error!("Batch execution failed at setup: {}", e);
+            emit_session_state_after_failure(
+                &app,
+                &connection_id,
+                session_driver.as_ref(),
+                session_id.as_deref(),
+            )
+            .await;
             Err(e)
         }
         Err(_) => {
             log::warn!("Batch was cancelled");
+            emit_session_state_after_failure(
+                &app,
+                &connection_id,
+                session_driver.as_ref(),
+                session_id.as_deref(),
+            )
+            .await;
             Err("Query cancelled".into())
         }
     }
@@ -4530,6 +4956,35 @@ pub async fn explain_query_plan<R: Runtime>(
     }
 }
 
+/// Run a read on the connection pinned to `session_id`, inside its open
+/// transaction, so it sees the tab's uncommitted changes. A savepoint keeps a
+/// failing read from aborting the user's transaction.
+pub(crate) async fn read_in_open_transaction(
+    drv: &dyn crate::drivers::driver_trait::DatabaseDriver,
+    params: &ConnectionParams,
+    query: &str,
+    limit: Option<u32>,
+    page: u32,
+    schema: Option<&str>,
+    session_id: &str,
+) -> Result<QueryResult, String> {
+    let batch = [
+        "SAVEPOINT tabularis_read".to_string(),
+        query.to_string(),
+        "ROLLBACK TO SAVEPOINT tabularis_read".to_string(),
+        "RELEASE SAVEPOINT tabularis_read".to_string(),
+    ];
+    let (results, _) = drv
+        .execute_batch_in_session(params, &batch, limit, page, schema, Some(session_id), None)
+        .await?;
+    // With no transaction open (a stale badge) only the savepoint lines fail; the read still runs.
+    match results.into_iter().nth(1) {
+        Some(BatchStatementResult { result: Some(result), .. }) => Ok(result),
+        Some(BatchStatementResult { error: Some(e), .. }) => Err(e),
+        _ => Err("The statement produced no result".to_string()),
+    }
+}
+
 // --- Count Query ---
 
 #[tauri::command]
@@ -4538,6 +4993,7 @@ pub async fn count_query<R: Runtime>(
     connection_id: String,
     query: String,
     schema: Option<String>,
+    session_id: Option<String>,
 ) -> Result<u64, String> {
     let saved_conn = find_connection_by_id(&app, &connection_id)?;
     let expanded_params = expand_ssh_connection_params(&app, &saved_conn.params).await?;
@@ -4549,9 +5005,25 @@ pub async fn count_query<R: Runtime>(
     let count_q = format!("SELECT COUNT(*) FROM ({}) as count_wrapper", sanitized);
 
     let drv = driver_for_params(&params).await?;
-    let result = drv
-        .execute_query(&params, &count_q, None, 1, schema.as_deref())
-        .await?;
+    // The editor sends a session only for a tab inside a transaction.
+    let result = match session_id.as_deref() {
+        Some(id) => {
+            read_in_open_transaction(
+                drv.as_ref(),
+                &params,
+                &count_q,
+                None,
+                1,
+                schema.as_deref(),
+                id,
+            )
+            .await?
+        }
+        None => {
+            drv.execute_query(&params, &count_q, None, 1, schema.as_deref())
+                .await?
+        }
+    };
 
     let total: u64 = result
         .rows
@@ -5440,6 +5912,8 @@ pub async fn disconnect_connection<R: Runtime>(
     let expanded_params = expand_ssh_connection_params(&app, &saved_conn.params).await?;
     let expanded_params = expand_k8s_connection_params(&app, &expanded_params).await?;
     let params = resolve_connection_params_with_id(&expanded_params, &connection_id)?;
+
+    release_connection_sessions(&app, &connection_id, Some(&params)).await;
 
     // Close the connection pool
     crate::pool_manager::close_pool_with_id(&params, Some(&connection_id)).await;

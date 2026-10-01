@@ -1,11 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { createRef } from "react";
 import { MultiResultPanel } from "../../../src/components/ui/MultiResultPanel";
+import type { DataGridCommandTarget } from "../../../src/components/ui/DataGrid";
 import type { QueryResultEntry, QueryResult } from "../../../src/types/editor";
 
 // Mock DataGrid
 vi.mock("../../../src/components/ui/DataGrid", () => ({
-  DataGrid: vi.fn(() => <div data-testid="data-grid" />),
+  DataGrid: vi.fn(
+    ({
+      ref,
+      data,
+      initialScrollTop,
+      onScrollTopChange,
+    }: {
+      ref?: unknown;
+      data: unknown[][];
+      initialScrollTop?: number;
+      onScrollTopChange?: (scrollTop: number) => void;
+    }) => (
+      <div
+        data-testid="data-grid"
+        data-has-command-target={String(Boolean(ref))}
+        data-first-value={String(data[0]?.[0] ?? "")}
+        data-initial-scroll-top={String(initialScrollTop ?? "")}
+        onScroll={(e) => onScrollTopChange?.(e.currentTarget.scrollTop)}
+      />
+    ),
+  ),
 }));
 
 // Mock ErrorDisplay
@@ -163,6 +185,52 @@ describe("MultiResultPanel", () => {
     expect(screen.getByText(/editor\.rowsRetrieved/)).toBeInTheDocument();
   });
 
+  it("connects the command target to the active result grid", () => {
+    const commandTargetRef = createRef<DataGridCommandTarget>();
+    render(
+      <MultiResultPanel
+        {...defaultProps}
+        results={[
+          makeEntry({
+            id: "r-0",
+            isLoading: false,
+            result: makeResult(),
+          }),
+        ]}
+        activeResultId="r-0"
+        commandTargetRef={commandTargetRef}
+      />,
+    );
+
+    expect(screen.getByTestId("data-grid")).toHaveAttribute(
+      "data-has-command-target",
+      "true",
+    );
+  });
+
+  it("connects the command target only to the active grid in stacked view", () => {
+    const commandTargetRef = createRef<DataGridCommandTarget>();
+    render(
+      <MultiResultPanel
+        {...defaultProps}
+        results={[
+          makeEntry({ id: "r-0", isLoading: false, result: makeResult([[1]]) }),
+          makeEntry({ id: "r-1", isLoading: false, result: makeResult([[2]]) }),
+        ]}
+        activeResultId="r-1"
+        commandTargetRef={commandTargetRef}
+      />,
+    );
+
+    fireEvent.click(screen.getByTitle("editor.multiResult.viewStacked"));
+
+    const grids = screen.getAllByTestId("data-grid");
+    expect(grids).toHaveLength(2);
+    expect(grids[0]).toHaveAttribute("data-has-command-target", "false");
+    expect(grids[1]).toHaveAttribute("data-first-value", "2");
+    expect(grids[1]).toHaveAttribute("data-has-command-target", "true");
+  });
+
   it("calls onSelectResult when clicking a tab", () => {
     const results = [
       makeEntry({ id: "r-0", queryIndex: 0 }),
@@ -251,7 +319,7 @@ describe("MultiResultPanel", () => {
       />,
     );
     // Summary badge shows succeeded count with green color
-    const greenSpan = container.querySelector(".text-green-400");
+    const greenSpan = container.querySelector(".text-accent-success");
     expect(greenSpan).not.toBeNull();
     expect(greenSpan?.textContent).toContain("1");
   });
@@ -383,5 +451,73 @@ describe("MultiResultPanel", () => {
       />,
     );
     expect(screen.getByText("My Query")).toBeInTheDocument();
+  });
+
+  describe("scroll position (#823)", () => {
+    const results = [
+      makeEntry({ id: "r-0", result: makeResult([[10]]), isLoading: false }),
+      makeEntry({ id: "r-1", result: makeResult([[20]]), isLoading: false }),
+    ];
+
+    it("passes each entry's offset to its grid in tabs view", () => {
+      const offsets: Record<string, number> = { "r-0": 120, "r-1": 340 };
+      const getInitialScrollTop = vi.fn((id: string) => offsets[id]);
+      const { rerender } = render(
+        <MultiResultPanel
+          {...defaultProps}
+          results={results}
+          activeResultId="r-0"
+          getInitialScrollTop={getInitialScrollTop}
+        />,
+      );
+      expect(
+        screen.getByTestId("data-grid").getAttribute("data-initial-scroll-top"),
+      ).toBe("120");
+
+      rerender(
+        <MultiResultPanel
+          {...defaultProps}
+          results={results}
+          activeResultId="r-1"
+          getInitialScrollTop={getInitialScrollTop}
+        />,
+      );
+      expect(
+        screen.getByTestId("data-grid").getAttribute("data-initial-scroll-top"),
+      ).toBe("340");
+    });
+
+    it("restores every grid's offset in stacked view", () => {
+      const offsets: Record<string, number> = { "r-0": 120, "r-1": 340 };
+      render(
+        <MultiResultPanel
+          {...defaultProps}
+          results={results}
+          activeResultId="r-0"
+          getInitialScrollTop={(id) => offsets[id]}
+        />,
+      );
+      fireEvent.click(screen.getByTitle("editor.multiResult.viewStacked"));
+      const grids = screen.getAllByTestId("data-grid");
+      expect(
+        grids.map((g) => g.getAttribute("data-initial-scroll-top")),
+      ).toEqual(["120", "340"]);
+    });
+
+    it("reports scroll changes with the entry id", () => {
+      const onScrollTopChange = vi.fn();
+      render(
+        <MultiResultPanel
+          {...defaultProps}
+          results={results}
+          activeResultId="r-0"
+          onScrollTopChange={onScrollTopChange}
+        />,
+      );
+      fireEvent.click(screen.getByTitle("editor.multiResult.viewStacked"));
+      const grids = screen.getAllByTestId("data-grid");
+      fireEvent.scroll(grids[1], { target: { scrollTop: 77 } });
+      expect(onScrollTopChange).toHaveBeenCalledWith("r-1", 77);
+    });
   });
 });

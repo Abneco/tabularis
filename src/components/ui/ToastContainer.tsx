@@ -54,7 +54,7 @@ export const ToastContainer = ({ toasts, onDismiss }: ToastContainerProps) => {
               <MessageContainer
                 className={
                   toast.onClick
-                    ? "w-full text-left cursor-pointer rounded focus-visible:outline focus-visible:outline-accent-primary"
+                    ? "w-full text-left cursor-pointer rounded focus-visible:outline focus-visible:outline-focus"
                     : undefined
                 }
                 onClick={
@@ -96,7 +96,7 @@ export const ToastContainer = ({ toasts, onDismiss }: ToastContainerProps) => {
                         action.onClick();
                         onDismiss(toast.id);
                       }}
-                      className="text-xs font-medium hover:underline underline-offset-2 rounded focus-visible:outline focus-visible:outline-accent-primary"
+                      className="text-xs font-medium hover:underline underline-offset-2 rounded focus-visible:outline focus-visible:outline-focus"
                       style={{
                         color:
                           "color-mix(in srgb, var(--accent-primary) 35%, CanvasText)",

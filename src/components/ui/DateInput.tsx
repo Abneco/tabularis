@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   clamp,
   daysInMonth,
@@ -124,7 +125,7 @@ const SelectDropdown = ({
       <select
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value, 10))}
-        className="w-full appearance-none bg-base border border-strong rounded text-primary text-sm font-mono px-2 py-0.5 pr-6 outline-none focus:border-blue-500 cursor-pointer"
+        className="w-full appearance-none bg-base border border-strong rounded text-primary text-sm font-mono px-2 py-0.5 pr-6 outline-none focus:border-focus cursor-pointer"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -147,6 +148,12 @@ export interface DateInputProps {
   onBlur?: () => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   inputRef?: React.RefObject<HTMLInputElement | null>;
+  /**
+   * Commits a value in the same event (see DataGrid's commitEditWithValue).
+   * Used to accept the prefilled date of an empty value without the parent
+   * reading a stale one. Without it, accepting falls back to `onChange`.
+   */
+  onCommitValue?: (value: string) => void;
   className?: string;
 }
 
@@ -161,10 +168,32 @@ export const DateInput = ({
   onBlur,
   onKeyDown,
   inputRef,
+  onCommitValue,
   className = "",
 }: DateInputProps) => {
+  const { t } = useTranslation();
   const dt = parseDateTime(value);
   const containerRef = useRef<HTMLDivElement>(null);
+  // An empty value shows today's date as a starting point, but that date is
+  // only a suggestion until the user accepts it or changes a field (#826).
+  const isEmpty = value.trim() === "";
+
+  const acceptShown = useCallback(() => {
+    const shown = formatDateTime(parseDateTime(value), mode);
+    if (onCommitValue) onCommitValue(shown);
+    else onChange(shown);
+  }, [value, mode, onCommitValue, onChange]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      // Enter on an empty value commits the date on screen. The parent's own
+      // Enter handling still runs afterwards for the focus restore; the
+      // commit above already closed the edit, so it does not commit again.
+      if (e.key === "Enter" && isEmpty && onCommitValue) acceptShown();
+      onKeyDown?.(e);
+    },
+    [isEmpty, onCommitValue, acceptShown, onKeyDown],
+  );
 
   // Propagate changes upward
   const update = useCallback(
@@ -209,8 +238,11 @@ export const DateInput = ({
   const showTime = mode === "time" || mode === "datetime";
 
   return (
+    // Layout wrapper: onKeyDown/onBlur only observe events bubbling from the
+    // inner selects and inputs, which carry the semantics.
     <div
       ref={containerRef}
+      role="presentation"
       className={`inline-flex flex-col gap-1.5 p-2 bg-base border border-strong rounded-lg shadow-lg ${className}`}
       onBlur={(e) => {
         // Only fire onBlur when focus leaves the entire component
@@ -218,7 +250,7 @@ export const DateInput = ({
           onBlur?.();
         }
       }}
-      onKeyDown={onKeyDown}
+      onKeyDown={handleKeyDown}
     >
       {showDate && (
         <div className="flex items-center gap-1.5">
@@ -275,6 +307,17 @@ export const DateInput = ({
             onChange={(v) => update({ seconds: v })}
           />
         </div>
+      )}
+
+      {isEmpty && (
+        <button
+          type="button"
+          onClick={acceptShown}
+          className="flex items-center justify-center gap-1 px-2 py-0.5 text-xs text-primary bg-surface-secondary border border-strong rounded hover:bg-surface-tertiary transition-colors"
+        >
+          <Check size={12} aria-hidden="true" />
+          {t("dateInput.useShownValue")}
+        </button>
       )}
     </div>
   );

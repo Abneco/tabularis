@@ -27,7 +27,7 @@ export const NavItem = ({
       clsx(
         "flex items-center justify-center w-12 h-12 rounded-lg transition-colors mb-2 relative group",
         isActive
-          ? "bg-accent-primary text-white"
+          ? "bg-accent-primary text-inverse"
           : "text-muted hover:bg-surface-secondary hover:text-primary",
       )
     }

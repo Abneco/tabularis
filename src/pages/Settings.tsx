@@ -126,6 +126,7 @@ export const Settings = () => {
         const next = new URLSearchParams(previous);
         next.set("tab", tab);
         next.delete("filter");
+        next.delete("kind");
         return next;
       },
       { replace: true },

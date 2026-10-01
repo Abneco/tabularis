@@ -16,6 +16,10 @@ import {
   type Index,
 } from "../../utils/sqlGenerator";
 import { toBindParamName } from "../../utils/queryParameters";
+import {
+  loadTableQueryTemplates,
+  type TableQueryTemplates,
+} from "../../utils/tableQueryTemplates";
 import type { TableTarget } from "../../types/databaseObjects";
 import type { TableInfo } from "../../contexts/DatabaseContext";
 import type { CommandRuntime } from "../../types/commands";
@@ -55,6 +59,12 @@ export const GenerateSQLModal = ({
   const [sql, setSql] = useState<string>("");
   const [columns, setColumns] = useState<TableColumn[]>([]);
   const [loading, setLoading] = useState(false);
+  const [templates, setTemplates] = useState<TableQueryTemplates>({});
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const requestKey = JSON.stringify([connectionId, tableName, schema, dialect]);
+  const busy = loading || loadedKey !== requestKey;
+  const displayedError = dialectError ?? (loadedKey === requestKey ? loadError : null);
   const { copied, copy: copyText } = useCopyFeedback();
 
   useEffect(() => {
@@ -65,8 +75,10 @@ export const GenerateSQLModal = ({
       return;
     }
 
+    let cancelled = false;
     const generateSQL = async () => {
       setLoading(true);
+      setLoadError(null);
       try {
         const schemaParam = schema ? { schema } : {};
         const [fetchedColumns, foreignKeys, indexes, tables] = await Promise.all([
@@ -91,7 +103,15 @@ export const GenerateSQLModal = ({
           }),
         ]);
 
-        setColumns(fetchedColumns);
+        const generatedTemplates =
+          typeof dialect === "object" && dialect.table_query_templates
+            ? await loadTableQueryTemplates(
+                connectionId,
+                tableName,
+                schema,
+                fetchedColumns.map((column) => column.name),
+              )
+            : {};
         const generatedSQL = generateCreateTableSQL(
           tableName,
           fetchedColumns,
@@ -100,16 +120,27 @@ export const GenerateSQLModal = ({
           dialect,
           tables.find((table) => table.name === tableName)?.comment,
         );
+        if (cancelled) return;
+        setColumns(fetchedColumns);
+        setTemplates(generatedTemplates);
         setSql(generatedSQL);
       } catch (err) {
+        if (cancelled) return;
         console.error(err);
+        setLoadError(String(err));
         showAlert(String(err), { title: t("common.error"), kind: "error" });
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoadedKey(requestKey);
+          setLoading(false);
+        }
       }
     };
 
     void generateSQL();
+    return () => {
+      cancelled = true;
+    };
   }, [
     isOpen,
     connectionId,
@@ -118,9 +149,13 @@ export const GenerateSQLModal = ({
     t,
     schema,
     showAlert,
+    requestKey,
   ]);
 
   const getTabSql = (currentTab: SqlTab): string => {
+    if (currentTab !== "create" && templates[currentTab] != null) {
+      return templates[currentTab];
+    }
     switch (currentTab) {
       case "create":
         return sql;
@@ -173,8 +208,8 @@ export const GenerateSQLModal = ({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-default bg-base">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-900/30 rounded-lg">
-              <FileCode size={20} className="text-blue-400" />
+            <div className="p-2 bg-accent-primary/15 rounded-lg">
+              <FileCode size={20} className="text-accent" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-primary">
@@ -227,7 +262,7 @@ export const GenerateSQLModal = ({
               className={clsx(
                 "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap",
                 tab === tabId
-                  ? "text-primary border-blue-500"
+                  ? "text-primary border-accent-primary"
                   : "text-muted border-transparent hover:text-primary",
               )}
             >
@@ -239,14 +274,14 @@ export const GenerateSQLModal = ({
 
         {/* Content */}
         <div className="flex-1 p-6 overflow-hidden flex flex-col">
-          {dialectError ? (
+          {displayedError ? (
             <div
               role="alert"
-              className="rounded-lg border border-red-500/40 bg-red-950/20 px-4 py-3 text-sm text-red-400"
+              className="rounded-lg border border-accent-error/40 bg-accent-error/10 px-4 py-3 text-sm text-accent-error"
             >
-              {dialectError}
+              {displayedError}
             </div>
-          ) : loading ? (
+          ) : busy ? (
             <div className="text-center py-8 text-muted">
               <Loader2 size={24} className="animate-spin mx-auto mb-2" />
               <span>{t("generateSQL.loading")}</span>
@@ -266,7 +301,7 @@ export const GenerateSQLModal = ({
         </div>
 
         {/* Footer */}
-        {!loading && !dialectError && (
+        {!busy && !displayedError && (
           <div className="p-4 border-t border-default bg-base/50 flex justify-end gap-3">
             <button
               onClick={handleRunInConsole}
@@ -277,7 +312,7 @@ export const GenerateSQLModal = ({
             </button>
             <button
               onClick={handleCopy}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-accent-primary hover:bg-accent-primary/90 text-inverse rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
             >
               {copied ? <Check size={16} /> : <Copy size={16} />}
               {copied ? t("generateSQL.copied") : t("generateSQL.copy")}

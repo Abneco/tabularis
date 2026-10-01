@@ -39,7 +39,7 @@ export const RightSidebar = () => {
 			>
 				<span
 					aria-hidden
-					className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-default group-hover/resize:bg-blue-500 group-hover/resize:w-0.5 transition-all"
+					className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-default group-hover/resize:bg-accent-primary group-hover/resize:w-0.5 transition-all"
 				/>
 			</button>
 

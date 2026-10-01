@@ -183,9 +183,13 @@ export function groupByEngine(drivers: CatalogueDriver[]): EngineGroup[] {
     );
     groups.push({
       engine,
-      // The card represents the engine, not whichever plugin happens to be
-      // first in the group — driver names show up in the driver picker.
-      displayName: engineDisplayName(engine),
+      // Known/shared engines keep their engine title. Standalone plugins can
+      // supply a display name; legacy slug-only manifests keep title-casing.
+      displayName: ENGINE_DISPLAY_NAMES[engine.toLowerCase()] ?? (
+        list.length === 1 && list[0].name.trim() && list[0].name !== list[0].slug
+          ? list[0].name
+          : engineDisplayName(engine)
+      ),
       primaryParadigm,
       secondaryParadigms: [...allParadigms],
       drivers: orderedDrivers,
