@@ -82,7 +82,6 @@ function collectSegments(
       case 'slashDelimiter':
         // Batch mode: `;` ends a statement, not a batch — keep it inline.
         if (batchOnly && token.kind === 'delimiter') {
-          hasMeaningful = true;
           position += token.length;
           state.lineLeading = false;
           break;

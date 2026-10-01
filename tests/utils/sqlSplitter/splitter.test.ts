@@ -650,4 +650,27 @@ describe('splitBatches', () => {
     const result = splitBatches('SELECT 1; SELECT 2;', 'postgres');
     expect(result.map((s) => s.text)).toEqual(['SELECT 1', 'SELECT 2']);
   });
+
+  it('ignores GO inside strings and comments', () => {
+    const sql = "SELECT 'GO';\n/*\nGO\n*/\n-- GO\nSELECT 2;";
+    expect(splitBatches(sql, 'mssql')).toHaveLength(1);
+  });
+
+  it('drops batches made only of bare delimiters', () => {
+    expect(splitBatches(';;;', 'mssql')).toEqual([]);
+    // Folds into the previous batch like a comment-only fragment instead of running alone.
+    expect(splitBatches('SELECT 1;\nGO\n;;\nGO', 'mssql')).toHaveLength(1);
+  });
+
+  it('keeps a procedure body with BEGIN ... END in one batch', () => {
+    const proc = [
+      'CREATE PROCEDURE p AS',
+      'BEGIN',
+      '  DECLARE @n INT = 1;',
+      '  SELECT @n;',
+      'END;',
+    ].join('\n');
+    const result = splitBatches(`${proc}\nGO\nEXEC p;`, 'mssql');
+    expect(result.map((s) => s.text)).toEqual([proc, 'EXEC p;']);
+  });
 });

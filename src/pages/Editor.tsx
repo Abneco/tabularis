@@ -104,7 +104,7 @@ import {
   ExportProgressModal,
   type ExportStatus,
 } from "../components/modals/ExportProgressModal";
-import { splitBatches, findStatementAtOffset, extractTableName, getExplainableQueries, statementLabel, type Statement } from "../utils/sql";
+import { splitQueries, splitStatements, splitBatches, findStatementAtOffset, extractTableName, getExplainableQueries, statementLabel, type Statement } from "../utils/sql";
 import { resolveRunTarget, type RunContext } from "../utils/runTarget";
 import {
   createResultEntries,
@@ -209,12 +209,13 @@ function splitBatchQueries(sql: string, dialect: string | undefined): string[] {
 function getStatementAtCursor(
   editor: Parameters<OnMount>[0],
   dialect: string | undefined,
+  split = splitBatches,
 ): Statement | undefined {
   const model = editor.getModel();
   const position = editor.getPosition();
   if (!model || !position) return undefined;
   const offset = model.getOffsetAt(position);
-  const statements = splitBatches(model.getValue(), dialect);
+  const statements = split(model.getValue(), dialect);
   return findStatementAtOffset(statements, offset);
 }
 
@@ -1180,7 +1181,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
 
       if (!textToRun || !textToRun.trim()) return;
 
-      const mayRun = await guardQueryExecution(textToRun);
+      // Guard per statement: a T-SQL batch can hide a DELETE behind a SELECT.
+      const mayRun = await guardQueryExecution(splitQueries(textToRun, activeDialect));
       if (!mayRun) return;
 
       // Check for parameters
@@ -1434,7 +1436,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       const targetTab = tabsRef.current.find((t) => t.id === targetTabId);
       if (!targetTab) return;
 
-      const mayRun = await guardQueryExecution(queries);
+      const mayRun = await guardQueryExecution(
+        queries.flatMap((q) => splitQueries(q, activeDialect)),
+      );
       if (!mayRun) return;
 
       // Collect all unique parameters across all queries
@@ -2311,7 +2315,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     }
 
     if (settings.runStatementUnderCursor !== false) {
-      const statement = getStatementAtCursor(editor, activeDialect);
+      // Explain needs the single statement, not the whole T-SQL batch.
+      const statement = getStatementAtCursor(editor, activeDialect, splitStatements);
       if (!statement) return;
       if (!statement.isExplainable) {
         showAlert(t("editor.statementNotExplainable"), { kind: "warning" });
