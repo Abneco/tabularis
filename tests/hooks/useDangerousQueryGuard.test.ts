@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import { useDangerousQueryGuard } from '../../src/hooks/useDangerousQueryGuard';
-import { splitBatches, splitQueries } from '../../src/utils/sqlSplitter';
+import { splitBatches, splitGuardStatements } from '../../src/utils/sqlSplitter';
 
 describe('useDangerousQueryGuard', () => {
   it('resolves immediately without opening a dialog for a safe query', async () => {
@@ -149,12 +149,27 @@ describe('useDangerousQueryGuard', () => {
 
     const { result } = renderHook(() => useDangerousQueryGuard());
     act(() => {
-      result.current.guardQuery(splitQueries(batch.text, 'mssql'));
+      result.current.guardQuery(splitGuardStatements(batch.text, 'mssql'));
     });
     expect(result.current.pending).toMatchObject({ kind: 'no-where', count: 1 });
 
     act(() => {
       result.current.resolve(false);
     });
+  });
+
+  it.each([
+    ['CREATE PROCEDURE dbo.p AS\nBEGIN\n  SET NOCOUNT ON;\n  DELETE FROM #tmp;\nEND'],
+    ['-- refresh\nCREATE OR ALTER TRIGGER t ON a AFTER INSERT AS\nBEGIN\n  DELETE FROM b;\nEND;'],
+  ])('does not flag statements inside a T-SQL routine body: %s', async (sql) => {
+    const { result } = renderHook(() => useDangerousQueryGuard());
+
+    let resolved: boolean | undefined;
+    await act(async () => {
+      resolved = await result.current.guardQuery(splitGuardStatements(sql, 'mssql'));
+    });
+
+    expect(resolved).toBe(true);
+    expect(result.current.pending).toBeNull();
   });
 });

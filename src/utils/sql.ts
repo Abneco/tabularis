@@ -9,7 +9,7 @@ import {
 export type SqlDialect = Dialect;
 export type { Statement };
 
-export { splitQueries, splitStatements, splitBatches, findStatementAtOffset } from './sqlSplitter';
+export { splitQueries, splitStatements, splitBatches, splitGuardStatements, findStatementAtOffset } from './sqlSplitter';
 
 export const stripLeadingSqlComments = stripLeadingComments;
 

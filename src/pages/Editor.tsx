@@ -104,7 +104,7 @@ import {
   ExportProgressModal,
   type ExportStatus,
 } from "../components/modals/ExportProgressModal";
-import { splitQueries, splitStatements, splitBatches, findStatementAtOffset, extractTableName, getExplainableQueries, statementLabel, type Statement } from "../utils/sql";
+import { splitGuardStatements, splitStatements, splitBatches, findStatementAtOffset, extractTableName, getExplainableQueries, statementLabel, type Statement } from "../utils/sql";
 import { resolveRunTarget, type RunContext } from "../utils/runTarget";
 import {
   createResultEntries,
@@ -1182,7 +1182,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       if (!textToRun || !textToRun.trim()) return;
 
       // Guard per statement: a T-SQL batch can hide a DELETE behind a SELECT.
-      const mayRun = await guardQueryExecution(splitQueries(textToRun, activeDialect));
+      const mayRun = await guardQueryExecution(splitGuardStatements(textToRun, activeDialect));
       if (!mayRun) return;
 
       // Check for parameters
@@ -1437,7 +1437,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       if (!targetTab) return;
 
       const mayRun = await guardQueryExecution(
-        queries.flatMap((q) => splitQueries(q, activeDialect)),
+        queries.flatMap((q) => splitGuardStatements(q, activeDialect)),
       );
       if (!mayRun) return;
 
@@ -2213,7 +2213,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       isReadOnly: activeTab.readOnly === true,
       isLoading: activeTab.isLoading === true,
       canSaveSqlFile: canSaveSqlFile(activeTab),
-      statementCount: splitQueries(editorText, activeDialect).length,
+      statementCount: splitBatchQueries(editorText, activeDialect).length,
       labels: {
         run: runLabel,
         runAll: t("editor.runAll"),

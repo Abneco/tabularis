@@ -1,5 +1,6 @@
 import { splitInto } from './splitter';
 import { collectNonCodeSpans } from './nonCodeSpans';
+import { stripLeadingComments } from './classify';
 
 export type Dialect =
   | 'postgres'
@@ -304,6 +305,22 @@ export function splitBatches(
 ): Statement[] {
   const options = dialectOptions(normalizeDialect(dialect));
   return splitInto(sql, options, options.goDelimiter);
+}
+
+const ROUTINE_DEFINITION_RE =
+  /^(?:create(?:\s+or\s+alter)?|alter)\s+(?:proc|procedure|function|trigger|view)\b/i;
+
+/**
+ * Statements of `sql` the dangerous-query guard should classify. A routine
+ * definition owns the rest of its T-SQL batch, so it stays whole instead of
+ * having the `;`-terminated statements of its body flagged as top level.
+ */
+export function splitGuardStatements(
+  sql: string,
+  dialect?: Dialect | string,
+): string[] {
+  if (ROUTINE_DEFINITION_RE.test(stripLeadingComments(sql).trimStart())) return [sql];
+  return splitQueries(sql, dialect);
 }
 
 /**
