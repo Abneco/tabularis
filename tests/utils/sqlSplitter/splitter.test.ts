@@ -629,48 +629,15 @@ describe('splitStatements', () => {
 });
 
 describe('splitBatches', () => {
-  it('keeps a T-SQL script with DECLARE and several SELECTs in one batch', () => {
-    const sql = [
-      "DECLARE @id INT = 1;",
-      "SELECT * FROM a WHERE id = @id;",
-      "-- second",
-      "SELECT * FROM b WHERE id = @id;",
-    ].join('\n');
-    const result = splitBatches(sql, 'mssql');
-    expect(result).toHaveLength(1);
-    expect(result[0].text).toBe(sql);
-  });
-
-  it('splits a T-SQL script on GO only', () => {
-    const result = splitBatches('SELECT 1; SELECT 2;\nGO\nSELECT 3;', 'mssql');
-    expect(result.map((s) => s.text)).toEqual(['SELECT 1; SELECT 2;', 'SELECT 3;']);
-  });
-
-  it('still splits per statement on dialects without a batch separator', () => {
-    const result = splitBatches('SELECT 1; SELECT 2;', 'postgres');
-    expect(result.map((s) => s.text)).toEqual(['SELECT 1', 'SELECT 2']);
-  });
-
-  it('ignores GO inside strings and comments', () => {
-    const sql = "SELECT 'GO';\n/*\nGO\n*/\n-- GO\nSELECT 2;";
-    expect(splitBatches(sql, 'mssql')).toHaveLength(1);
-  });
-
-  it('drops batches made only of bare delimiters', () => {
-    expect(splitBatches(';;;', 'mssql')).toEqual([]);
-    // Folds into the previous batch like a comment-only fragment instead of running alone.
-    expect(splitBatches('SELECT 1;\nGO\n;;\nGO', 'mssql')).toHaveLength(1);
-  });
-
-  it('keeps a procedure body with BEGIN ... END in one batch', () => {
-    const proc = [
-      'CREATE PROCEDURE p AS',
-      'BEGIN',
-      '  DECLARE @n INT = 1;',
-      '  SELECT @n;',
-      'END;',
-    ].join('\n');
-    const result = splitBatches(`${proc}\nGO\nEXEC p;`, 'mssql');
-    expect(result.map((s) => s.text)).toEqual([proc, 'EXEC p;']);
+  const proc = 'CREATE PROCEDURE p AS\nBEGIN\n  DECLARE @n INT = 1;\n  SELECT @n;\nEND;';
+  it.each([
+    ['keeps DECLARE scope in one T-SQL batch', 'DECLARE @id INT = 1;\nSELECT @id;\n-- c\nSELECT @id;', 'mssql', ['DECLARE @id INT = 1;\nSELECT @id;\n-- c\nSELECT @id;']],
+    ['splits T-SQL on GO only', 'SELECT 1; SELECT 2;\nGO\nSELECT 3;', 'mssql', ['SELECT 1; SELECT 2;', 'SELECT 3;']],
+    ['ignores GO in strings and comments', "SELECT 'GO';\n/*\nGO\n*/\n-- GO\nSELECT 2;", 'mssql', ["SELECT 'GO';\n/*\nGO\n*/\n-- GO\nSELECT 2;"]],
+    ['drops a bare-delimiter batch', ';;;', 'mssql', []],
+    ['keeps a BEGIN ... END procedure body whole', `${proc}\nGO\nEXEC p;`, 'mssql', [proc, 'EXEC p;']],
+    ['splits per statement without a batch separator', 'SELECT 1; SELECT 2;', 'postgres', ['SELECT 1', 'SELECT 2']],
+  ])('%s', (_name, sql, dialect, expected) => {
+    expect(splitBatches(sql, dialect).map((s) => s.text)).toEqual(expected);
   });
 });

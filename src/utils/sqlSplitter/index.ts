@@ -1,6 +1,5 @@
 import { splitInto } from './splitter';
 import { collectNonCodeSpans } from './nonCodeSpans';
-import { stripLeadingComments } from './classify';
 
 export type Dialect =
   | 'postgres'
@@ -291,39 +290,13 @@ export function splitQueries(
   return splitStatements(sql, dialect).map((s) => s.text);
 }
 
-/**
- * Split a SQL source into the units the server actually executes as one
- * unit of scope. Dialects with a batch separator (T-SQL `GO`) split on
- * that alone, so `;`-separated statements stay in one batch and
- * batch-scoped state (`DECLARE @var`, `#temp`) survives across them — the
- * way SSMS runs a script or a selection. Every other dialect splits per
- * statement, identical to `splitStatements`.
- */
+/** Like `splitStatements`, but T-SQL splits on `GO` only so `DECLARE @var` scope survives. */
 export function splitBatches(
   sql: string,
   dialect?: Dialect | string,
 ): Statement[] {
   const options = dialectOptions(normalizeDialect(dialect));
   return splitInto(sql, options, options.goDelimiter);
-}
-
-const ROUTINE_DEFINITION_RE =
-  /^(?:create(?:\s+or\s+alter)?|alter)\s+(?:proc|procedure|function|trigger|view)\b/i;
-
-/**
- * Statements of `sql` the dangerous-query guard should classify. A routine
- * definition owns only the rest of its own batch, so that batch stays whole
- * instead of having the `;`-terminated statements of its body flagged.
- */
-export function splitGuardStatements(
-  sql: string,
-  dialect?: Dialect | string,
-): string[] {
-  return splitBatches(sql, dialect).flatMap(({ text }) =>
-    ROUTINE_DEFINITION_RE.test(stripLeadingComments(text).trimStart())
-      ? [text]
-      : splitQueries(text, dialect),
-  );
 }
 
 /**

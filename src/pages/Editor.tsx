@@ -104,7 +104,7 @@ import {
   ExportProgressModal,
   type ExportStatus,
 } from "../components/modals/ExportProgressModal";
-import { splitGuardStatements, splitStatements, splitBatches, findStatementAtOffset, extractTableName, getExplainableQueries, statementLabel, type Statement } from "../utils/sql";
+import { splitQueries, splitStatements, splitBatches, findStatementAtOffset, extractTableName, getExplainableQueries, statementLabel, type Statement } from "../utils/sql";
 import { resolveRunTarget, type RunContext } from "../utils/runTarget";
 import {
   createResultEntries,
@@ -198,8 +198,7 @@ const CHEVRON_SELECT_STYLE: React.CSSProperties = {
   backgroundPosition: "right center",
 };
 
-// Execution units of `sql`: one batch per `GO` on T-SQL, one per statement
-// everywhere else (see splitBatches).
+// Execution units: one per `GO` batch on T-SQL, one per statement elsewhere.
 function splitBatchQueries(sql: string, dialect: string | undefined): string[] {
   return splitBatches(sql, dialect).map((statement) => statement.text);
 }
@@ -1182,7 +1181,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       if (!textToRun || !textToRun.trim()) return;
 
       // Guard per statement: a T-SQL batch can hide a DELETE behind a SELECT.
-      const mayRun = await guardQueryExecution(splitGuardStatements(textToRun, activeDialect));
+      const mayRun = await guardQueryExecution(splitQueries(textToRun, activeDialect));
       if (!mayRun) return;
 
       // Check for parameters
@@ -1437,7 +1436,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       if (!targetTab) return;
 
       const mayRun = await guardQueryExecution(
-        queries.flatMap((q) => splitGuardStatements(q, activeDialect)),
+        queries.flatMap((q) => splitQueries(q, activeDialect)),
       );
       if (!mayRun) return;
 
