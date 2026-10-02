@@ -312,15 +312,18 @@ const ROUTINE_DEFINITION_RE =
 
 /**
  * Statements of `sql` the dangerous-query guard should classify. A routine
- * definition owns the rest of its T-SQL batch, so it stays whole instead of
- * having the `;`-terminated statements of its body flagged as top level.
+ * definition owns only the rest of its own batch, so that batch stays whole
+ * instead of having the `;`-terminated statements of its body flagged.
  */
 export function splitGuardStatements(
   sql: string,
   dialect?: Dialect | string,
 ): string[] {
-  if (ROUTINE_DEFINITION_RE.test(stripLeadingComments(sql).trimStart())) return [sql];
-  return splitQueries(sql, dialect);
+  return splitBatches(sql, dialect).flatMap(({ text }) =>
+    ROUTINE_DEFINITION_RE.test(stripLeadingComments(text).trimStart())
+      ? [text]
+      : splitQueries(text, dialect),
+  );
 }
 
 /**

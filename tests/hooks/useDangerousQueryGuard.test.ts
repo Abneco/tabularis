@@ -172,4 +172,20 @@ describe('useDangerousQueryGuard', () => {
     expect(resolved).toBe(true);
     expect(result.current.pending).toBeNull();
   });
+
+  it.each([
+    ['CREATE OR ALTER PROCEDURE dbo.p AS BEGIN SELECT 1; END\nGO\nDELETE FROM t;', 'mssql'],
+    ['CREATE VIEW v AS SELECT 1; DELETE FROM t;', 'postgres'],
+    ['CREATE VIEW v AS SELECT 1; DELETE FROM t;', 'mysql'],
+  ])('flags a dangerous statement after a routine definition: %s (%s)', (sql, dialect) => {
+    const { result } = renderHook(() => useDangerousQueryGuard());
+    act(() => {
+      result.current.guardQuery(splitGuardStatements(sql, dialect));
+    });
+    expect(result.current.pending).toMatchObject({ kind: 'no-where', count: 1 });
+
+    act(() => {
+      result.current.resolve(false);
+    });
+  });
 });
