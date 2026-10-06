@@ -64,6 +64,9 @@ import {
   buildCellRange,
   extendCellRange,
   moveCellPosition,
+  getColumnLayoutKey,
+  resolveLockedColumnWidths,
+  type LockedColumnWidths,
   createDataGridResultCommands,
   type RangeExtendKey,
 } from "../../utils/dataGrid";
@@ -1469,6 +1472,48 @@ export const DataGrid = React.memo(
       hasRenderedRows,
     ]);
 
+    // Lock the column widths once the first rows are on screen (#844). The
+    // table starts in auto layout so the browser sizes each column to its
+    // header and the rendered values; those widths are then measured and
+    // held with a fixed layout, so scrolling through rows that are wider or
+    // narrower no longer reflows the columns. Re-measured only when the
+    // column set changes.
+    const theadRowRef = useRef<HTMLTableRowElement>(null);
+    const [lockedColumnWidths, setLockedColumnWidths] =
+      useState<LockedColumnWidths | null>(null);
+    const columnLayoutKey = useMemo(
+      () =>
+        getColumnLayoutKey(
+          tableColumns.map((col) => col.id ?? ""),
+          tableRows.length > 0,
+        ),
+      [tableColumns, tableRows.length],
+    );
+    const columnWidths = resolveLockedColumnWidths(
+      lockedColumnWidths,
+      columnLayoutKey,
+      tableColumns.length + 1,
+    );
+    useLayoutEffect(() => {
+      if (columnWidths) return;
+      // Wait until the grid is visible and its rows are rendered: a hidden
+      // grid (inactive tab) or a not-yet-virtualized body measures wrong.
+      if (parentViewportWidth === 0) return;
+      if (tableRows.length > 0 && !hasRenderedRows) return;
+      const headerRow = theadRowRef.current;
+      if (!headerRow) return;
+      const widths = Array.from(headerRow.children).map(
+        (cell) => cell.getBoundingClientRect().width,
+      );
+      setLockedColumnWidths({ key: columnLayoutKey, widths });
+    }, [
+      columnWidths,
+      columnLayoutKey,
+      parentViewportWidth,
+      tableRows.length,
+      hasRenderedRows,
+    ]);
+
     const handleContextMenu = useCallback(
       (
         e: React.MouseEvent,
@@ -2579,12 +2624,22 @@ export const DataGrid = React.memo(
           onScroll={handleScroll}
           className="h-full overflow-auto border border-default rounded bg-elevated relative focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
         >
-          <table className="w-full text-left border-collapse">
+          <table
+            className="w-full text-left border-collapse"
+            style={columnWidths ? { tableLayout: "fixed" } : undefined}
+          >
+            {columnWidths && (
+              <colgroup>
+                {columnWidths.map((width, index) => (
+                  <col key={index} style={{ width }} />
+                ))}
+              </colgroup>
+            )}
             <thead
               className={`bg-base z-10 shadow-sm ${stickyColumnHeaders ? "sticky top-0" : ""}`}
             >
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
+                <tr key={headerGroup.id} ref={theadRowRef}>
                   <th
                     onClick={handleSelectAll}
                     title={
