@@ -375,7 +375,6 @@ pnpm tauri build
 
 Вклад в проект приветствуется, см. [CONTRIBUTING.md](./CONTRIBUTING.md). С чего можно начать:
 
-- [Плагин-драйвер SQL Server: протестируйте драйвер и возьмите открытые задачи](https://github.com/TabularisDB/tabularis-sqlserver-plugin)
 - [Дизайн-система UI и визуальная идентичность: приглашение контрибьюторов](https://github.com/TabularisDB/tabularis/issues/195)
 - Напишите плагин-драйвер на любом языке с помощью [руководства по плагинам](./plugins/PLUGIN_GUIDE.md)
 

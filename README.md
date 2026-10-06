@@ -429,17 +429,17 @@ pnpm tauri build
 
 ## Roadmap
 
+- [x] [Plugin registry platform — OAuth publishing, release sync, download analytics](https://github.com/TabularisDB/tabularis/issues/196)
+- [x] [SQL Server driver — implementation roadmap & call for contributors](https://github.com/TabularisDB/tabularis/issues/150)
 - [x] [[Feat]: Allow loading of multiple Databases per connection](https://github.com/TabularisDB/tabularis/issues/47)
+- [x] [Command Palette](https://github.com/TabularisDB/tabularis/issues/25)
 - [x] [JSON/JSONB Editor & Viewer](https://github.com/TabularisDB/tabularis/issues/24)
+- [x] [SQL Formatting / Prettier](https://github.com/TabularisDB/tabularis/issues/23)
 - [x] [Visual Explain Analyze](https://github.com/TabularisDB/tabularis/issues/22)
 - [x] [Plugin System](https://github.com/TabularisDB/tabularis/issues/19)
 - [x] [Query History](https://github.com/TabularisDB/tabularis/issues/18)
-- [ ] [Plugin registry platform: OAuth publishing, release sync, download analytics](https://github.com/TabularisDB/tabularis/issues/196)
-- [ ] [UI design system & visual identity: call for contributors](https://github.com/TabularisDB/tabularis/issues/195)
-- [ ] [SQL Server driver plugin, in development in its own repository](https://github.com/TabularisDB/tabularis-sqlserver-plugin)
+- [ ] [UI design system & visual identity — call for contributors](https://github.com/TabularisDB/tabularis/issues/195)
 - [ ] [Feature: Remote Control](https://github.com/TabularisDB/tabularis/issues/46)
-- [ ] [Command Palette](https://github.com/TabularisDB/tabularis/issues/25)
-- [ ] [SQL Formatting / Prettier](https://github.com/TabularisDB/tabularis/issues/23)
 - [ ] [Data Compare / Diff Tool](https://github.com/TabularisDB/tabularis/issues/21)
 - [ ] [Team Collaboration](https://github.com/TabularisDB/tabularis/issues/20)
 - [ ] [Better SQLite Support](https://github.com/TabularisDB/tabularis/issues/17)
@@ -449,7 +449,6 @@ pnpm tauri build
 
 Contributions are welcome, see [CONTRIBUTING.md](./CONTRIBUTING.md). Good places to start:
 
-- [SQL Server driver plugin: test the driver and claim open issues](https://github.com/TabularisDB/tabularis-sqlserver-plugin)
 - [UI design system & visual identity: call for contributors](https://github.com/TabularisDB/tabularis/issues/195)
 - Write a driver plugin in any language with the [Plugin Guide](./plugins/PLUGIN_GUIDE.md)
 

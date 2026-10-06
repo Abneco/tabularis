@@ -375,7 +375,6 @@ La feuille de route est générée automatiquement à partir des issues GitHub. 
 
 Les contributions sont les bienvenues, consultez [CONTRIBUTING.md](./CONTRIBUTING.md). Quelques bons points de départ :
 
-- [Plugin de driver SQL Server : testez le driver et prenez en charge les issues ouvertes](https://github.com/TabularisDB/tabularis-sqlserver-plugin)
 - [Système de design UI et identité visuelle : appel à contributeurs](https://github.com/TabularisDB/tabularis/issues/195)
 - Écrivez un plugin de driver dans n’importe quel langage avec le [guide des plugins](./plugins/PLUGIN_GUIDE.md)
 

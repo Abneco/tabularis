@@ -375,7 +375,6 @@ pnpm tauri build
 
 欢迎贡献，请参阅 [CONTRIBUTING.md](./CONTRIBUTING.md)。不错的切入点：
 
-- [SQL Server 驱动插件：测试驱动并处理未解决的 Issue](https://github.com/TabularisDB/tabularis-sqlserver-plugin)
 - [UI 设计系统与视觉识别：贡献者招募](https://github.com/TabularisDB/tabularis/issues/195)
 - 参阅[插件指南](./plugins/PLUGIN_GUIDE.md)，用任意语言编写驱动插件
 

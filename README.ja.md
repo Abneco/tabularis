@@ -375,7 +375,6 @@ pnpm tauri build
 
 コントリビューションを歓迎します。詳しくは [CONTRIBUTING.md](./CONTRIBUTING.md) をご覧ください。始めやすいテーマは次のとおりです。
 
-- [SQL Server ドライバープラグイン: ドライバーをテストし、未解決の Issue に取り組む](https://github.com/TabularisDB/tabularis-sqlserver-plugin)
 - [UI デザインシステムとビジュアルアイデンティティ: コントリビューター募集](https://github.com/TabularisDB/tabularis/issues/195)
 - [プラグインガイド](./plugins/PLUGIN_GUIDE.md)を参考に、好きな言語でドライバープラグインを書く
 

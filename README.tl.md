@@ -375,7 +375,6 @@ Awtomatikong binubuo ang roadmap mula sa mga GitHub issue. Tingnan ang kasalukuy
 
 Malugod na tinatanggap ang mga kontribusyon, tingnan ang [CONTRIBUTING.md](./CONTRIBUTING.md). Maaari kang magsimula sa:
 
-- [SQL Server driver plugin: subukan ang driver at kunin ang mga bukas na issue](https://github.com/TabularisDB/tabularis-sqlserver-plugin)
 - [UI design system at visual identity: call for contributors](https://github.com/TabularisDB/tabularis/issues/195)
 - Sumulat ng driver plugin sa anumang wika gamit ang [Plugin Guide](./plugins/PLUGIN_GUIDE.md)
 

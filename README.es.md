@@ -375,7 +375,6 @@ El roadmap se genera automáticamente a partir de las issues de GitHub. Consulta
 
 Las contribuciones son bienvenidas, consulta [CONTRIBUTING.md](./CONTRIBUTING.md). Buenos puntos para empezar:
 
-- [Plugin de driver de SQL Server: prueba el driver y reclama issues abiertas](https://github.com/TabularisDB/tabularis-sqlserver-plugin)
 - [Sistema de diseño de UI e identidad visual: llamada a contribuidores](https://github.com/TabularisDB/tabularis/issues/195)
 - Escribe un plugin de driver en cualquier lenguaje con la [Guía de Plugins](./plugins/PLUGIN_GUIDE.md)
 

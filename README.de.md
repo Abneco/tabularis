@@ -375,7 +375,6 @@ Die Roadmap wird automatisch aus den GitHub-Issues erzeugt. Den aktuellen Stand 
 
 Beiträge sind willkommen, siehe [CONTRIBUTING.md](./CONTRIBUTING.md). Gute Einstiegspunkte:
 
-- [SQL-Server-Treiber-Plugin: Treiber testen und offene Issues übernehmen](https://github.com/TabularisDB/tabularis-sqlserver-plugin)
 - [UI-Designsystem & visuelle Identität: Aufruf an Mitwirkende](https://github.com/TabularisDB/tabularis/issues/195)
 - Schreibe ein Treiber-Plugin in einer beliebigen Sprache mit dem [Plugin Guide](./plugins/PLUGIN_GUIDE.md)
 
