@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { reconstructTableQuery, resolveTabPageSize } from "../utils/editor";
+import {
+  getTabDisplayTitle,
+  reconstructTableQuery,
+  resolveTabPageSize,
+} from "../utils/editor";
 import { shouldShowStatementSuccess } from "../utils/resultPresentation";
 import { formatRowsForCopy, copyTextToClipboard } from "../utils/clipboard";
 import { onActivationKey } from "../utils/keyboardEvents";
@@ -4105,7 +4109,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                   }
                 >
                   <span className="truncate" title={tab.sourceFilePath}>
-                    {tab.title}
+                    {getTabDisplayTitle(tab, tabs)}
                     {tab.sourceFileDirty ? " •" : ""}
                   </span>
                   {tab.type === "console" && isMultiDb && (

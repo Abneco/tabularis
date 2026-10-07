@@ -135,6 +135,22 @@ export function generateTabTitle(
   return consoleCount === 0 ? "Console" : `Console ${consoleCount + 1}`;
 }
 
+export function getTabDisplayTitle(tab: Tab, tabs: Tab[]): string {
+  if (tab.type !== "table" || !tab.schema || tab.title !== tab.activeTable) {
+    return tab.title;
+  }
+  const sameTableOtherSchema = tabs.some(
+    (t) =>
+      t.id !== tab.id &&
+      t.connectionId === tab.connectionId &&
+      t.type === "table" &&
+      t.title === t.activeTable &&
+      t.activeTable === tab.activeTable &&
+      t.schema !== tab.schema,
+  );
+  return sameTableOtherSchema ? `${tab.schema}.${tab.title}` : tab.title;
+}
+
 export function findExistingTableTab(
   tabs: Tab[],
   connectionId: string,
