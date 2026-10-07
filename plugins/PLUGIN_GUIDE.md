@@ -127,7 +127,6 @@ Upgrade the registry before publishing the new format. Add `id` equal to the **e
 | `connection_string` | bool | Set `false` to hide the connection string import UI for this driver. Defaults to `true` for network drivers. `file_based` and `folder_based` drivers skip the import UI automatically regardless of this flag. |
 | `connection_string_example` | string | Optional placeholder example shown in the connection string import field (e.g. `"clickhouse://user:pass@localhost:9000/db"`). Also accepted as camelCase `connectionStringExample`. |
 | `connection_string_examples` | array | Optional connection string presets shown beside the import field. Each item has a required `label` and `value`, plus an optional `description`. Selecting one fills the field; `connection_string_example` remains the placeholder. Also accepted as camelCase `connectionStringExamples`. |
-
 | `identifier_quote` | string | Character used to quote SQL identifiers. Use `"\""` for ANSI standard or `` "`" `` for MySQL style. |
 | `table_query_templates` | bool | Opts the Generate SQL dialog into the optional `get_table_query_template` RPC for SELECT/UPDATE/DELETE previews. Defaults to `false`; older plugins and built-in drivers keep the existing host templates. See [Table Query Templates](#table-query-templates). |
 | `sql_dialect` | string | Optional statement-splitting dialect: `postgres`, `mysql`, `mssql`, `sqlite`, `oracle`, or `generic`. Oracle-like plugins, including DM/Dameng, should use `"oracle"`. |

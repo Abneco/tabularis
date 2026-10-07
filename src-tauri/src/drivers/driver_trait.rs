@@ -39,8 +39,7 @@ pub enum SqlDialect {
     Generic,
 }
 
-/// Capabilities advertised by a driver.
-/// The frontend uses these flags to decide which UI sections to show.
+/// A labeled connection URI preset displayed in the connection modal.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ConnectionStringExample {
     pub label: String,
@@ -49,6 +48,8 @@ pub struct ConnectionStringExample {
     pub description: Option<String>,
 }
 
+/// Capabilities advertised by a driver.
+/// The frontend uses these flags to decide which UI sections to show.
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DriverCapabilities {
     /// Supports multiple named schemas (e.g. PostgreSQL).
