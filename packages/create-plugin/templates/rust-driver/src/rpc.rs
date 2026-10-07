@@ -84,10 +84,9 @@ pub fn error_response(id: Value, code: i64, message: &str) -> Value {
     })
 }
 
+/// Keep "Method not found" in the message: the host only sees the message,
+/// not the code, and needs that wording to use its fallback for optional
+/// methods (batch execution, materialized views, BLOBs, ...).
 pub fn not_implemented(id: Value, method: &str) -> Value {
-    error_response(
-        id,
-        -32601,
-        &format!("method '{method}' is not implemented by this plugin yet"),
-    )
+    error_response(id, -32601, &format!("Method not found: {method}"))
 }

@@ -706,7 +706,7 @@ When a call exceeds the configured plugin call timeout, Tabularis stops waiting 
 
 ## 5. Required Methods
 
-Your plugin must respond to the following JSON-RPC methods. For unsupported features, return an empty array `[]` or a `-32601` (Method not found) error.
+Your plugin must respond to the following JSON-RPC methods. For unsupported features, return an empty array `[]` or a `-32601` (Method not found) error. The host recognizes that error by its **message**, not its code, so the message must contain `Method not found` (e.g. `Method not found: execute_query_batch`); with any other wording the host reports an error instead of using its fallback for optional methods.
 
 ### Connection
 
@@ -1550,7 +1550,7 @@ fn dispatch(method: &str, params: &Value, id: Value) -> Value {
             "jsonrpc": "2.0",
             "error": {
                 "code": -32601,
-                "message": format!("Method '{}' not implemented", method)
+                "message": format!("Method not found: {}", method)
             },
             "id": id
         }),
