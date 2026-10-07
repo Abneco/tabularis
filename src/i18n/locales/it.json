@@ -1386,6 +1386,7 @@
     "exportLoadedRowsWarning": "Sono state esportate solo {{loaded}} righe caricate su {{total}} righe totali. Scorri le pagine del risultato o esegui una query più mirata prima di esportare se ti servono più righe.",
     "queryParameters": "Parametri Query",
     "formatSql": "Formatta SQL",
+    "convertSelectionToSqlList": "Converti selezione in lista SQL",
     "convertToConsole": "Converti in Console",
     "parameters": "Parametri",
     "paramValuePlaceholder": "Valore (es. 'testo' o 123)",

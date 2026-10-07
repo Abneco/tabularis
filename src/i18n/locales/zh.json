@@ -1320,6 +1320,7 @@
     "exportLoadedRowsWarning": "仅导出了总计 {{total}} 行中的 {{loaded}} 行已加载数据。如果需要更多行，请先翻页加载结果或运行范围更窄的查询后再导出。",
     "queryParameters": "查询参数",
     "formatSql": "格式化 SQL",
+    "convertSelectionToSqlList": "将所选内容转换为 SQL 列表",
     "convertToConsole": "转换为控制台",
     "parameters": "参数",
     "paramValuePlaceholder": "值（例如 'text' 或 123）",
