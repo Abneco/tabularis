@@ -1393,6 +1393,7 @@
     "exportLoadedRowsWarning": "Seules {{loaded}} lignes chargées sur {{total}} lignes au total ont été exportées. Parcourez les pages du résultat ou exécutez une requête plus restrictive avant d'exporter si vous avez besoin de plus de lignes.",
     "queryParameters": "Paramètres de requête",
     "formatSql": "Formater SQL",
+    "convertSelectionToSqlList": "Convertir la sélection en liste SQL",
     "convertToConsole": "Convertir en console",
     "parameters": "Paramètres",
     "paramValuePlaceholder": "Valeur (ex. 'texte' ou 123)",
