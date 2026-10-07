@@ -539,6 +539,10 @@
     "fontSizeDesc": "Ajusta el tamaño base de fuente usado en la aplicación (10-20px).",
     "preview": "Vista Previa",
     "fontPreviewText": "El veloz zorro marrón salta sobre el perro perezoso",
+    "dataGrid": {
+      "zebraStripes": "Fondo de filas alternas",
+      "zebraStripesDesc": "Sombrea una fila de cada dos para seguir más fácilmente una fila en tablas anchas."
+    },
     "appearance_general": "General",
     "appearance_sqlEditor": "Editor SQL",
     "appearance_editorTheme": "Tema del Editor",

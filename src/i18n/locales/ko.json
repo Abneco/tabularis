@@ -489,6 +489,10 @@
       "confirm": "확인",
       "cancel": "취소"
     },
+    "dataGrid": {
+      "zebraStripes": "줄무늬 행 배경",
+      "zebraStripesDesc": "넓은 테이블에서 행을 더 쉽게 추적할 수 있도록 한 행 건너 음영을 적용합니다."
+    },
     "appearance_general": "일반",
     "appearance_sqlEditor": "SQL 에디터",
     "appearance_editorTheme": "에디터 테마",

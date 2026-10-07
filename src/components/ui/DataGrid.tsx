@@ -255,6 +255,7 @@ export const DataGrid = React.memo(
     const rightSidebar = useRightSidebar();
     const colorByType = settings.resultColorByType ?? false;
     const stickyColumnHeaders = settings.stickyColumnHeaders ?? true;
+    const zebraStripes = settings.resultZebraStripes ?? false;
 
     // Sensitive-column masking (#485): display-only — copy/export keep the
     // real values; only the rendered grid masks them.
@@ -2503,6 +2504,7 @@ export const DataGrid = React.memo(
         onPendingInsertionChange,
         openJsonViewerWindow,
         editInputRef,
+        zebraStripes,
       }),
       [
         columns,
@@ -2547,6 +2549,7 @@ export const DataGrid = React.memo(
         onPendingInsertionChange,
         openJsonViewerWindow,
         editInputRef,
+        zebraStripes,
       ],
     );
 

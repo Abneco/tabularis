@@ -548,6 +548,8 @@
       "title": "Data Grid",
       "stickyHeaders": "Sticky column headers",
       "stickyHeadersDesc": "Keep the column headers visible at the top while scrolling through results.",
+      "zebraStripes": "Alternating row background",
+      "zebraStripesDesc": "Shade every other row so it is easier to follow a row across wide tables.",
       "fontFamily": "Result font",
       "fontFamilyDesc": "Font used for query result cells. Monospace keeps values aligned; pick \"Same as interface\" to reuse the application font.",
       "fontSameAsInterface": "Same as interface"

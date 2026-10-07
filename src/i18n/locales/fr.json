@@ -544,6 +544,10 @@
       "confirm": "Confirmer",
       "cancel": "Annuler"
     },
+    "dataGrid": {
+      "zebraStripes": "Arrière-plan alterné des lignes",
+      "zebraStripesDesc": "Ombrage une ligne sur deux pour suivre plus facilement une ligne dans les tableaux larges."
+    },
     "appearance_general": "Général",
     "appearance_sqlEditor": "Éditeur SQL",
     "appearance_editorTheme": "Thème de l’éditeur",

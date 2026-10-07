@@ -525,6 +525,10 @@
     "fontSizeDesc": "アプリケーション全体で使用される基本フォントサイズを調整します (10〜20px)。",
     "preview": "プレビュー",
     "fontPreviewText": "いろはにほへと ちりぬるを わかよたれそ つねならむ",
+    "dataGrid": {
+      "zebraStripes": "交互の行背景",
+      "zebraStripesDesc": "1行おきに背景を網掛けし、横幅の広いテーブルでも行を追いやすくします。"
+    },
     "appearance_general": "一般",
     "appearance_sqlEditor": "SQL エディタ",
     "appearance_editorTheme": "エディタテーマ",
