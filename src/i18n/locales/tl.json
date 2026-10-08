@@ -1238,6 +1238,10 @@
     "copyColumnNameQuoted": "Kopyahin bilang `column`",
     "copyColumnNameTable": "Kopyahin bilang table.column",
     "copyColumnValuesIn": "Kopyahin ang mga value ng column bilang SQL IN",
+    "filterEquals": "Filter: {{column}} = value na ito",
+    "filterNotEquals": "Filter: {{column}} <> value na ito",
+    "filterIsNull": "Filter: {{column}} IS NULL",
+    "filterIsNotNull": "Filter: {{column}} IS NOT NULL",
     "copyCells": "Kopyahin ang {{count}} Cell",
     "copyRows": "Kopyahin ang {{count}} Row",
     "copied": "Nakopya sa clipboard",
@@ -2267,7 +2271,6 @@
     "outputParameter": "Output parameter — ibabalik bilang resulta",
     "rawLabel": "Raw",
     "rawHint": "Ipasok ang halaga nang verbatim, walang string quoting (mga numero, expression)",
-    "runButton": "Patakbuhin",
     "runTabPrefix": "Patakbuhin",
     "returnValue": "nagbabalik ng"
   },

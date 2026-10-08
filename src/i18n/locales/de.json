@@ -1207,6 +1207,10 @@
     "copyColumnNameQuoted": "Als `column` kopieren",
     "copyColumnNameTable": "Als table.column kopieren",
     "copyColumnValuesIn": "Spaltenwerte als SQL IN kopieren",
+    "filterEquals": "Filtern: {{column}} = dieser Wert",
+    "filterNotEquals": "Filtern: {{column}} <> dieser Wert",
+    "filterIsNull": "Filtern: {{column}} IS NULL",
+    "filterIsNotNull": "Filtern: {{column}} IS NOT NULL",
     "copyCells": "{{count}} Zelle(n) kopieren",
     "copyRows": "{{count}} Zeile(n) kopieren",
     "copied": "In Zwischenablage kopiert",
@@ -2197,7 +2201,6 @@
     "outputParameter": "Ausgabeparameter — wird als Ergebnis zurückgegeben",
     "rawLabel": "Raw",
     "rawHint": "Wert unverändert einfügen, ohne String-Quoting (Zahlen, Ausdrücke)",
-    "runButton": "Ausführen",
     "runTabPrefix": "Ausführen",
     "returnValue": "Rückgabe"
   },

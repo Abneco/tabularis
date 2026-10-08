@@ -1182,6 +1182,10 @@
     "copyColumnNameQuoted": "`column` 형식으로 복사",
     "copyColumnNameTable": "table.column 형식으로 복사",
     "copyColumnValuesIn": "열 값을 SQL IN으로 복사",
+    "filterEquals": "필터: {{column}} = 이 값",
+    "filterNotEquals": "필터: {{column}} <> 이 값",
+    "filterIsNull": "필터: {{column}} IS NULL",
+    "filterIsNotNull": "필터: {{column}} IS NOT NULL",
     "copyCells": "{{count}}개 셀 복사",
     "copyRows": "{{count}}개 행 복사",
     "copied": "클립보드에 복사되었습니다",
@@ -2201,7 +2205,6 @@
     "outputParameter": "출력 매개변수 — 결과로 반환됨",
     "rawLabel": "원본",
     "rawHint": "문자열 인용 없이 값을 그대로 삽입합니다 (숫자, 표현식)",
-    "runButton": "실행",
     "runTabPrefix": "실행",
     "returnValue": "반환"
   },
