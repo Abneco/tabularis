@@ -13,7 +13,7 @@ pub struct Args {
     #[arg(long)]
     pub mcp: bool,
 
-    /// Enable debug logging (including sqlx queries)
+    /// Enable debug logging (including sqlx queries and other dependencies)
     #[arg(long)]
     pub debug: bool,
 
