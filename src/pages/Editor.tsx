@@ -60,6 +60,7 @@ import {
   ArrowRightToLine,
   XCircle,
   Trash2,
+  Undo2,
   Check,
   BookOpen,
   UsersRound,
@@ -256,6 +257,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     closeOtherTabs,
     closeTabsToLeft,
     closeTabsToRight,
+    reopenClosedTab,
+    canReopenClosedTab,
   } = useEditor();
   const location = useLocation();
   const { matchesShortcut, isMac } = useKeybindings();
@@ -2395,6 +2398,12 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         return;
       }
 
+      if (matchesShortcut(e, "reopen_closed_tab")) {
+        e.preventDefault();
+        reopenClosedTab();
+        return;
+      }
+
       if (matchesShortcut(e, "new_tab")) {
         e.preventDefault();
         addTab({ type: "console" });
@@ -2442,6 +2451,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     matchesShortcut,
     addTab,
     handleCloseTab,
+    reopenClosedTab,
     runQuery,
   ]);
 
@@ -5469,6 +5479,12 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                   },
                 ]
               : []),
+            {
+              label: t("editor.reopenClosedTab"),
+              icon: Undo2,
+              disabled: !canReopenClosedTab,
+              action: () => reopenClosedTab(),
+            },
             {
               label: t("editor.closeTab"),
               icon: X,

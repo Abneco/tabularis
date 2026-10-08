@@ -881,6 +881,7 @@
       "newConnection": "Nuova connessione",
       "newTab": "Nuovo tab",
       "closeTab": "Chiudi tab",
+      "reopenClosedTab": "Riapri scheda chiusa",
       "nextPage": "Pagina successiva",
       "prevPage": "Pagina precedente",
       "switchConnection": "Passa alla connessione 1–9",
@@ -1321,6 +1322,7 @@
       "reattach": "Riaggancia"
     },
     "closeTab": "Chiudi scheda",
+    "reopenClosedTab": "Riapri scheda chiusa",
     "closeOthers": "Chiudi altre schede",
     "closeRight": "Chiudi schede a destra",
     "closeLeft": "Chiudi schede a sinistra",

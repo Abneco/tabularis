@@ -881,6 +881,7 @@
       "newConnection": "Nouvelle connexion",
       "newTab": "Nouvel onglet",
       "closeTab": "Fermer l’onglet",
+      "reopenClosedTab": "Réouvrir l’onglet fermé",
       "nextPage": "Page suivante",
       "prevPage": "Page précédente",
       "saveGridChanges": "Enregistrer les modifications en attente",
@@ -1327,6 +1328,7 @@
       "reattach": "Rattacher"
     },
     "closeTab": "Fermer l’onglet",
+    "reopenClosedTab": "Réouvrir l’onglet fermé",
     "closeOthers": "Fermer les autres onglets",
     "closeRight": "Fermer les onglets à droite",
     "closeLeft": "Fermer les onglets à gauche",

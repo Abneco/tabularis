@@ -879,6 +879,7 @@
       "newConnection": "Bagong koneksyon",
       "newTab": "Bagong tab",
       "closeTab": "Isara ang tab",
+      "reopenClosedTab": "Muling buksan ang saradong tab",
       "nextPage": "Susunod na pahina",
       "prevPage": "Nakaraang pahina",
       "saveGridChanges": "I-save ang nakabinbing pagbabago",
@@ -1318,6 +1319,7 @@
       "reattach": "I-attach muli"
     },
     "closeTab": "Isara ang Tab",
+    "reopenClosedTab": "Muling Buksan ang Saradong Tab",
     "closeOthers": "Isara ang Ibang Tab",
     "closeRight": "Isara ang mga Tab sa Kanan",
     "closeLeft": "Isara ang mga Tab sa Kaliwa",

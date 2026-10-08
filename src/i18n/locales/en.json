@@ -893,6 +893,7 @@
       "newConnection": "New connection",
       "newTab": "New tab",
       "closeTab": "Close tab",
+      "reopenClosedTab": "Reopen closed tab",
       "nextPage": "Next page",
       "prevPage": "Previous page",
       "saveGridChanges": "Save pending changes",
@@ -1337,6 +1338,7 @@
       "reattach": "Re-attach"
     },
     "closeTab": "Close Tab",
+    "reopenClosedTab": "Reopen Closed Tab",
     "closeOthers": "Close Other Tabs",
     "closeRight": "Close Tabs to Right",
     "closeLeft": "Close Tabs to Left",
