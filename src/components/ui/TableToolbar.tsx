@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect, useId } from "react";
+import React, { useState, useRef, useCallback, useId } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Filter,
@@ -95,9 +95,6 @@ const TableToolbarInternal = ({
   const whereListId = useId();
   const sortListId = useId();
 
-  const panelRef = useRef<HTMLDivElement>(null);
-  const filtersButtonRef = useRef<HTMLButtonElement>(null);
-
   const columns = columnMetadata ?? [];
   const hasColumns = columns.length > 0;
   const activeFilterCount = structuredFilters.filter((f) => f.enabled !== false).length;
@@ -121,29 +118,6 @@ const TableToolbarInternal = ({
     },
     [getLimitVal, initialFilter, initialSort, initialLimit, onUpdate, quotingDriver]
   );
-
-  // ── click outside to close panel ─────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!panelOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        panelRef.current &&
-        !panelRef.current.contains(target) &&
-        filtersButtonRef.current &&
-        !filtersButtonRef.current.contains(target)
-      ) {
-        closePanel();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  // closePanel is stable enough; adding it would cause infinite re-registration
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panelOpen]);
 
   // ── panel helpers ─────────────────────────────────────────────────────────────
 
@@ -410,7 +384,7 @@ const TableToolbarInternal = ({
 
   return (
     // Size container so controls collapse in narrow split panes. The explicit
-    // z-index keeps the autocomplete/filter overlays above the grid below (a
+    // z-index keeps the autocomplete dropdowns above the grid below (a
     // container creates a stacking context that would otherwise paint under
     // later siblings).
     <div className="@container relative z-30">
@@ -419,7 +393,6 @@ const TableToolbarInternal = ({
         {/* Filters button */}
         {hasColumns && (
           <button
-            ref={filtersButtonRef}
             onClick={togglePanel}
             title={t("toolbar.toggleFilterPanel")}
             className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs border transition-all shrink-0 ${
@@ -581,16 +554,14 @@ const TableToolbarInternal = ({
         />
       </div>
 
-      {/* Overlay filter panel */}
+      {/* Inline filter panel — pushes the grid down so results stay visible */}
       {panelOpen && (
         // Layout wrapper: onKeyDown only catches Escape bubbling from the
         // filter controls inside, which carry the semantics.
         <div
-          ref={panelRef}
           role="presentation"
           onKeyDown={handlePanelKeyDown}
-          className="absolute top-full left-0 z-50 mt-1 w-full min-w-[min(560px,100cqw)] max-w-4xl bg-elevated border border-default/80 rounded-lg overflow-hidden"
-          style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3)" }}
+          className="w-full bg-elevated border-b border-default/80"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-default/60 bg-base/40">
@@ -613,7 +584,7 @@ const TableToolbarInternal = ({
           </div>
 
           {/* Filter rows — scroll horizontally when the pane is narrower than a row */}
-          <div className="divide-y divide-default/30 overflow-x-auto">
+          <div className="divide-y divide-default/30 overflow-x-auto overflow-y-auto max-h-[40vh]">
             {structuredFilters.length === 0 ? (
               <div className="flex items-center gap-2 px-3 py-3">
                 <span className="text-xs text-muted">{t("toolbar.noFilters")}</span>
