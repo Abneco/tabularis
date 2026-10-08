@@ -84,9 +84,9 @@ pub fn error_response(id: Value, code: i64, message: &str) -> Value {
     })
 }
 
-/// Keep "Method not found" in the message: the host only sees the message,
-/// not the code, and needs that wording to use its fallback for optional
-/// methods (batch execution, materialized views, BLOBs, ...).
+/// Keep code -32601 and "Method not found" in the message: most host fallbacks
+/// for optional methods (batch execution, materialized views, BLOBs, ...)
+/// match on the message text, a few on the code.
 pub fn not_implemented(id: Value, method: &str) -> Value {
     error_response(id, -32601, &format!("Method not found: {method}"))
 }
