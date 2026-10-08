@@ -2520,7 +2520,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
     );
     if (currentTab?.activeTable && activeConnectionId)
       return runQuery(undefined, currentTab.page, currentTab.id,
-        undefined, undefined, undefined, undefined, undefined, undefined, { background: true });
+        undefined, undefined, undefined, undefined, undefined, undefined, { background: !!currentTab.result });
   }, [activeConnectionId, runQuery]);
 
   const refreshSchedule = useMemo(

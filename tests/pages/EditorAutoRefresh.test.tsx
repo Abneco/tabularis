@@ -212,6 +212,17 @@ describe("table auto-refresh integration", () => {
     await advance(1); expect(queries()).toHaveLength(2);
   });
 
+  it("manual refresh recovers from a failed initial query", async () => {
+    render(<Harness initialTabs={[{ ...initialTab(), result: null, error: "offline" }]} />);
+    expect(context.activeTab?.error).toBe("offline");
+    fireEvent.click(screen.getByRole("button", { name: "toolbar.autoRefresh.refresh" }));
+    await advance(0);
+    expect(queries()).toHaveLength(1);
+    expect(context.activeTab?.error).toBe("");
+    expect(screen.getByTestId("grid")).toHaveTextContent("[[2],[3]]");
+    await advance(5000); expect(queries()).toHaveLength(2);
+  });
+
   it("queues explicit table navigation behind a refresh and discards superseded rows", async () => {
     const first = deferred<QueryResult>();
     const second = deferred<QueryResult>();
