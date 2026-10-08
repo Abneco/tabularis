@@ -21,6 +21,16 @@ pub struct PluginConfig {
     pub call_timeout_seconds: Option<u32>,
 }
 
+/// Per-connection column masking overrides (`table.column` entries).
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct ColumnMaskingOverride {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub include: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub exclude: Option<Vec<String>>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum WindowDecorationsMode {
@@ -56,6 +66,11 @@ pub struct AppConfig {
     pub sticky_column_headers: Option<bool>,
     /// Alternate the background of data grid rows. Default: false.
     pub result_zebra_stripes: Option<bool>,
+    /// Keep the row editor sidebar in sync with the selected grid row. Default: true.
+    pub row_editor_follow_selection: Option<bool>,
+    /// What double-clicking a grid cell does: `"inline"` (default), `"sidebar"`
+    /// or `"both"`.
+    pub cell_double_click_action: Option<String>,
     pub ai_enabled: Option<bool>,
     pub ai_provider: Option<String>,
     pub ai_model: Option<String>,
@@ -189,6 +204,14 @@ pub struct AppConfig {
     pub backup_webdav_url: Option<String>,
     /// WebDAV username; the password lives in the OS keychain.
     pub backup_webdav_username: Option<String>,
+
+    // ----- Privacy -----
+    /// Mask values of sensitive columns in the results grid (display only). Default: true.
+    pub column_masking_enabled: Option<bool>,
+    /// Column-name patterns (case-insensitive substring) that trigger masking.
+    pub column_masking_patterns: Option<Vec<String>>,
+    /// Per-connection `table.column` include/exclude overrides, keyed by connection id.
+    pub column_masking_overrides: Option<HashMap<String, ColumnMaskingOverride>>,
 
     // ----- Session restore -----
     /// Reconnect to the last active connection on startup. Default: true.
@@ -421,6 +444,12 @@ pub fn save_config(app: AppHandle, config: AppConfig) -> Result<(), String> {
         if config.result_zebra_stripes.is_some() {
             existing_config.result_zebra_stripes = config.result_zebra_stripes;
         }
+        if config.row_editor_follow_selection.is_some() {
+            existing_config.row_editor_follow_selection = config.row_editor_follow_selection;
+        }
+        if config.cell_double_click_action.is_some() {
+            existing_config.cell_double_click_action = config.cell_double_click_action;
+        }
         if config.ai_enabled.is_some() {
             existing_config.ai_enabled = config.ai_enabled;
         }
@@ -609,6 +638,15 @@ pub fn save_config(app: AppHandle, config: AppConfig) -> Result<(), String> {
         }
         if config.backup_webdav_username.is_some() {
             existing_config.backup_webdav_username = config.backup_webdav_username;
+        }
+        if config.column_masking_enabled.is_some() {
+            existing_config.column_masking_enabled = config.column_masking_enabled;
+        }
+        if config.column_masking_patterns.is_some() {
+            existing_config.column_masking_patterns = config.column_masking_patterns;
+        }
+        if config.column_masking_overrides.is_some() {
+            existing_config.column_masking_overrides = config.column_masking_overrides;
         }
         if config.auto_connect_last_connection.is_some() {
             existing_config.auto_connect_last_connection = config.auto_connect_last_connection;
@@ -1367,5 +1405,73 @@ mod tests {
     fn parse_config_file_distrusts_malformed_content() {
         let (_, trusted) = parse_config_file(Ok("{ truncated".to_string()));
         assert!(!trusted);
+    }
+
+    #[test]
+    fn grid_and_privacy_settings_round_trip_through_config_file() {
+        // Payload shape sent by the frontend's `save_config` call.
+        let json = r#"{
+            "rowEditorFollowSelection": false,
+            "cellDoubleClickAction": "sidebar",
+            "columnMaskingEnabled": false,
+            "columnMaskingPatterns": ["password", "ssn"],
+            "columnMaskingOverrides": {
+                "conn-1": { "include": ["users.email"], "exclude": ["users.token"] },
+                "conn-2": { "exclude": ["orders.card"] }
+            }
+        }"#;
+        let config: AppConfig = serde_json::from_str(json).unwrap();
+
+        // Same path as save_config (write) followed by load_config (read).
+        let saved = serde_json::to_string_pretty(&config).unwrap();
+        let reloaded = parse_config_file(Ok(saved.clone())).0;
+
+        assert_eq!(reloaded.row_editor_follow_selection, Some(false));
+        assert_eq!(
+            reloaded.cell_double_click_action.as_deref(),
+            Some("sidebar")
+        );
+        assert_eq!(reloaded.column_masking_enabled, Some(false));
+        assert_eq!(
+            reloaded.column_masking_patterns,
+            Some(vec!["password".to_string(), "ssn".to_string()])
+        );
+        let overrides = reloaded.column_masking_overrides.unwrap();
+        assert_eq!(
+            overrides.get("conn-1"),
+            Some(&ColumnMaskingOverride {
+                include: Some(vec!["users.email".to_string()]),
+                exclude: Some(vec!["users.token".to_string()]),
+            })
+        );
+        assert_eq!(
+            overrides.get("conn-2"),
+            Some(&ColumnMaskingOverride {
+                include: None,
+                exclude: Some(vec!["orders.card".to_string()]),
+            })
+        );
+
+        // Keys are written in camelCase, matching `SettingsContext.ts`.
+        for key in [
+            "rowEditorFollowSelection",
+            "cellDoubleClickAction",
+            "columnMaskingEnabled",
+            "columnMaskingPatterns",
+            "columnMaskingOverrides",
+        ] {
+            assert!(saved.contains(key), "missing {key} in saved config");
+        }
+    }
+
+    #[test]
+    fn grid_and_privacy_settings_default_to_none_for_existing_configs() {
+        let (config, trusted) = parse_config_file(Ok(r#"{"theme":"dracula"}"#.to_string()));
+        assert!(trusted);
+        assert!(config.row_editor_follow_selection.is_none());
+        assert!(config.cell_double_click_action.is_none());
+        assert!(config.column_masking_enabled.is_none());
+        assert!(config.column_masking_patterns.is_none());
+        assert!(config.column_masking_overrides.is_none());
     }
 }
