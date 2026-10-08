@@ -615,7 +615,7 @@ const TableToolbarInternal = ({
             </div>
             <div className="flex items-center gap-2">
               <div
-                role="radiogroup"
+                role="group"
                 aria-label={t("toolbar.matchMode")}
                 className="flex items-center rounded border border-default/60 overflow-hidden"
               >
@@ -623,8 +623,7 @@ const TableToolbarInternal = ({
                   <button
                     key={mode}
                     type="button"
-                    role="radio"
-                    aria-checked={combinator === mode}
+                    aria-pressed={combinator === mode}
                     onClick={() => handleCombinatorChange(mode)}
                     className={`px-2 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus ${
                       combinator === mode
