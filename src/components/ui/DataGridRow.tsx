@@ -265,7 +265,7 @@ export const MemoRow = React.memo(function MemoRow(rowCtx: MemoRowProps) {
               : isPendingDelete
                 ? "bg-semantic-deleted/10 opacity-60"
                 : isZebraStripedRow(rowIndex, zebraStripes)
-                  ? "bg-surface-secondary/40 hover:bg-surface-secondary/60"
+                  ? "bg-surface-secondary/40 hover:bg-surface-secondary/90"
                   : "hover:bg-surface-secondary/50"
         }`}
       >
@@ -290,7 +290,7 @@ export const MemoRow = React.memo(function MemoRow(rowCtx: MemoRowProps) {
                 : isSelected
                   ? "bg-accent-primary/20 text-accent font-bold"
                   : isZebraStripedRow(rowIndex, zebraStripes)
-                    ? "bg-surface-secondary text-muted hover:bg-surface-tertiary"
+                    ? "bg-[color-mix(in_srgb,var(--surface-secondary)_40%,var(--bg-base))] text-muted hover:bg-surface-tertiary"
                     : "bg-base text-muted hover:bg-surface-secondary"
           }`}
         >
