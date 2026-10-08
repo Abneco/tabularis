@@ -2201,7 +2201,6 @@
     "outputParameter": "출력 매개변수 — 결과로 반환됨",
     "rawLabel": "원본",
     "rawHint": "문자열 인용 없이 값을 그대로 삽입합니다 (숫자, 표현식)",
-    "runButton": "실행",
     "runTabPrefix": "실행",
     "returnValue": "반환"
   },

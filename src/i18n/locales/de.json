@@ -2197,7 +2197,6 @@
     "outputParameter": "Ausgabeparameter — wird als Ergebnis zurückgegeben",
     "rawLabel": "Raw",
     "rawHint": "Wert unverändert einfügen, ohne String-Quoting (Zahlen, Ausdrücke)",
-    "runButton": "Ausführen",
     "runTabPrefix": "Ausführen",
     "returnValue": "Rückgabe"
   },

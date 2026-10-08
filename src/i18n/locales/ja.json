@@ -2215,7 +2215,6 @@
     "outputParameter": "出力パラメータ — 結果として返されます",
     "rawLabel": "Raw",
     "rawHint": "文字列クォートなしでそのまま挿入します（数値・式）",
-    "runButton": "実行",
     "runTabPrefix": "実行",
     "returnValue": "戻り値"
   },

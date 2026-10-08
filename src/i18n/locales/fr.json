@@ -2277,7 +2277,6 @@
     "outputParameter": "Paramètre de sortie — renvoyé comme résultat",
     "rawLabel": "Brut",
     "rawHint": "Insère la valeur telle quelle, sans guillemets de chaîne (nombres, expressions)",
-    "runButton": "Exécuter",
     "runTabPrefix": "Exécuter",
     "returnValue": "retourne"
   },
