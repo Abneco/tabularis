@@ -622,12 +622,13 @@ const TableToolbarInternal = ({
                 {(["AND", "OR"] as const).map((mode) => (
                   <button
                     key={mode}
+                    type="button"
                     role="radio"
                     aria-checked={combinator === mode}
                     onClick={() => handleCombinatorChange(mode)}
-                    className={`px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                    className={`px-2 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus ${
                       combinator === mode
-                        ? "bg-blue-600/20 text-blue-300"
+                        ? "bg-accent-primary/20 text-accent"
                         : "text-muted hover:text-secondary hover:bg-surface-secondary"
                     }`}
                   >
