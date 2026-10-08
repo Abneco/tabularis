@@ -34,6 +34,7 @@ import {
   Eraser,
   FileDigit,
   ExternalLink,
+  Filter,
   PanelBottomOpen,
   Eye,
   EyeOff,
@@ -82,6 +83,10 @@ import {
   getForeignKeyForPreview,
 } from "../../utils/foreignKeys";
 import {
+  getCellValueFilterOperators,
+  type CellValueFilterOperator,
+} from "../../utils/cellValueFilter";
+import {
   getDateInputMode,
   parseDateTime,
   formatDateTime,
@@ -125,6 +130,12 @@ interface DataGridProps {
   columnMetadata?: TableColumn[];
   foreignKeys?: ForeignKey[];
   onForeignKeyNavigate?: (fk: ForeignKey, value: unknown) => void;
+  onFilterByValue?: (
+    column: string,
+    operator: CellValueFilterOperator,
+    value: unknown,
+    columnType?: string,
+  ) => void;
   onForeignKeyShowPanel?: (fk: ForeignKey, value: unknown) => void;
   onForeignKeyHidePanel?: () => void;
   connectionId?: string | null;
@@ -204,6 +215,14 @@ const RANGE_EXTEND_KEYS = new Set([
   "ArrowRight",
 ]);
 
+// i18n label per "Filter by this value" operator (issue #853).
+const CELL_VALUE_FILTER_LABEL_KEYS: Record<CellValueFilterOperator, string> = {
+  "=": "dataGrid.filterEquals",
+  "<>": "dataGrid.filterNotEquals",
+  "IS NULL": "dataGrid.filterIsNull",
+  "IS NOT NULL": "dataGrid.filterIsNotNull",
+};
+
 export const DataGrid = React.memo(
   function DataGrid({
     ref,
@@ -217,6 +236,7 @@ export const DataGrid = React.memo(
     columnMetadata,
     foreignKeys,
     onForeignKeyNavigate,
+    onFilterByValue,
     onForeignKeyShowPanel,
     onForeignKeyHidePanel,
     connectionId,
@@ -2797,6 +2817,39 @@ export const DataGrid = React.memo(
                   icon: Braces,
                   action: openJsonEditor,
                 });
+              }
+
+              // "Filter by this value" (issue #853): hidden for blobs/JSON
+              // (their wire formats don't survive a WHERE comparison) and for
+              // insertion rows, which have no stored value to filter on yet.
+              if (onFilterByValue && tableName && !isInsertion) {
+                const isBlobCell =
+                  isBlobColumn(colDataType, columnLengthMap?.get(colName)) ||
+                  isBlobWireFormat(contextCellValue);
+                if (
+                  !isBlobCell &&
+                  !isJsonCellTarget(colDataType, contextCellValue)
+                ) {
+                  for (const op of getCellValueFilterOperators(
+                    contextCellValue,
+                  )) {
+                    menuItems.push({
+                      label: t(CELL_VALUE_FILTER_LABEL_KEYS[op], {
+                        column: colName,
+                      }),
+                      icon: Filter,
+                      action: () => {
+                        onFilterByValue(
+                          colName,
+                          op,
+                          contextCellValue,
+                          colDataType || undefined,
+                        );
+                        setContextMenu(null);
+                      },
+                    });
+                  }
+                }
               }
 
               // Separator before row actions

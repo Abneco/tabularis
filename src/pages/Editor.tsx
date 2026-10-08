@@ -170,6 +170,11 @@ import type { CommandScope } from "../types/commands";
 import { ROOT_COMMAND_SCOPE_ID } from "../utils/commandScopeStore";
 import { createActiveEditorCommands } from "../utils/editorCommands";
 import { buildForeignKeyFilterClause } from "../utils/foreignKeys";
+import {
+  buildCellValueFilterClause,
+  combineFilterClauses,
+  type CellValueFilterOperator,
+} from "../utils/cellValueFilter";
 import { formatSqlIdentifier } from "../utils/identifiers";
 import {
   createSqlFileTab,
@@ -2545,6 +2550,37 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       updateTab,
       runQuery,
     ],
+  );
+
+  const handleFilterByValue = useCallback(
+    (
+      column: string,
+      operator: CellValueFilterOperator,
+      value: unknown,
+      columnType?: string,
+    ) => {
+      const currentTab = tabsRef.current.find(
+        (tb) => tb.id === activeTabIdRef.current,
+      );
+      if (!currentTab) return;
+
+      const sourceType =
+        columnType ||
+        currentTab.columnMetadata?.find((c) => c.name === column)?.data_type;
+      const added = buildCellValueFilterClause(
+        column,
+        operator,
+        value,
+        activeCapabilities ?? activeDriver ?? null,
+        sourceType,
+      );
+      handleToolbarUpdate(
+        combineFilterClauses(currentTab.filterClause, added),
+        currentTab.sortClause || "",
+        currentTab.limitClause,
+      );
+    },
+    [activeDriver, activeCapabilities, handleToolbarUpdate],
   );
 
   const handleSort = useCallback(
@@ -5250,6 +5286,11 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
                       onForeignKeyNavigate={handleForeignKeyNavigate}
                       onForeignKeyShowPanel={handleForeignKeyShowPanel}
                       onForeignKeyHidePanel={() => setActiveFkQuery(null)}
+                      onFilterByValue={
+                        activeTab.type === "table"
+                          ? handleFilterByValue
+                          : undefined
+                      }
                       connectionId={activeConnectionId}
                       onRefresh={handleRefresh}
                       pendingChanges={activeTab.pendingChanges}
