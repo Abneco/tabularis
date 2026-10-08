@@ -514,6 +514,10 @@
     "fontSizeDesc": "调整整个应用使用的基础字体大小（10-20px）。",
     "preview": "预览",
     "fontPreviewText": "The quick brown fox jumps over the lazy dog",
+    "dataGrid": {
+      "zebraStripes": "交替行背景",
+      "zebraStripesDesc": "为每隔一行添加底色，便于在宽表中横向追踪某一行。"
+    },
     "language": "语言",
     "languageDesc": "选择您的首选语言。自动\"将使用您的系统语言。",
     "languageSearch": "搜索语言...",

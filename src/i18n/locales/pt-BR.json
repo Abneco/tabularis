@@ -519,6 +519,8 @@
       "title": "Grade de Dados",
       "stickyHeaders": "Cabeçalhos de coluna fixos",
       "stickyHeadersDesc": "Mantém os cabeçalhos das colunas visíveis no topo ao rolar pelos resultados.",
+      "zebraStripes": "Fundo de linhas alternadas",
+      "zebraStripesDesc": "Sombreia as linhas alternadas para ficar mais fácil acompanhar uma linha em tabelas largas.",
       "fontFamily": "Fonte dos resultados",
       "fontFamilyDesc": "Fonte usada nas células dos resultados de consulta. Monoespaçada mantém os valores alinhados; escolha \"Igual à interface\" para reutilizar a fonte do aplicativo.",
       "fontSameAsInterface": "Igual à interface"

@@ -4,6 +4,7 @@ import {
   getColumnSortState,
   calculateSelectionRange,
   toggleSetValue,
+  isZebraStripedRow,
   USE_DEFAULT_SENTINEL,
   resolveInsertionCellDisplay,
   resolveExistingCellDisplay,
@@ -1129,6 +1130,20 @@ describe('dataGrid utils', () => {
       expect(moveCellPosition(pos, 'ArrowDown', 10, 10, true)).toEqual({ rowIndex: 9, colIndex: 3 });
       expect(moveCellPosition(pos, 'ArrowLeft', 10, 10, true)).toEqual({ rowIndex: 3, colIndex: 0 });
       expect(moveCellPosition(pos, 'ArrowRight', 10, 10, true)).toEqual({ rowIndex: 3, colIndex: 9 });
+    });
+  });
+
+  describe('isZebraStripedRow', () => {
+    it('should stripe odd row indices only', () => {
+      expect(isZebraStripedRow(0, true)).toBe(false);
+      expect(isZebraStripedRow(1, true)).toBe(true);
+      expect(isZebraStripedRow(2, true)).toBe(false);
+      expect(isZebraStripedRow(3, true)).toBe(true);
+    });
+
+    it('should never stripe when disabled', () => {
+      expect(isZebraStripedRow(1, false)).toBe(false);
+      expect(isZebraStripedRow(3, false)).toBe(false);
     });
   });
 });

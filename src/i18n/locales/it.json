@@ -543,6 +543,8 @@
       "title": "Griglia dati",
       "stickyHeaders": "Intestazioni colonne fisse",
       "stickyHeadersDesc": "Mantieni le intestazioni delle colonne visibili in alto mentre scorri i risultati.",
+      "zebraStripes": "Sfondo alternato delle righe",
+      "zebraStripesDesc": "Ombreggia una riga sì e una no per seguire più facilmente le righe nelle tabelle larghe.",
       "fontFamily": "Font dei risultati",
       "fontFamilyDesc": "Font usato nelle celle dei risultati delle query. Il monospaziato mantiene i valori allineati; scegli \"Come interfaccia\" per riutilizzare il font dell'applicazione.",
       "fontSameAsInterface": "Come interfaccia"

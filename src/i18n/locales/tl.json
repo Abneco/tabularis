@@ -544,6 +544,10 @@
       "confirm": "Kumpirmahin",
       "cancel": "Kanselahin"
     },
+    "dataGrid": {
+      "zebraStripes": "Magkakahaliling background ng row",
+      "zebraStripesDesc": "I-shade bawat ikalawang row para mas madaling sundan ang isang row sa mga malapad na table."
+    },
     "appearance_general": "Pangkalahatan",
     "appearance_sqlEditor": "SQL Editor",
     "appearance_editorTheme": "Theme ng Editor",
