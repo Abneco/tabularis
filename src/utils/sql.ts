@@ -5,6 +5,8 @@ import {
   stripLeadingComments,
   isExplainable,
 } from './sqlSplitter';
+import { leadingKeyword } from './sqlSplitter/classify';
+import { maskNonCode } from './queryParameters';
 
 export type SqlDialect = Dialect;
 export type { Statement };
@@ -15,6 +17,27 @@ export const stripLeadingSqlComments = stripLeadingComments;
 
 export const isExplainableQuery = isExplainable;
 
+const DATA_MODIFYING_KEYWORDS: ReadonlySet<string> = new Set([
+  "INSERT",
+  "UPDATE",
+  "DELETE",
+  "MERGE",
+  "REPLACE",
+  "UPSERT",
+  "TRUNCATE",
+  "CREATE",
+  "DROP",
+  "ALTER",
+  "GRANT",
+  "REVOKE",
+  "CALL",
+  "EXEC",
+  "EXECUTE",
+]);
+
+// A `WITH` statement writes when its main statement or any CTE body does.
+const CTE_WRITE_RE = /\b(?:INSERT|UPDATE|DELETE|MERGE)\b/i;
+
 /**
  * Whether a statement changes data, so callers can warn before running it under
  * `EXPLAIN ANALYZE` — which really executes it.
@@ -23,14 +46,14 @@ export const isExplainableQuery = isExplainable;
  * helpers rather than in the plan analysis package.
  */
 export function isDataModifyingQuery(query: string): boolean {
-  const trimmed = query.trim().toUpperCase();
-  return (
-    trimmed.startsWith("INSERT") ||
-    trimmed.startsWith("UPDATE") ||
-    trimmed.startsWith("DELETE") ||
-    trimmed.startsWith("DROP") ||
-    trimmed.startsWith("ALTER") ||
-    trimmed.startsWith("TRUNCATE")
+  const keyword = leadingKeyword(query);
+  if (DATA_MODIFYING_KEYWORDS.has(keyword)) return true;
+  if (keyword !== "WITH") return false;
+  // Look for a write keyword outside strings and comments. Standard and MySQL
+  // rules disagree on backslash escapes, and either reading can end a literal
+  // late and hide a keyword behind it, so a match under either one counts.
+  return (["generic", "mysql"] as const).some((dialect) =>
+    CTE_WRITE_RE.test(maskNonCode(query, dialect)),
   );
 }
 
