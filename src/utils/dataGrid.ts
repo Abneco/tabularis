@@ -737,3 +737,40 @@ export function computePasteTargets(
   });
   return targets;
 }
+
+/**
+ * Column widths measured once for a result set and then held fixed, so that
+ * scrolling a virtualized grid (which only renders the visible rows) does not
+ * resize the columns as wider or narrower values come into view (#844).
+ */
+export interface LockedColumnWidths {
+  key: string;
+  widths: number[];
+}
+
+/**
+ * Identifies the column layout the widths were measured for. A new set of
+ * columns, or the first rows arriving in a previously empty result, calls for
+ * a fresh measurement; paging or refreshing the same columns does not.
+ */
+export function getColumnLayoutKey(
+  columnIds: string[],
+  hasRows: boolean,
+): string {
+  return `${hasRows ? 1 : 0}:${columnIds.join("\u0000")}`;
+}
+
+/**
+ * The locked widths to apply for the current layout, or null when they were
+ * measured for a different one (the grid then falls back to auto layout and
+ * measures again).
+ */
+export function resolveLockedColumnWidths(
+  locked: LockedColumnWidths | null,
+  key: string,
+  columnCount: number,
+): number[] | null {
+  if (!locked || locked.key !== key) return null;
+  if (locked.widths.length !== columnCount) return null;
+  return locked.widths;
+}

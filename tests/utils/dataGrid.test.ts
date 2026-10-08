@@ -21,6 +21,8 @@ import {
   type ColumnDisplayInfo,
   type CellClassParams,
   createDataGridResultCommands,
+  getColumnLayoutKey,
+  resolveLockedColumnWidths,
 } from '../../src/utils/dataGrid';
 
 describe('createDataGridResultCommands', () => {
@@ -1145,5 +1147,68 @@ describe('dataGrid utils', () => {
       expect(isZebraStripedRow(1, false)).toBe(false);
       expect(isZebraStripedRow(3, false)).toBe(false);
     });
+  });
+});
+
+describe('getColumnLayoutKey', () => {
+  it('should be stable for the same columns', () => {
+    expect(getColumnLayoutKey(['id', 'name'], true)).toBe(
+      getColumnLayoutKey(['id', 'name'], true),
+    );
+  });
+
+  it('should change when the columns change', () => {
+    expect(getColumnLayoutKey(['id', 'name'], true)).not.toBe(
+      getColumnLayoutKey(['id', 'email'], true),
+    );
+  });
+
+  it('should change when the column order changes', () => {
+    expect(getColumnLayoutKey(['id', 'name'], true)).not.toBe(
+      getColumnLayoutKey(['name', 'id'], true),
+    );
+  });
+
+  it('should change when rows arrive in an empty result', () => {
+    expect(getColumnLayoutKey(['id'], false)).not.toBe(
+      getColumnLayoutKey(['id'], true),
+    );
+  });
+
+  it('should not confuse column names that join to the same string', () => {
+    expect(getColumnLayoutKey(['a,b'], true)).not.toBe(
+      getColumnLayoutKey(['a', 'b'], true),
+    );
+  });
+
+  it('should handle no columns', () => {
+    expect(getColumnLayoutKey([], false)).toBe('0:');
+  });
+});
+
+describe('resolveLockedColumnWidths', () => {
+  const key = getColumnLayoutKey(['id', 'name'], true);
+
+  it('should return null when nothing was measured yet', () => {
+    expect(resolveLockedColumnWidths(null, key, 3)).toBeNull();
+  });
+
+  it('should return the widths measured for the same layout', () => {
+    expect(
+      resolveLockedColumnWidths({ key, widths: [50, 80, 200] }, key, 3),
+    ).toEqual([50, 80, 200]);
+  });
+
+  it('should return null for a different layout', () => {
+    const other = getColumnLayoutKey(['id', 'email'], true);
+    expect(
+      resolveLockedColumnWidths({ key, widths: [50, 80, 200] }, other, 3),
+    ).toBeNull();
+  });
+
+  it('should return null when the column count does not match', () => {
+    expect(
+      resolveLockedColumnWidths({ key, widths: [50, 80] }, key, 3),
+    ).toBeNull();
   });
 });
