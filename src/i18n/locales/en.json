@@ -717,7 +717,7 @@
     "clearLogs": "Clear Logs",
     "clearLogsConfirm": "Are you sure you want to clear all logs?",
     "exportLogs": "Export Logs",
-    "exportLogsSuccess": "Logs exported to clipboard",
+    "exportLogsSuccess": "Logs exported",
     "noLogs": "No logs available",
     "refreshLogs": "Refresh",
     "logLevel": "Level",

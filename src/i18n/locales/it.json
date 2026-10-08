@@ -705,7 +705,7 @@
     "clearLogs": "Pulisci Log",
     "clearLogsConfirm": "Sei sicuro di voler cancellare tutti i log?",
     "exportLogs": "Esporta Log",
-    "exportLogsSuccess": "Log esportati negli appunti",
+    "exportLogsSuccess": "Log esportati",
     "noLogs": "Nessun log disponibile",
     "refreshLogs": "Aggiorna",
     "logLevel": "Livello",

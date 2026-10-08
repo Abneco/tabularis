@@ -707,7 +707,7 @@
     "clearLogs": "Effacer les logs",
     "clearLogsConfirm": "Voulez-vous vraiment effacer tous les logs ?",
     "exportLogs": "Exporter les logs",
-    "exportLogsSuccess": "Logs exportés dans le presse-papiers",
+    "exportLogsSuccess": "Logs exportés",
     "noLogs": "Aucun log disponible",
     "refreshLogs": "Actualiser",
     "logLevel": "Niveau",

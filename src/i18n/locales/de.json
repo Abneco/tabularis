@@ -674,7 +674,7 @@
     "clearLogs": "Logs löschen",
     "clearLogsConfirm": "Möchtest du wirklich alle Logs löschen?",
     "exportLogs": "Logs exportieren",
-    "exportLogsSuccess": "Logs in die Zwischenablage exportiert",
+    "exportLogsSuccess": "Logs exportiert",
     "noLogs": "Keine Logs verfügbar",
     "refreshLogs": "Aktualisieren",
     "logLevel": "Level",

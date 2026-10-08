@@ -669,7 +669,7 @@
     "clearLogs": "Очистить логи",
     "clearLogsConfirm": "Очистить все логи?",
     "exportLogs": "Экспортировать логи",
-    "exportLogsSuccess": "Логи скопированы в буфер обмена",
+    "exportLogsSuccess": "Логи экспортированы",
     "noLogs": "Логи отсутствуют",
     "refreshLogs": "Обновить",
     "logLevel": "Уровень",
