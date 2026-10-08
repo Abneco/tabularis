@@ -7,8 +7,10 @@ import {
   Plus,
   SlidersHorizontal,
   X,
+  RefreshCw,
 } from "lucide-react";
-import type { TableColumn } from "../../types/editor";
+import type { AutoRefreshInterval, TableColumn } from "../../types/editor";
+import { AUTO_REFRESH_INTERVALS, normalizeAutoRefreshInterval } from "../../utils/autoRefresh";
 import {
   filterColumnSuggestions,
   getCurrentWordPrefix,
@@ -33,6 +35,11 @@ interface TableToolbarProps {
   defaultLimit: number;
   columnMetadata?: TableColumn[];
   onUpdate: (filter: string, sort: string, limit: number | undefined) => void;
+  onRefresh?: () => void;
+  refreshDisabled?: boolean;
+  autoRefreshIntervalMs?: AutoRefreshInterval;
+  onAutoRefreshChange?: (interval: AutoRefreshInterval) => void;
+  autoRefreshPaused?: boolean;
 }
 
 interface TableToolbarInternalProps extends TableToolbarProps {
@@ -65,6 +72,11 @@ const TableToolbarInternal = ({
   onResetApplied,
   onResetAllApplied,
   onUpdate,
+  onRefresh,
+  refreshDisabled,
+  autoRefreshIntervalMs = 0,
+  onAutoRefreshChange,
+  autoRefreshPaused,
 }: TableToolbarInternalProps) => {
   const { t } = useTranslation();
   const { activeDriver, activeCapabilities } = useDatabase();
@@ -574,6 +586,30 @@ const TableToolbarInternal = ({
         </div>
 
         {/* Plugin extension slot */}
+        {onAutoRefreshChange && (
+          <div className="flex items-center gap-1.5 shrink-0 text-xs text-secondary">
+            <button type="button" onClick={onRefresh} disabled={refreshDisabled}
+              aria-label={t("toolbar.autoRefresh.refresh")}
+              title={t("toolbar.autoRefresh.refresh")}
+              className="p-1 rounded text-muted hover:text-primary disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+              <RefreshCw size={14} />
+            </button>
+            <label className="flex items-center gap-1.5">
+              <span className="hidden @[800px]:inline">{t("toolbar.autoRefresh.label")}</span>
+              <select aria-label={t("toolbar.autoRefresh.label")}
+                value={autoRefreshIntervalMs}
+                onChange={(event) => onAutoRefreshChange(normalizeAutoRefreshInterval(Number(event.target.value)))}
+                className="bg-base text-secondary border border-default rounded px-1 py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+                {AUTO_REFRESH_INTERVALS.map((interval) => (
+                  <option key={interval} value={interval}>
+                    {interval ? t("toolbar.autoRefresh.seconds", { seconds: interval / 1000 }) : t("toolbar.autoRefresh.off")}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {autoRefreshPaused && <span role="status" className="text-muted">{t("toolbar.autoRefresh.paused")}</span>}
+          </div>
+        )}
         <SlotAnchor
           name="data-grid.toolbar.actions"
           context={{}}

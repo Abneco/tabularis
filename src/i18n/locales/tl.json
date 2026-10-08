@@ -1,5 +1,13 @@
 {
   "toolbar": {
+    "autoRefresh": {
+      "label": "Awtomatikong pag-refresh",
+      "off": "Naka-off",
+      "seconds": "{{seconds}}s",
+      "paused": "Naka-pause habang nag-e-edit",
+      "refresh": "I-refresh ang talahanayan",
+      "failed": "Hindi na-refresh: {{error}}"
+    },
     "filters": "Mga Filter",
     "toggleFilterPanel": "I-toggle ang structured filter panel",
     "filterConditions": "Mga kondisyon ng filter",

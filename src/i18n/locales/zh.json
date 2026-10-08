@@ -1,5 +1,13 @@
 {
   "toolbar": {
+    "autoRefresh": {
+      "label": "自动刷新",
+      "off": "关闭",
+      "seconds": "{{seconds}}秒",
+      "paused": "编辑时暂停",
+      "refresh": "刷新表格",
+      "failed": "刷新失败：{{error}}"
+    },
     "filters": "筛选器",
     "toggleFilterPanel": "切换结构化筛选面板",
     "filterConditions": "筛选条件",

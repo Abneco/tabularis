@@ -1,5 +1,13 @@
 {
   "toolbar": {
+    "autoRefresh": {
+      "label": "Auto-refresh",
+      "off": "Off",
+      "seconds": "{{seconds}}s",
+      "paused": "Paused while editing",
+      "refresh": "Refresh table",
+      "failed": "Refresh failed: {{error}}"
+    },
     "filters": "Filters",
     "toggleFilterPanel": "Toggle structured filter panel",
     "filterConditions": "Filter conditions",

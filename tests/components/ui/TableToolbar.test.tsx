@@ -31,6 +31,26 @@ describe('TableToolbar', () => {
     expect(screen.getByText('LIMIT')).toBeInTheDocument();
   });
 
+  it('exposes a controlled, labeled refresh interval beside manual refresh', () => {
+    const onChange = vi.fn();
+    const onRefresh = vi.fn();
+    const { rerender } = render(<TableToolbar {...defaultProps} autoRefreshIntervalMs={10000}
+      onAutoRefreshChange={onChange} onRefresh={onRefresh} />);
+    const select = screen.getByRole('combobox', { name: 'toolbar.autoRefresh.label' });
+    expect(select).toHaveValue('10000');
+    expect(select.querySelectorAll('option')).toHaveLength(5);
+    fireEvent.change(select, { target: { value: '5000' } });
+    expect(onChange).toHaveBeenCalledWith(5000);
+    expect(select).toHaveValue('10000');
+    fireEvent.click(screen.getByRole('button', { name: 'toolbar.autoRefresh.refresh' }));
+    expect(onRefresh).toHaveBeenCalledOnce();
+    rerender(<TableToolbar {...defaultProps} autoRefreshIntervalMs={5000}
+      onAutoRefreshChange={onChange} onRefresh={onRefresh} autoRefreshPaused refreshDisabled />);
+    expect(select).toHaveValue('5000');
+    expect(screen.getByRole('status')).toHaveTextContent('toolbar.autoRefresh.paused');
+    expect(screen.getByRole('button', { name: 'toolbar.autoRefresh.refresh' })).toBeDisabled();
+  });
+
   it('renders with initial values', () => {
     render(
       <TableToolbar
