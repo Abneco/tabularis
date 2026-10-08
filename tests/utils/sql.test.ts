@@ -379,11 +379,35 @@ describe('sql utils', () => {
     });
 
     it.each([
+      "WITH c AS (SELECT $$it's$$ AS a) DELETE FROM t",
+      "WITH c AS (SELECT $tag$don't$tag$ AS a) UPDATE t SET a = 1",
+      "WITH c AS (SELECT E'\\'' AS a, 'C:\\' AS b) DELETE FROM t WHERE x = 'y'",
+      "WITH c AS (SELECT 1 AS [it's]) DELETE FROM t",
+    ])("should not let another dialect's literal hide a write in a CTE: %j", (sql) => {
+      // Each literal lexes only under its own dialect; under the others its
+      // apostrophe opens a string that runs to the end of the text.
+      expect(isDataModifyingQuery(sql)).toBe(true);
+    });
+
+    it.each([
+      "SELECT * INTO t2 FROM t",
+      "select id into archive from t where id < 10",
+      "SELECT * INTO #recent FROM t",
+      "WITH c AS (SELECT 1 AS id) SELECT * INTO t2 FROM c",
+      "SELECT $$it's$$ AS a INTO t2",
+    ])("should detect SELECT ... INTO: %j", (sql) => {
+      expect(isDataModifyingQuery(sql)).toBe(true);
+    });
+
+    it.each([
       "-- note\nSELECT * FROM t",
       "(SELECT 1) UNION ALL (SELECT 2)",
       "TABLE t",
       "SELECT replace(name, 'a', 'b') FROM t",
       "SELECT * FROM updates",
+      "SELECT 'insert into t' AS note FROM t",
+      "SELECT * FROM t -- into archive later",
+      "SELECT intouch, into_date FROM t",
     ])("should not flag a read-only statement: %j", (sql) => {
       expect(isDataModifyingQuery(sql)).toBe(false);
     });

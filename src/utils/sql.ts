@@ -36,11 +36,26 @@ const DATA_MODIFYING_KEYWORDS: ReadonlySet<string> = new Set([
 ]);
 
 // A `WITH` statement writes when its main statement or any CTE body does.
-const CTE_WRITE_RE = /\b(?:INSERT|UPDATE|DELETE|MERGE)\b/i;
+// `INTO` also covers `SELECT ... INTO new_table`, which creates the table.
+const CTE_WRITE_RE = /\b(?:INSERT|UPDATE|DELETE|MERGE|INTO)\b/i;
+
+const SELECT_INTO_RE = /\bINTO\b/i;
+
+const MASK_DIALECTS: readonly SqlDialect[] = [
+  "postgres",
+  "mysql",
+  "mssql",
+  "sqlite",
+  "oracle",
+  "generic",
+];
 
 /**
  * Whether a statement changes data, so callers can warn before running it under
  * `EXPLAIN ANALYZE` — which really executes it.
+ *
+ * It reads the statement, not what it calls: a function with side effects
+ * (`SELECT nextval('s')`, `SELECT purge_old_rows()`) is not detected.
  *
  * A question about a query, not about a plan: it belongs with the other SQL
  * helpers rather than in the plan analysis package.
@@ -48,13 +63,18 @@ const CTE_WRITE_RE = /\b(?:INSERT|UPDATE|DELETE|MERGE)\b/i;
 export function isDataModifyingQuery(query: string): boolean {
   const keyword = leadingKeyword(query);
   if (DATA_MODIFYING_KEYWORDS.has(keyword)) return true;
-  if (keyword !== "WITH") return false;
-  // Look for a write keyword outside strings and comments. Standard and MySQL
-  // rules disagree on backslash escapes, and either reading can end a literal
-  // late and hide a keyword behind it, so a match under either one counts.
-  return (["generic", "mysql"] as const).some((dialect) =>
-    CTE_WRITE_RE.test(maskNonCode(query, dialect)),
-  );
+  if (keyword === "SELECT") return matchesOutsideStrings(query, SELECT_INTO_RE);
+  if (keyword === "WITH") return matchesOutsideStrings(query, CTE_WRITE_RE);
+  return false;
+}
+
+// Look for a keyword outside strings and comments. The connection's dialect is
+// not known here, and a dialect that does not lex a literal (Postgres dollar
+// quoting, E-strings, T-SQL bracket identifiers, MySQL backslash escapes) can
+// read an apostrophe in it as an unterminated string that hides everything
+// after it. The real dialect always lexes it, so a match under any one counts.
+function matchesOutsideStrings(query: string, pattern: RegExp): boolean {
+  return MASK_DIALECTS.some((dialect) => pattern.test(maskNonCode(query, dialect)));
 }
 
 function isIdentifierChar(char: string): boolean {
