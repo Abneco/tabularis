@@ -21,7 +21,12 @@
     "selectForApplyAll": "Seleccionar para Aplicar todos",
     "valuePlaceholder": "valor",
     "fromPlaceholder": "desde",
-    "toPlaceholder": "hasta"
+    "toPlaceholder": "hasta",
+    "opContains": "contiene",
+    "opStartsWith": "empieza con",
+    "opEndsWith": "termina con",
+    "opIsEmpty": "está vacío",
+    "opIsNotEmpty": "no está vacío"
   },
   "tags": {
     "label": "Etiquetas",

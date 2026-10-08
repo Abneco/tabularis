@@ -21,7 +21,12 @@
     "selectForApplyAll": "Select for Apply All",
     "valuePlaceholder": "value",
     "fromPlaceholder": "from",
-    "toPlaceholder": "to"
+    "toPlaceholder": "to",
+    "opContains": "contains",
+    "opStartsWith": "starts with",
+    "opEndsWith": "ends with",
+    "opIsEmpty": "is empty",
+    "opIsNotEmpty": "is not empty"
   },
   "tags": {
     "label": "Tags",

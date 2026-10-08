@@ -21,7 +21,12 @@
     "selectForApplyAll": "전체 적용에 포함",
     "valuePlaceholder": "값",
     "fromPlaceholder": "시작",
-    "toPlaceholder": "끝"
+    "toPlaceholder": "끝",
+    "opContains": "포함",
+    "opStartsWith": "시작",
+    "opEndsWith": "끝",
+    "opIsEmpty": "비어 있음",
+    "opIsNotEmpty": "비어 있지 않음"
   },
   "common": {
     "save": "저장",

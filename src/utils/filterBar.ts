@@ -12,6 +12,11 @@ export type FilterOperator =
   | "<="
   | "LIKE"
   | "NOT LIKE"
+  | "contains"
+  | "starts with"
+  | "ends with"
+  | "is empty"
+  | "is not empty"
   | "IS NULL"
   | "IS NOT NULL"
   | "IN"
@@ -124,7 +129,18 @@ export function getOperatorsForType(dataType: string): FilterOperator[] {
   }
 
   if (isString) {
-    return [...base, "LIKE", "NOT LIKE", "IN", "NOT IN"];
+    return [
+      ...base,
+      "LIKE",
+      "NOT LIKE",
+      "contains",
+      "starts with",
+      "ends with",
+      "is empty",
+      "is not empty",
+      "IN",
+      "NOT IN",
+    ];
   }
 
   // Default: all operators
@@ -155,7 +171,7 @@ export function buildSingleFilterClause(
   driver?: string | PluginManifest | DriverCapabilities | null
 ): string {
   const col = formatSqlIdentifier(filter.column, driver);
-    const op = filter.operator;
+  const op = filter.operator;
 
   if (op === "IS NULL") {
     return `${col} IS NULL`;
@@ -163,6 +179,27 @@ export function buildSingleFilterClause(
 
   if (op === "IS NOT NULL") {
     return `${col} IS NOT NULL`;
+  }
+
+  if (op === "is empty") {
+    return `(${col} IS NULL OR ${col} = '')`;
+  }
+
+  if (op === "is not empty") {
+    return `NOT (${col} IS NULL OR ${col} = '')`;
+  }
+
+  if (op === "contains" || op === "starts with" || op === "ends with") {
+    const escaped = escapeLikePattern(filter.value);
+    let pattern: string;
+    if (op === "contains") {
+      pattern = `%${escaped}%`;
+    } else if (op === "starts with") {
+      pattern = `${escaped}%`;
+    } else {
+      pattern = `%${escaped}`;
+    }
+    return `${col} LIKE ${quoteLiteral(pattern)} ESCAPE ${quoteLiteral(LIKE_ESCAPE)}`;
   }
 
   if (op === "BETWEEN") {
@@ -184,6 +221,24 @@ export function buildSingleFilterClause(
   return `${col} ${op} ${val}`;
 }
 
+/** Escape character used in generated LIKE … ESCAPE clauses. */
+const LIKE_ESCAPE = "\\";
+
+/**
+ * Escapes LIKE wildcards and the escape character so the value matches literally.
+ */
+function escapeLikePattern(value: string): string {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_");
+}
+
+/** Always quote a SQL string literal, doubling embedded single quotes. */
+function quoteLiteral(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
 function quoteIfNeeded(value: string): string {
   if (value === "") return "''";
   // If it's a pure number (integer or decimal), don't quote
@@ -196,7 +251,7 @@ function quoteIfNeeded(value: string): string {
     return value;
   }
   // Escape single quotes inside the value
-  return `'${value.replace(/'/g, "''")}'`;
+  return quoteLiteral(value);
 }
 
 /**

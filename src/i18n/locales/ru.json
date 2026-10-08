@@ -21,7 +21,12 @@
     "selectForApplyAll": "Добавить в «Применить все»",
     "valuePlaceholder": "значение",
     "fromPlaceholder": "от",
-    "toPlaceholder": "до"
+    "toPlaceholder": "до",
+    "opContains": "содержит",
+    "opStartsWith": "начинается с",
+    "opEndsWith": "заканчивается на",
+    "opIsEmpty": "пусто",
+    "opIsNotEmpty": "не пусто"
   },
   "tags": {
     "label": "Теги",

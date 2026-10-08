@@ -21,7 +21,12 @@
     "selectForApplyAll": "すべて適用に含める",
     "valuePlaceholder": "値",
     "fromPlaceholder": "開始",
-    "toPlaceholder": "終了"
+    "toPlaceholder": "終了",
+    "opContains": "含む",
+    "opStartsWith": "で始まる",
+    "opEndsWith": "で終わる",
+    "opIsEmpty": "空である",
+    "opIsNotEmpty": "空でない"
   },
   "tags": {
     "label": "タグ",
