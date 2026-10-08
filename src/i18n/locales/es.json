@@ -2131,7 +2131,6 @@
     "outputParameter": "Parámetro de salida — devuelto como resultado",
     "rawLabel": "Raw",
     "rawHint": "Inserta el valor tal cual, sin comillas de cadena (números, expresiones)",
-    "runButton": "Ejecutar",
     "runTabPrefix": "Ejecutar",
     "returnValue": "devuelve"
   },

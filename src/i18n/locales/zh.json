@@ -2139,7 +2139,6 @@
     "outputParameter": "输出参数 — 作为结果返回",
     "rawLabel": "原始值",
     "rawHint": "按原样插入值，不加字符串引号（数字、表达式）",
-    "runButton": "运行",
     "runTabPrefix": "运行",
     "returnValue": "返回值"
   },

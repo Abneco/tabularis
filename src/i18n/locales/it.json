@@ -2210,7 +2210,6 @@
     "outputParameter": "Parametro di output — restituito come risultato",
     "rawLabel": "Raw",
     "rawHint": "Inserisce il valore così com'è, senza quoting stringa (numeri, espressioni)",
-    "runButton": "Esegui",
     "runTabPrefix": "Esegui",
     "returnValue": "ritorna"
   },

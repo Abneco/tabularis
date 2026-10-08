@@ -2253,7 +2253,6 @@
     "outputParameter": "Parâmetro de saída — retornado como resultado",
     "rawLabel": "Bruto",
     "rawHint": "Inserir o valor literalmente, sem aspas de string (números, expressões)",
-    "runButton": "Executar",
     "runTabPrefix": "Executar",
     "returnValue": "retorna"
   },

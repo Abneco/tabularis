@@ -2267,7 +2267,6 @@
     "outputParameter": "Output parameter — ibabalik bilang resulta",
     "rawLabel": "Raw",
     "rawHint": "Ipasok ang halaga nang verbatim, walang string quoting (mga numero, expression)",
-    "runButton": "Patakbuhin",
     "runTabPrefix": "Patakbuhin",
     "returnValue": "nagbabalik ng"
   },
