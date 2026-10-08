@@ -80,6 +80,7 @@ const TableToolbarInternal = ({
 }: TableToolbarInternalProps) => {
   const { t } = useTranslation();
   const { activeDriver, activeCapabilities } = useDatabase();
+  const autoRefreshActive = autoRefreshIntervalMs > 0;
   // Capability-driven when available (issue #614): a postgres-compatible
   // driver registered under a different id (e.g. a standalone PostgreSQL
   // plugin) is quoted the same as the builtin "postgres" driver.
@@ -585,21 +586,30 @@ const TableToolbarInternal = ({
           />
         </div>
 
-        {/* Plugin extension slot */}
+        {/* Manual refresh + auto-refresh interval */}
         {onAutoRefreshChange && (
           <div className="flex items-center gap-1.5 shrink-0 text-xs text-secondary">
             <button type="button" onClick={onRefresh} disabled={refreshDisabled}
               aria-label={t("toolbar.autoRefresh.refresh")}
               title={t("toolbar.autoRefresh.refresh")}
-              className="p-1 rounded text-muted hover:text-primary disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+              className={`p-1 rounded hover:text-primary disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                autoRefreshActive ? "text-accent" : "text-muted"
+              }`}>
               <RefreshCw size={14} />
             </button>
             <label className="flex items-center gap-1.5">
-              <span className="hidden @[800px]:inline">{t("toolbar.autoRefresh.label")}</span>
+              <span className={`hidden @[800px]:inline ${autoRefreshActive ? "text-accent" : ""}`}>
+                {t("toolbar.autoRefresh.label")}
+              </span>
               <select aria-label={t("toolbar.autoRefresh.label")}
                 value={autoRefreshIntervalMs}
                 onChange={(event) => onAutoRefreshChange(normalizeAutoRefreshInterval(Number(event.target.value)))}
-                className="bg-base text-secondary border border-default rounded px-1 py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
+                data-active={autoRefreshActive || undefined}
+                className={`bg-base border rounded px-1 py-1 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                  autoRefreshActive
+                    ? "border-accent-primary/50 text-accent font-medium"
+                    : "border-default text-secondary"
+                }`}>
                 {AUTO_REFRESH_INTERVALS.map((interval) => (
                   <option key={interval} value={interval}>
                     {interval ? t("toolbar.autoRefresh.seconds", { seconds: interval / 1000 }) : t("toolbar.autoRefresh.off")}
@@ -610,6 +620,7 @@ const TableToolbarInternal = ({
             {autoRefreshPaused && <span role="status" className="text-muted">{t("toolbar.autoRefresh.paused")}</span>}
           </div>
         )}
+        {/* Plugin extension slot */}
         <SlotAnchor
           name="data-grid.toolbar.actions"
           context={{}}

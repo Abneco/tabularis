@@ -51,6 +51,31 @@ describe('TableToolbar', () => {
     expect(screen.getByRole('button', { name: 'toolbar.autoRefresh.refresh' })).toBeDisabled();
   });
 
+  it('renders a single refresh button and marks a non-Off interval as active', () => {
+    const props = { ...defaultProps, onAutoRefreshChange: vi.fn(), onRefresh: vi.fn() };
+    const { rerender } = render(<TableToolbar {...props} autoRefreshIntervalMs={0} />);
+    expect(screen.getAllByRole('button', { name: 'toolbar.autoRefresh.refresh' })).toHaveLength(1);
+    const select = screen.getByRole('combobox', { name: 'toolbar.autoRefresh.label' });
+    expect(select).not.toHaveAttribute('data-active');
+    expect(select).toHaveClass('border-default', 'text-secondary');
+
+    rerender(<TableToolbar {...props} autoRefreshIntervalMs={30000} />);
+    expect(select).toHaveAttribute('data-active', 'true');
+    expect(select).toHaveClass('border-accent-primary/50', 'text-accent');
+    expect(select).not.toHaveClass('border-default');
+    expect(screen.getByRole('button', { name: 'toolbar.autoRefresh.refresh' })).toHaveClass('text-accent');
+
+    rerender(<TableToolbar {...props} autoRefreshIntervalMs={0} />);
+    expect(select).not.toHaveAttribute('data-active');
+    expect(screen.getByRole('button', { name: 'toolbar.autoRefresh.refresh' })).toHaveClass('text-muted');
+  });
+
+  it('omits the refresh controls when auto-refresh is not wired', () => {
+    render(<TableToolbar {...defaultProps} />);
+    expect(screen.queryByRole('button', { name: 'toolbar.autoRefresh.refresh' })).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'toolbar.autoRefresh.label' })).toBeNull();
+  });
+
   it('renders with initial values', () => {
     render(
       <TableToolbar
