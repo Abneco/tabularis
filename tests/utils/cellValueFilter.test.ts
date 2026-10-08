@@ -132,5 +132,17 @@ describe("cellValueFilter", () => {
       expect(getCellValueFilterOperators("abc")).toEqual(["=", "<>"]);
       expect(getCellValueFilterOperators(false)).toEqual(["=", "<>"]);
     });
+
+    it("offers only IS NULL / IS NOT NULL for masked cells, whatever the value", () => {
+      for (const value of ["alice@example.com", "", 0, null]) {
+        expect(getCellValueFilterOperators(value, { masked: true })).toEqual([
+          "IS NULL",
+          "IS NOT NULL",
+        ]);
+      }
+      expect(
+        getCellValueFilterOperators("abc", { masked: false }),
+      ).toEqual(["=", "<>"]);
+    });
   });
 });

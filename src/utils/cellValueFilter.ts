@@ -43,11 +43,17 @@ export function combineFilterClauses(
 /**
  * Operators offered for a cell: NULL cells only offer the IS NULL /
  * IS NOT NULL pair, everything else (including empty strings) offers = / <>.
+ *
+ * A masked cell also only offers IS NULL / IS NOT NULL, whatever its value:
+ * `=` / `<>` would copy the real value into the WHERE input, and offering the
+ * same pair for NULL and non-NULL cells keeps the menu from hinting which one
+ * the masked cell holds.
  */
 export function getCellValueFilterOperators(
   value: unknown,
+  options: { masked?: boolean } = {},
 ): CellValueFilterOperator[] {
-  if (value === null || value === undefined) {
+  if (options.masked || value === null || value === undefined) {
     return ["IS NULL", "IS NOT NULL"];
   }
   return ["=", "<>"];

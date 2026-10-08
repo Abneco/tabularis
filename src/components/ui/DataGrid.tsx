@@ -215,7 +215,7 @@ const RANGE_EXTEND_KEYS = new Set([
   "ArrowRight",
 ]);
 
-// i18n label per "Filter by this value" operator (issue #853).
+// i18n label per "Filter by this value" operator.
 const CELL_VALUE_FILTER_LABEL_KEYS: Record<CellValueFilterOperator, string> = {
   "=": "dataGrid.filterEquals",
   "<>": "dataGrid.filterNotEquals",
@@ -2819,10 +2819,16 @@ export const DataGrid = React.memo(
                 });
               }
 
-              // "Filter by this value" (issue #853): hidden for blobs/JSON
-              // (their wire formats don't survive a WHERE comparison) and for
-              // insertion rows, which have no stored value to filter on yet.
+              // "Filter by this value": hidden for blobs/JSON (their wire
+              // formats don't survive a WHERE comparison) and for insertion
+              // rows, which have no stored value to filter on yet. Masking is
+              // display-only, so a masked cell only gets IS NULL / IS NOT NULL
+              // and its real value never reaches the WHERE input.
               if (onFilterByValue && tableName && !isInsertion) {
+                const isContextCellMasked = isCellMasked(
+                  contextMenu.rowIndex,
+                  contextMenu.colIndex,
+                );
                 const isBlobCell =
                   isBlobColumn(colDataType, columnLengthMap?.get(colName)) ||
                   isBlobWireFormat(contextCellValue);
@@ -2832,6 +2838,7 @@ export const DataGrid = React.memo(
                 ) {
                   for (const op of getCellValueFilterOperators(
                     contextCellValue,
+                    { masked: isContextCellMasked },
                   )) {
                     menuItems.push({
                       label: t(CELL_VALUE_FILTER_LABEL_KEYS[op], {
@@ -2842,7 +2849,7 @@ export const DataGrid = React.memo(
                         onFilterByValue(
                           colName,
                           op,
-                          contextCellValue,
+                          isContextCellMasked ? null : contextCellValue,
                           colDataType || undefined,
                         );
                         setContextMenu(null);
