@@ -4706,6 +4706,7 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         <>
           {isTableTab ? (
             <TableToolbar
+              key={activeTab?.id}
               initialFilter={activeTab?.filterClause}
               initialSort={activeTab?.sortClause}
               initialLimit={activeTab?.limitClause}

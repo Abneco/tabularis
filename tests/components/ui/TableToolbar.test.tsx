@@ -267,4 +267,42 @@ describe('TableToolbar', () => {
 
     expect(mockOnUpdate).toHaveBeenCalledWith('id = 1', 'id ASC', 10);
   });
+
+  describe('filter panel', () => {
+    const panelProps = {
+      ...defaultProps,
+      columnMetadata: [
+        { name: 'id', data_type: 'int', is_pk: true, is_nullable: false, is_auto_increment: true },
+      ],
+    };
+    const openPanel = () => {
+      fireEvent.click(screen.getByTitle('toolbar.toggleFilterPanel'));
+      // the WHERE input is hidden while the panel is open
+      expect(screen.queryByText('WHERE')).not.toBeInTheDocument();
+    };
+
+    it('stays open when clicking outside of it', () => {
+      render(
+        <div>
+          <TableToolbar {...panelProps} />
+          <div data-testid="grid">grid</div>
+        </div>
+      );
+      openPanel();
+
+      fireEvent.mouseDown(screen.getByTestId('grid'));
+      fireEvent.click(screen.getByTestId('grid'));
+
+      expect(screen.queryByText('WHERE')).not.toBeInTheDocument();
+    });
+
+    it('is closed when remounted with another key (table tab switch)', () => {
+      const { rerender } = render(<TableToolbar key="customers" {...panelProps} />);
+      openPanel();
+
+      rerender(<TableToolbar key="orders" {...panelProps} />);
+
+      expect(screen.getByText('WHERE')).toBeInTheDocument();
+    });
+  });
 });
