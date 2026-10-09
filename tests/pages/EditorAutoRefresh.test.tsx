@@ -16,7 +16,9 @@ const mocks = vi.hoisted(() => ({
   settings: { resultPageSize: 100, csvIncludeHeaders: true },
   capabilities: { schemas: true, sql_dialect: "postgresql", identifier_quote: '"' },
   t: (key: string, options?: Record<string, unknown>) => key === "toolbar.autoRefresh.failed" ? String(options?.error) : key,
+  notify: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock("../../src/utils/queryNotification", () => ({ notifyQueryFinished: mocks.notify }));
 vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: mocks.t }) }));
 vi.mock("lucide-react", async (importOriginal) => await importOriginal());
 vi.mock("react-router-dom", () => ({ useLocation: () => mocks.location, useNavigate: () => mocks.noop }));
@@ -100,6 +102,7 @@ function Harness({ initialTabs = [initialTab()] }: { initialTabs?: Tab[] }) {
     addTab: mocks.noop, openNotebook: mocks.noop, closeTab: (id: string) => setTabs((tabs) => tabs.filter((tab) => tab.id !== id)),
     closeAllTabs: mocks.noop, closeOtherTabs: mocks.noop, closeTabsToLeft: mocks.noop, closeTabsToRight: mocks.noop,
     reorderTab: mocks.noop, updateResultEntry: mocks.noop, getSchema: mocks.noop,
+    reopenClosedTab: mocks.noop, canReopenClosedTab: false,
   } as EditorContextType;
   useLayoutEffect(() => { context = value; });
   return <EditorContext.Provider value={value}><Editor /></EditorContext.Provider>;
@@ -115,7 +118,7 @@ const queries = () => vi.mocked(invoke).mock.calls.filter(([command]) => command
 
 describe("table auto-refresh integration", () => {
   beforeEach(() => {
-    vi.useFakeTimers(); vi.setSystemTime(0); mocks.connectionId = "connection-1";
+    vi.useFakeTimers(); vi.setSystemTime(0); mocks.connectionId = "connection-1"; mocks.notify.mockClear();
     vi.mocked(invoke).mockReset();
     vi.mocked(invoke).mockImplementation((command) => command === "execute_query"
       ? Promise.resolve({ ...initialResult, rows: [[2], [3]] }) : Promise.resolve([]));
@@ -161,6 +164,51 @@ describe("table auto-refresh integration", () => {
     await advance(60000); expect(queries()).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Toggle editing" }));
     await advance(0); expect(queries()).toHaveLength(2);
+  });
+
+  it("pauses automatic refresh while rows are selected and resumes once cleared", async () => {
+    render(<Harness />);
+    act(() => context.updateTab("table-1", { selectedRows: [0] }));
+    expect(screen.getByText("toolbar.autoRefresh.pausedSelection")).toHaveAttribute("role", "status");
+    await advance(60000); expect(queries()).toHaveLength(0);
+    expect(context.activeTab?.selectedRows).toEqual([0]);
+    act(() => context.updateTab("table-1", { selectedRows: [] }));
+    expect(screen.queryByText("toolbar.autoRefresh.pausedSelection")).toBeNull();
+    await advance(0); expect(queries()).toHaveLength(1);
+    expect(context.activeTab?.result?.rows).toEqual([[2], [3]]);
+  });
+
+  it("discards an in-flight automatic refresh when rows get selected", async () => {
+    const request = deferred<QueryResult>();
+    vi.mocked(invoke).mockReturnValue(request.promise);
+    render(<Harness />); await advance(5000);
+    act(() => context.updateTab("table-1", { selectedRows: [0] }));
+    await act(async () => { request.resolve({ ...initialResult, rows: [[999], [1]] }); });
+    // The selected index 0 must still point at the row the user picked.
+    expect(context.activeTab?.result?.rows).toEqual([[1]]);
+    expect(context.activeTab?.selectedRows).toEqual([0]);
+  });
+
+  it("manual refresh clears a selection whose indexes may now point at other rows", async () => {
+    render(<Harness />);
+    act(() => context.updateTab("table-1", { selectedRows: [0] }));
+    fireEvent.click(screen.getByRole("button", { name: "toolbar.autoRefresh.refresh" }));
+    await advance(0);
+    expect(queries()).toHaveLength(1);
+    expect(context.activeTab?.result?.rows).toEqual([[2], [3]]);
+    expect(context.activeTab?.selectedRows).toEqual([]);
+  });
+
+  it("sends long-query notifications for manual refreshes only, not automatic ticks", async () => {
+    render(<Harness />);
+    await advance(5000); expect(queries()).toHaveLength(1);
+    expect(mocks.notify).not.toHaveBeenCalled();
+    vi.mocked(invoke).mockRejectedValue("offline");
+    await advance(5000); expect(queries()).toHaveLength(2);
+    expect(mocks.notify).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "toolbar.autoRefresh.refresh" }));
+    await advance(0);
+    expect(mocks.notify).toHaveBeenCalledOnce();
   });
 
   it("keeps each deadline across switches and refreshes overdue tabs once", async () => {

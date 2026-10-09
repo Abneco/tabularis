@@ -51,6 +51,18 @@ describe('TableToolbar', () => {
     expect(screen.getByRole('button', { name: 'toolbar.autoRefresh.refresh' })).toBeDisabled();
   });
 
+  it('keeps the auto-refresh live region mounted and names the pause reason', () => {
+    const props = { ...defaultProps, onAutoRefreshChange: vi.fn(), onRefresh: vi.fn(), autoRefreshIntervalMs: 5000 as const };
+    const { rerender } = render(<TableToolbar {...props} />);
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('');
+    rerender(<TableToolbar {...props} autoRefreshPaused autoRefreshPausedReason="selection" />);
+    expect(screen.getByRole('status')).toBe(status);
+    expect(status).toHaveTextContent('toolbar.autoRefresh.pausedSelection');
+    rerender(<TableToolbar {...props} autoRefreshPaused autoRefreshPausedReason="editing" />);
+    expect(status).toHaveTextContent('toolbar.autoRefresh.paused');
+  });
+
   it('renders a single refresh button and marks a non-Off interval as active', () => {
     const props = { ...defaultProps, onAutoRefreshChange: vi.fn(), onRefresh: vi.fn() };
     const { rerender } = render(<TableToolbar {...props} autoRefreshIntervalMs={0} />);
