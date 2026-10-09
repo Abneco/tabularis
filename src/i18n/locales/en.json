@@ -572,6 +572,10 @@
     "runStatementUnderCursorDesc": "When a script has multiple statements, run the one under the cursor instead of showing the query picker. Select text to run a specific range.",
     "safetyConfirmationDelay": "Delay safety confirmations",
     "safetyConfirmationDelayDesc": "Disable confirmation buttons for five seconds for destructive queries and production writes.",
+    "notifyLongQueries": "Notify when long queries finish",
+    "notifyLongQueriesDesc": "Send a desktop notification when a query finishes while Tabularis is in the background.",
+    "notifyLongQueriesThreshold": "Notification threshold",
+    "notifyLongQueriesThresholdDesc": "Only notify for queries that ran at least this long.",
     "formatter_title": "SQL Formatter",
     "formatter_keywordCase": "Keyword Case",
     "formatter_keywordCaseDesc": "How SQL keywords (SELECT, FROM, WHERE) are capitalized after formatting.",
@@ -1676,6 +1680,14 @@
       "collapseAll": "Collapse all",
       "expandAll": "Expand all",
       "collapsed": "Collapsed"
+    },
+    "queryNotification": {
+      "successTitle": "Query finished",
+      "errorTitle": "Query failed",
+      "body": "{{tab}} · {{duration}}",
+      "batchSuccessTitle": "Run All finished",
+      "batchErrorTitle": "Run All finished with errors",
+      "batchBody": "{{tab}} · {{succeeded}} succeeded, {{failed}} failed · {{duration}}"
     }
   },
   "createTable": {

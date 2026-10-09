@@ -564,6 +564,10 @@
     "runStatementUnderCursorDesc": "Kapag maraming statement ang isang script, patakbuhin ang nasa ilalim ng cursor sa halip na ipakita ang query picker. Pumili ng teksto para patakbuhin ang isang partikular na saklaw.",
     "safetyConfirmationDelay": "Iantala ang mga kumpirmasyon sa kaligtasan",
     "safetyConfirmationDelayDesc": "I-disable ang mga confirmation button nang limang segundo para sa mapanirang query at production writes.",
+    "notifyLongQueries": "I-abiso kapag natapos ang mahahabang query",
+    "notifyLongQueriesDesc": "Nagpapadala ng desktop notification kapag natapos ang isang query habang nasa background ang Tabularis.",
+    "notifyLongQueriesThreshold": "Threshold ng notification",
+    "notifyLongQueriesThresholdDesc": "Nag-aabiso lang para sa mga query na tumakbo nang hindi bababa sa ganitong katagal.",
     "formatter_title": "SQL Formatter",
     "formatter_keywordCase": "Case ng Keyword",
     "formatter_keywordCaseDesc": "Paano icapitalize ang SQL keywords (SELECT, FROM, WHERE) pagkatapos i-format.",
@@ -1655,6 +1659,14 @@
       "collapseAll": "I-collapse lahat",
       "expandAll": "I-expand lahat",
       "collapsed": "Na-collapse"
+    },
+    "queryNotification": {
+      "successTitle": "Natapos ang query",
+      "errorTitle": "Nabigo ang query",
+      "body": "{{tab}} · {{duration}}",
+      "batchSuccessTitle": "Natapos ang Patakbuhin lahat",
+      "batchErrorTitle": "Natapos ang Patakbuhin lahat na may mga error",
+      "batchBody": "{{tab}} · {{succeeded}} matagumpay, {{failed}} nabigo · {{duration}}"
     }
   },
   "createTable": {

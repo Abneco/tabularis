@@ -108,6 +108,10 @@ pub struct AppConfig {
     pub run_statement_under_cursor: Option<bool>,
     /// Delay destructive-query and production-write confirmations for five seconds. Default: false.
     pub safety_confirmation_delay_enabled: Option<bool>,
+    /// Send a desktop notification when a long-running query finishes while the window is unfocused. Default: true.
+    pub notify_long_queries: Option<bool>,
+    /// Minimum execution time in seconds before a finished query triggers a notification. Default: 20.
+    pub notify_long_queries_threshold_sec: Option<u32>,
     // ----- SQL Formatter -----
     pub formatter_keyword_case: Option<String>,
     pub formatter_indent_style: Option<String>,
@@ -514,6 +518,13 @@ pub fn save_config(app: AppHandle, config: AppConfig) -> Result<(), String> {
         if config.safety_confirmation_delay_enabled.is_some() {
             existing_config.safety_confirmation_delay_enabled =
                 config.safety_confirmation_delay_enabled;
+        }
+        if config.notify_long_queries.is_some() {
+            existing_config.notify_long_queries = config.notify_long_queries;
+        }
+        if config.notify_long_queries_threshold_sec.is_some() {
+            existing_config.notify_long_queries_threshold_sec =
+                config.notify_long_queries_threshold_sec;
         }
         if config.ping_interval.is_some() {
             let old_interval = existing_config.ping_interval;
@@ -1132,6 +1143,8 @@ mod tests {
     fn editor_fields_default_to_none() {
         let config = AppConfig::default();
         assert!(config.safety_confirmation_delay_enabled.is_none());
+        assert!(config.notify_long_queries.is_none());
+        assert!(config.notify_long_queries_threshold_sec.is_none());
         assert!(config.editor_theme.is_none());
         assert!(config.result_font_family.is_none());
         assert!(config.editor_font_family.is_none());
@@ -1156,6 +1169,8 @@ mod tests {
         config.editor_theme = Some("tabularis-light".to_string());
         config.editor_accept_suggestion_on_enter = Some(true);
         config.safety_confirmation_delay_enabled = Some(true);
+        config.notify_long_queries = Some(true);
+        config.notify_long_queries_threshold_sec = Some(20);
 
         let json = serde_json::to_string(&config).unwrap();
         assert!(json.contains("editorFontFamily"));
@@ -1168,11 +1183,15 @@ mod tests {
         assert!(json.contains("editorTheme"));
         assert!(json.contains("editorAcceptSuggestionOnEnter"));
         assert!(json.contains("safetyConfirmationDelayEnabled"));
+        assert!(json.contains("notifyLongQueries"));
+        assert!(json.contains("notifyLongQueriesThresholdSec"));
         // snake_case must not appear
         assert!(!json.contains("editor_font_family"));
         assert!(!json.contains("result_font_family"));
         assert!(!json.contains("editor_accept_suggestion_on_enter"));
         assert!(!json.contains("safety_confirmation_delay_enabled"));
+        assert!(!json.contains("notify_long_queries"));
+        assert!(!json.contains("notify_long_queries_threshold_sec"));
     }
 
     #[test]
@@ -1187,7 +1206,9 @@ mod tests {
             "editorShowLineNumbers": true,
             "editorTheme": "tabularis-dark",
             "editorAcceptSuggestionOnEnter": true,
-            "safetyConfirmationDelayEnabled": true
+            "safetyConfirmationDelayEnabled": true,
+            "notifyLongQueries": true,
+            "notifyLongQueriesThresholdSec": 30
         }"#;
 
         let config: AppConfig = serde_json::from_str(json).unwrap();
@@ -1200,6 +1221,8 @@ mod tests {
         assert_eq!(config.editor_theme.as_deref(), Some("tabularis-dark"));
         assert_eq!(config.editor_accept_suggestion_on_enter, Some(true));
         assert_eq!(config.safety_confirmation_delay_enabled, Some(true));
+        assert_eq!(config.notify_long_queries, Some(true));
+        assert_eq!(config.notify_long_queries_threshold_sec, Some(30));
     }
 
     #[test]

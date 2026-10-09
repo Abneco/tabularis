@@ -534,6 +534,10 @@
     "runStatementUnderCursorDesc": "Wenn ein Skript mehrere Anweisungen enthält, wird die Anweisung unter dem Cursor ausgeführt, statt die Abfrageauswahl anzuzeigen. Markiere Text, um einen bestimmten Bereich auszuführen.",
     "safetyConfirmationDelay": "Sicherheitsbestätigungen verzögern",
     "safetyConfirmationDelayDesc": "Deaktiviert Bestätigungsschaltflächen für destruktive Abfragen und Produktionsschreibvorgänge fünf Sekunden lang.",
+    "notifyLongQueries": "Benachrichtigen, wenn lange Abfragen fertig sind",
+    "notifyLongQueriesDesc": "Sendet eine Desktop-Benachrichtigung, wenn eine Abfrage fertig ist, während Tabularis im Hintergrund ist.",
+    "notifyLongQueriesThreshold": "Benachrichtigungsschwellenwert",
+    "notifyLongQueriesThresholdDesc": "Benachrichtigt nur bei Abfragen, die mindestens so lange gelaufen sind.",
     "formatter_title": "SQL-Formatierung",
     "formatter_keywordCase": "Schlüsselwort-Schreibweise",
     "formatter_keywordCaseDesc": "Groß-/Kleinschreibung von SQL-Schlüsselwörtern (SELECT, FROM, WHERE) nach der Formatierung.",
@@ -1625,6 +1629,14 @@
       "collapseAll": "Alle einklappen",
       "expandAll": "Alle ausklappen",
       "collapsed": "Eingeklappt"
+    },
+    "queryNotification": {
+      "successTitle": "Abfrage abgeschlossen",
+      "errorTitle": "Abfrage fehlgeschlagen",
+      "body": "{{tab}} · {{duration}}",
+      "batchSuccessTitle": "Alle ausführen abgeschlossen",
+      "batchErrorTitle": "Alle ausführen mit Fehlern abgeschlossen",
+      "batchBody": "{{tab}} · {{succeeded}} erfolgreich, {{failed}} fehlgeschlagen · {{duration}}"
     }
   },
   "createTable": {

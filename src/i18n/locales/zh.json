@@ -913,7 +913,11 @@
     "runStatementUnderCursor": "执行光标所在的语句",
     "runStatementUnderCursorDesc": "当脚本包含多条语句时，执行光标所在的语句，而不显示查询选择器。选中文本可执行指定范围。",
     "safetyConfirmationDelay": "延迟安全确认",
-    "safetyConfirmationDelayDesc": "对于破坏性查询和生产环境写入，将确认按钮禁用五秒。"
+    "safetyConfirmationDelayDesc": "对于破坏性查询和生产环境写入，将确认按钮禁用五秒。",
+    "notifyLongQueries": "长查询完成时通知",
+    "notifyLongQueriesDesc": "当 Tabularis 处于后台时，查询完成后发送桌面通知。",
+    "notifyLongQueriesThreshold": "通知阈值",
+    "notifyLongQueriesThresholdDesc": "仅通知运行时间不短于此值的查询。"
   },
   "update": {
     "badges": {
@@ -1577,6 +1581,14 @@
       "generatingName": "正在生成名称...",
       "resultSetPrefix": "结果",
       "results": "结果"
+    },
+    "queryNotification": {
+      "successTitle": "查询完成",
+      "errorTitle": "查询失败",
+      "body": "{{tab}} · {{duration}}",
+      "batchSuccessTitle": "全部运行完成",
+      "batchErrorTitle": "全部运行完成，但有错误",
+      "batchBody": "{{tab}} · {{succeeded}} 成功, {{failed}} 失败 · {{duration}}"
     }
   },
   "createTable": {
