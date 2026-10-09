@@ -23,8 +23,8 @@
     "fromPlaceholder": "시작",
     "toPlaceholder": "끝",
     "opContains": "포함",
-    "opStartsWith": "시작",
-    "opEndsWith": "끝",
+    "opStartsWith": "으로 시작",
+    "opEndsWith": "으로 끝남",
     "opIsEmpty": "비어 있음",
     "opIsNotEmpty": "비어 있지 않음"
   },

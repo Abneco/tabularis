@@ -199,7 +199,12 @@ export function buildSingleFilterClause(
     } else {
       pattern = `%${escaped}`;
     }
-    return `${col} LIKE ${quoteLiteral(pattern)} ESCAPE ${quoteLiteral(LIKE_ESCAPE)}`;
+    // MySQL/MariaDB (default sql_mode) treat backslash as an escape inside
+    // string literals, so a literal backslash must be doubled to survive.
+    const literal = usesBackslashStringEscapes(driver)
+      ? pattern.replace(/\\/g, "\\\\")
+      : pattern;
+    return `${col} LIKE ${quoteLiteral(literal)} ESCAPE '${LIKE_ESCAPE}'`;
   }
 
   if (op === "BETWEEN") {
@@ -223,23 +228,40 @@ export function buildSingleFilterClause(
 
 /**
  * Escape character used in generated LIKE … ESCAPE clauses.
- * Standard SQL; most drivers honor ESCAPE '\\'. Dialects that treat backslash
- * specially inside string literals (or ignore ESCAPE) may still need a
- * per-driver override later.
+ * `!` rather than a backslash: `ESCAPE '\'` is a syntax error on MySQL/MariaDB with
+ * the default sql_mode (the backslash escapes the closing quote), while `!`
+ * has no special meaning inside string literals on any supported dialect.
  */
-const LIKE_ESCAPE = "\\";
+const LIKE_ESCAPE = "!";
 
 /**
  * Escapes LIKE wildcards and the escape character so the value matches literally.
  * `value` is a raw UI filter string (not a pre-escaped SQL fragment). Escape
- * backslash first, then % and _, so user-typed wildcards and backslashes are
+ * the escape character first, then % and _, so user-typed wildcards are
  * matched literally. Do not reorder unless the input contract changes.
  */
 function escapeLikePattern(value: string): string {
   return value
-    .replace(/\\/g, "\\\\")
-    .replace(/%/g, "\\%")
-    .replace(/_/g, "\\_");
+    .replace(/!/g, "!!")
+    .replace(/%/g, "!%")
+    .replace(/_/g, "!_");
+}
+
+/**
+ * True for dialects whose string literals treat backslash as an escape
+ * character by default (MySQL and MariaDB without NO_BACKSLASH_ESCAPES).
+ */
+function usesBackslashStringEscapes(
+  driver: string | PluginManifest | DriverCapabilities | null | undefined
+): boolean {
+  if (typeof driver === "string") {
+    return driver === "mysql" || driver === "mariadb";
+  }
+  if (!driver) return false;
+  const caps = "capabilities" in driver ? driver.capabilities : driver;
+  if (caps?.sql_dialect) return caps.sql_dialect === "mysql";
+  const id = "id" in driver ? driver.id : undefined;
+  return id === "mysql" || id === "mariadb";
 }
 
 /** Always quote a SQL string literal, doubling embedded single quotes. */

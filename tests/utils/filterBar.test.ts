@@ -10,6 +10,7 @@ import {
 } from "../../src/utils/filterBar";
 import type { TableColumn } from "../../src/types/editor";
 import type { StructuredFilter } from "../../src/utils/filterBar";
+import type { DriverCapabilities } from "../../src/types/plugins";
 
 const makeColumn = (name: string, data_type: string): TableColumn => ({
   name,
@@ -362,7 +363,7 @@ describe("filterBar utils", () => {
         value: "john",
       };
       expect(buildSingleFilterClause(filter)).toBe(
-        "name LIKE '%john%' ESCAPE '\\'"
+        "name LIKE '%john%' ESCAPE '!'"
       );
     });
 
@@ -374,7 +375,7 @@ describe("filterBar utils", () => {
         value: "admin",
       };
       expect(buildSingleFilterClause(filter)).toBe(
-        "email LIKE 'admin%' ESCAPE '\\'"
+        "email LIKE 'admin%' ESCAPE '!'"
       );
     });
 
@@ -386,19 +387,20 @@ describe("filterBar utils", () => {
         value: "@example.com",
       };
       expect(buildSingleFilterClause(filter)).toBe(
-        "email LIKE '%@example.com' ESCAPE '\\'"
+        "email LIKE '%@example.com' ESCAPE '!'"
       );
     });
 
-    it("should escape LIKE wildcards and backslashes in text operators", () => {
+    it("should escape LIKE wildcards and the escape character in text operators", () => {
       const filter: StructuredFilter = {
         id: "1",
         column: "name",
         operator: "contains",
-        value: "100%_off\\sale",
+        value: "100%_off!\\sale",
       };
+      // Backslash is not special with ESCAPE '!' on postgres/sqlite.
       expect(buildSingleFilterClause(filter)).toBe(
-        "name LIKE '%100\\%\\_off\\\\sale%' ESCAPE '\\'"
+        "name LIKE '%100!%!_off!!\\sale%' ESCAPE '!'"
       );
     });
 
@@ -410,7 +412,7 @@ describe("filterBar utils", () => {
         value: "O'Brien",
       };
       expect(buildSingleFilterClause(filter)).toBe(
-        "name LIKE 'O''Brien%' ESCAPE '\\'"
+        "name LIKE 'O''Brien%' ESCAPE '!'"
       );
     });
 
@@ -438,6 +440,57 @@ describe("filterBar utils", () => {
       );
     });
 
+    it("should never emit ESCAPE '\\' for mysql/mariadb text operators", () => {
+      for (const driver of ["mysql", "mariadb"]) {
+        for (const [operator, expected] of [
+          ["contains", "name LIKE '%john%' ESCAPE '!'"],
+          ["starts with", "name LIKE 'john%' ESCAPE '!'"],
+          ["ends with", "name LIKE '%john' ESCAPE '!'"],
+        ] as const) {
+          const filter: StructuredFilter = {
+            id: "1",
+            column: "name",
+            operator,
+            value: "john",
+          };
+          expect(buildSingleFilterClause(filter, driver)).toBe(expected);
+        }
+      }
+    });
+
+    it("should double backslashes in the mysql literal so they match literally", () => {
+      const filter: StructuredFilter = {
+        id: "1",
+        column: "path",
+        operator: "contains",
+        value: "C:\\temp_1%",
+      };
+      expect(buildSingleFilterClause(filter, "mysql")).toBe(
+        "path LIKE '%C:\\\\temp!_1!%%' ESCAPE '!'"
+      );
+    });
+
+    it("should detect mysql dialect from driver capabilities", () => {
+      const filter: StructuredFilter = {
+        id: "1",
+        column: "path",
+        operator: "starts with",
+        value: "a\\b",
+      };
+      expect(
+        buildSingleFilterClause(filter, {
+          identifier_quote: "`",
+          sql_dialect: "mysql",
+        } as DriverCapabilities)
+      ).toBe("path LIKE 'a\\\\b%' ESCAPE '!'");
+      expect(
+        buildSingleFilterClause(filter, {
+          identifier_quote: '"',
+          sql_dialect: "postgres",
+        } as DriverCapabilities)
+      ).toBe("path LIKE 'a\\b%' ESCAPE '!'");
+    });
+
     it("should quote mixed-case columns with text operators for postgres", () => {
       const filter: StructuredFilter = {
         id: "1",
@@ -446,7 +499,7 @@ describe("filterBar utils", () => {
         value: "Ada",
       };
       expect(buildSingleFilterClause(filter, "postgres")).toBe(
-        "\"DisplayName\" LIKE '%Ada%' ESCAPE '\\'"
+        "\"DisplayName\" LIKE '%Ada%' ESCAPE '!'"
       );
     });
   });
