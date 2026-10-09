@@ -869,6 +869,7 @@
       "newConnection": "Nova conexão",
       "newTab": "Nova aba",
       "closeTab": "Fechar aba",
+      "reopenClosedTab": "Reabrir aba fechada",
       "nextPage": "Próxima página",
       "prevPage": "Página anterior",
       "saveGridChanges": "Salvar alterações pendentes",
@@ -1316,6 +1317,7 @@
       "reattach": "Reanexar"
     },
     "closeTab": "Fechar Aba",
+    "reopenClosedTab": "Reabrir Aba Fechada",
     "closeOthers": "Fechar Outras Abas",
     "closeRight": "Fechar Abas à Direita",
     "closeLeft": "Fechar Abas à Esquerda",

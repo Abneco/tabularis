@@ -881,6 +881,7 @@
       "newConnection": "Nueva conexión",
       "newTab": "Nueva pestaña",
       "closeTab": "Cerrar pestaña",
+      "reopenClosedTab": "Reabrir pestaña cerrada",
       "nextPage": "Página siguiente",
       "prevPage": "Página anterior",
       "switchConnection": "Cambiar a conexión 1–9",
@@ -1338,6 +1339,7 @@
       "reattach": "Volver a acoplar"
     },
     "closeTab": "Cerrar Pestaña",
+    "reopenClosedTab": "Reabrir Pestaña Cerrada",
     "closeOthers": "Cerrar Otras Pestañas",
     "closeRight": "Cerrar Pestañas a la Derecha",
     "closeLeft": "Cerrar Pestañas a la Izquierda",
