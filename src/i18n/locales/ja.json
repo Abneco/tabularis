@@ -1,5 +1,14 @@
 {
   "toolbar": {
+    "autoRefresh": {
+      "label": "自動更新",
+      "off": "オフ",
+      "seconds": "{{seconds}}秒",
+      "paused": "編集中は一時停止",
+      "pausedSelection": "行の選択中は一時停止",
+      "refresh": "テーブルを更新",
+      "failed": "更新に失敗しました: {{error}}"
+    },
     "filters": "フィルター",
     "toggleFilterPanel": "構造化フィルターパネルを切り替え",
     "filterConditions": "フィルター条件",

@@ -1,5 +1,14 @@
 {
   "toolbar": {
+    "autoRefresh": {
+      "label": "자동 새로고침",
+      "off": "끄기",
+      "seconds": "{{seconds}}초",
+      "paused": "편집 중 일시 중지됨",
+      "pausedSelection": "행이 선택된 동안 일시 중지됨",
+      "refresh": "테이블 새로고침",
+      "failed": "새로고침 실패: {{error}}"
+    },
     "filters": "필터",
     "toggleFilterPanel": "구조화된 필터 패널 토글",
     "filterConditions": "필터 조건",

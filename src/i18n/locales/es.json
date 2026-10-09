@@ -1,5 +1,14 @@
 {
   "toolbar": {
+    "autoRefresh": {
+      "label": "Actualización automática",
+      "off": "Desactivada",
+      "seconds": "{{seconds}} s",
+      "paused": "En pausa durante la edición",
+      "pausedSelection": "En pausa mientras haya filas seleccionadas",
+      "refresh": "Actualizar tabla",
+      "failed": "Error al actualizar: {{error}}"
+    },
     "filters": "Filtros",
     "toggleFilterPanel": "Panel de filtros estructurados",
     "filterConditions": "Condiciones de filtro",

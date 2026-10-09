@@ -1,5 +1,14 @@
 {
   "toolbar": {
+    "autoRefresh": {
+      "label": "Автообновление",
+      "off": "Выкл.",
+      "seconds": "{{seconds}} с",
+      "paused": "Приостановлено на время редактирования",
+      "pausedSelection": "Приостановлено, пока выбраны строки",
+      "refresh": "Обновить таблицу",
+      "failed": "Не удалось обновить: {{error}}"
+    },
     "filters": "Фильтры",
     "toggleFilterPanel": "Открыть/закрыть панель фильтров",
     "filterConditions": "Условия фильтрации",
