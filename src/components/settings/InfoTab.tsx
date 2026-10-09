@@ -222,7 +222,7 @@ export function InfoTab() {
               <div className="text-sm font-medium text-accent-warning">
                 {t("update.managedByPackageManager", {
                   source:
-                    ({ aur: "AUR", snap: "Snap Store", flatpak: "Flathub" } as Record<string, string>)[
+                    ({ aur: "AUR", snap: "Snap Store", flatpak: "Flathub", winget: "WinGet" } as Record<string, string>)[
                       installationSource
                     ] ?? installationSource,
                 })}

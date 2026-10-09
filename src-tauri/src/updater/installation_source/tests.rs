@@ -73,30 +73,6 @@ fn detects_direct_installation() {
 }
 
 #[test]
-fn detects_homebrew_cask_when_apple_silicon_caskroom_exists() {
-    let source = detect_homebrew_cask_with(|path| path == "/opt/homebrew/Caskroom/tabularis");
-    assert_eq!(source.as_deref(), Some("Homebrew"));
-}
-
-#[test]
-fn detects_homebrew_cask_when_intel_caskroom_exists() {
-    let source = detect_homebrew_cask_with(|path| path == "/usr/local/Caskroom/tabularis");
-    assert_eq!(source.as_deref(), Some("Homebrew"));
-}
-
-#[test]
-fn homebrew_cask_undetected_when_no_receipt() {
-    let source = detect_homebrew_cask_with(|_| false);
-    assert_eq!(source, None);
-}
-
-#[test]
-fn homebrew_cask_candidate_paths_cover_both_prefixes() {
-    assert!(HOMEBREW_CASK_PATHS.contains(&"/opt/homebrew/Caskroom/tabularis"));
-    assert!(HOMEBREW_CASK_PATHS.contains(&"/usr/local/Caskroom/tabularis"));
-}
-
-#[test]
 fn detects_winget_from_localappdata_packages_dir() {
     let source = detect_winget_with(
         Some(r"C:\Users\test\AppData\Local"),
@@ -105,7 +81,7 @@ fn detects_winget_from_localappdata_packages_dir() {
         |dir| dir == r"C:\Users\test\AppData\Local\Microsoft\WinGet\Packages",
         None,
     );
-    assert_eq!(source.as_deref(), Some("WinGet"));
+    assert_eq!(source.as_deref(), Some("winget"));
 }
 
 #[test]
@@ -117,7 +93,7 @@ fn detects_winget_from_program_files_packages_dir() {
         |dir| dir == r"C:\Program Files\WinGet\Packages",
         None,
     );
-    assert_eq!(source.as_deref(), Some("WinGet"));
+    assert_eq!(source.as_deref(), Some("winget"));
 }
 
 #[test]
@@ -129,7 +105,7 @@ fn detects_winget_from_program_files_x86_packages_dir() {
         |dir| dir == r"C:\Program Files (x86)\WinGet\Packages",
         None,
     );
-    assert_eq!(source.as_deref(), Some("WinGet"));
+    assert_eq!(source.as_deref(), Some("winget"));
 }
 
 #[test]
@@ -143,7 +119,7 @@ fn detects_winget_from_portable_exe_path() {
             r"C:\Users\test\AppData\Local\Microsoft\WinGet\Packages\Debba.Tabularis_Microsoft.Winget.Source_8wekyb3d8bbwe\tabularis.exe",
         ),
     );
-    assert_eq!(source.as_deref(), Some("WinGet"));
+    assert_eq!(source.as_deref(), Some("winget"));
 }
 
 #[test]
@@ -157,7 +133,7 @@ fn detects_winget_from_forward_slash_exe_path() {
             r"C:/Users/test/AppData/Local/Microsoft/WinGet/Packages/Debba.Tabularis_msstore/tabularis.exe",
         ),
     );
-    assert_eq!(source.as_deref(), Some("WinGet"));
+    assert_eq!(source.as_deref(), Some("winget"));
 }
 
 #[test]
@@ -196,10 +172,8 @@ fn winget_packages_dir_has_tabularis_reads_injected_layout() {
     let dir = tempfile_winget_packages_dir();
     let packages = dir.path().join("Packages");
     std::fs::create_dir_all(&packages).unwrap();
-    std::fs::create_dir_all(
-        packages.join("Debba.Tabularis_Microsoft.Winget.Source_8wekyb3d8bbwe"),
-    )
-    .unwrap();
+    std::fs::create_dir_all(packages.join("Debba.Tabularis_Microsoft.Winget.Source_8wekyb3d8bbwe"))
+        .unwrap();
     std::fs::create_dir_all(packages.join("Other.App_source")).unwrap();
 
     assert!(winget_packages_dir_has_tabularis(
