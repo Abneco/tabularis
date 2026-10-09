@@ -688,7 +688,7 @@
     "clearLogs": "ログを消去",
     "clearLogsConfirm": "すべてのログを消去してもよろしいですか？",
     "exportLogs": "ログをエクスポート",
-    "exportLogsSuccess": "ログをクリップボードにエクスポートしました",
+    "exportLogsSuccess": "ログをエクスポートしました",
     "noLogs": "ログがありません",
     "refreshLogs": "更新",
     "logLevel": "レベル",

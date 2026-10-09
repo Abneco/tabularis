@@ -707,7 +707,7 @@
     "clearLogs": "I-clear ang mga Log",
     "clearLogsConfirm": "Sigurado ka bang gusto mong i-clear ang lahat ng log?",
     "exportLogs": "I-export ang mga Log",
-    "exportLogsSuccess": "Na-export ang mga log sa clipboard",
+    "exportLogsSuccess": "Na-export ang mga log",
     "noLogs": "Walang available na log",
     "refreshLogs": "I-refresh",
     "logLevel": "Level",

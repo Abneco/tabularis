@@ -652,7 +652,7 @@
     "clearLogs": "로그 지우기",
     "clearLogsConfirm": "모든 로그를 지우시겠습니까?",
     "exportLogs": "로그 내보내기",
-    "exportLogsSuccess": "로그가 클립보드로 내보내졌습니다",
+    "exportLogsSuccess": "로그를 내보냈습니다",
     "noLogs": "표시할 로그가 없습니다",
     "refreshLogs": "새로고침",
     "logLevel": "레벨",

@@ -643,7 +643,7 @@
     "clearLogs": "清除日志",
     "clearLogsConfirm": "确定要清除所有日志吗？",
     "exportLogs": "导出日志",
-    "exportLogsSuccess": "日志已导出到剪贴板",
+    "exportLogsSuccess": "日志已导出",
     "noLogs": "无日志可用",
     "refreshLogs": "刷新",
     "logLevel": "级别",

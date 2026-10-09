@@ -699,7 +699,7 @@
     "clearLogs": "Limpiar Registros",
     "clearLogsConfirm": "¿Estás seguro de que deseas borrar todos los registros?",
     "exportLogs": "Exportar Registros",
-    "exportLogsSuccess": "Registros exportados al portapapeles",
+    "exportLogsSuccess": "Registros exportados",
     "noLogs": "No hay registros disponibles",
     "refreshLogs": "Actualizar",
     "logLevel": "Nivel",
