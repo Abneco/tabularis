@@ -164,7 +164,10 @@ describe("filterBar utils", () => {
     it("should return text-friendly operators for TEXT types", () => {
       const ops = getOperatorsForType("TEXT");
       expect(ops).toContain("contains");
+      expect(ops).toContain("starts with");
+      expect(ops).toContain("ends with");
       expect(ops).toContain("is empty");
+      expect(ops).toContain("is not empty");
     });
 
     it("should NOT return text-friendly operators for numeric types", () => {

@@ -221,11 +221,19 @@ export function buildSingleFilterClause(
   return `${col} ${op} ${val}`;
 }
 
-/** Escape character used in generated LIKE … ESCAPE clauses. */
+/**
+ * Escape character used in generated LIKE … ESCAPE clauses.
+ * Standard SQL; most drivers honor ESCAPE '\\'. Dialects that treat backslash
+ * specially inside string literals (or ignore ESCAPE) may still need a
+ * per-driver override later.
+ */
 const LIKE_ESCAPE = "\\";
 
 /**
  * Escapes LIKE wildcards and the escape character so the value matches literally.
+ * `value` is a raw UI filter string (not a pre-escaped SQL fragment). Escape
+ * backslash first, then % and _, so user-typed wildcards and backslashes are
+ * matched literally. Do not reorder unless the input contract changes.
  */
 function escapeLikePattern(value: string): string {
   return value
