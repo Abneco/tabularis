@@ -545,6 +545,10 @@
     "runStatementUnderCursorDesc": "Quando um script tem várias instruções, executa a que está sob o cursor em vez de mostrar o seletor de consultas. Selecione um texto para executar um intervalo específico.",
     "safetyConfirmationDelay": "Atrasar confirmações de segurança",
     "safetyConfirmationDelayDesc": "Desativa os botões de confirmação por cinco segundos para consultas destrutivas e gravações em produção.",
+    "notifyLongQueries": "Notificar quando consultas longas terminarem",
+    "notifyLongQueriesDesc": "Envia uma notificação da área de trabalho quando uma consulta termina com o Tabularis em segundo plano.",
+    "notifyLongQueriesThreshold": "Limiar de notificação",
+    "notifyLongQueriesThresholdDesc": "Notifica apenas consultas que rodaram por pelo menos este tempo.",
     "formatter_title": "Formatador SQL",
     "formatter_keywordCase": "Caixa das Palavras-Chave",
     "formatter_keywordCaseDesc": "Como as palavras-chave SQL (SELECT, FROM, WHERE) são capitalizadas após a formatação.",
@@ -1652,6 +1656,14 @@
       "collapseAll": "Recolher tudo",
       "expandAll": "Expandir tudo",
       "collapsed": "Recolhido"
+    },
+    "queryNotification": {
+      "successTitle": "Consulta concluída",
+      "errorTitle": "A consulta falhou",
+      "body": "{{tab}} · {{duration}}",
+      "batchSuccessTitle": "Executar Tudo concluído",
+      "batchErrorTitle": "Executar Tudo concluído com erros",
+      "batchBody": "{{tab}} · {{succeeded}} com sucesso, {{failed}} com falha · {{duration}}"
     }
   },
   "createTable": {

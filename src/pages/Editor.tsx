@@ -126,6 +126,7 @@ import {
   interpolateQueryParams,
 } from "../utils/queryParameters";
 import { formatDuration } from "../utils/formatTime";
+import { notifyQueryFinished } from "../utils/queryNotification";
 import {
   buildSyncPayload,
   applyAction,
@@ -1265,8 +1266,9 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         || (isMultiDb ? activeDatabaseName : undefined)
         || undefined;
 
+      const start = performance.now();
+
       try {
-        const start = performance.now();
         // Per-tab page size (falling back to the global Result Page Size)
         // drives pagination; the "Total Limit" input is handled in the SQL.
         // undefined disables pagination entirely (the user picked "All").
@@ -1319,6 +1321,18 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
               historyDb,
             );
           }
+          void notifyQueryFinished({
+            enabled: settings.notifyLongQueries,
+            thresholdSec: settings.notifyLongQueriesThresholdSec,
+            durationMs: end - start,
+            content: {
+              title: t("editor.queryNotification.successTitle"),
+              body: t("editor.queryNotification.body", {
+                tab: targetTab.title,
+                duration: formatDuration(end - start),
+              }),
+            },
+          });
           return;
         }
 
@@ -1384,6 +1398,19 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
           } else {
             updateTab(targetTabId, { pkColumns: null });
           }
+
+          void notifyQueryFinished({
+            enabled: settings.notifyLongQueries,
+            thresholdSec: settings.notifyLongQueriesThresholdSec,
+            durationMs: end - start,
+            content: {
+              title: t("editor.queryNotification.successTitle"),
+              body: t("editor.queryNotification.body", {
+                tab: targetTab.title,
+                duration: formatDuration(end - start),
+              }),
+            },
+          });
         }
 
         if (shouldRecordHistory) {
@@ -1401,6 +1428,20 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
           updateTab(targetTabId, {
             error: typeof err === "string" ? err : t("editor.queryFailed"),
             isLoading: false,
+          });
+
+          const errorElapsed = performance.now() - start;
+          void notifyQueryFinished({
+            enabled: settings.notifyLongQueries,
+            thresholdSec: settings.notifyLongQueriesThresholdSec,
+            durationMs: errorElapsed,
+            content: {
+              title: t("editor.queryNotification.errorTitle"),
+              body: t("editor.queryNotification.body", {
+                tab: targetTab.title,
+                duration: formatDuration(errorElapsed),
+              }),
+            },
           });
         }
 
@@ -1421,6 +1462,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       activeConnectionId,
       updateTab,
       settings.resultPageSize,
+      settings.notifyLongQueries,
+      settings.notifyLongQueriesThresholdSec,
       fetchPkColumn,
       t,
       activeDriver,
@@ -1593,6 +1636,18 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
         // mark only the entries that haven't already resolved via a live event
         // as failed, so statements that completed first keep their results.
         const fallbackElapsed = performance.now() - batchStart;
+        void notifyQueryFinished({
+          enabled: settings.notifyLongQueries,
+          thresholdSec: settings.notifyLongQueriesThresholdSec,
+          durationMs: fallbackElapsed,
+          content: {
+            title: t("editor.queryNotification.errorTitle"),
+            body: t("editor.queryNotification.body", {
+              tab: targetTab.title,
+              duration: formatDuration(fallbackElapsed),
+            }),
+          },
+        });
         const message = typeof err === "string" ? err : t("editor.queryFailed");
         entries.forEach((entry, idx) => {
           if (applied.has(idx)) return;
@@ -1634,6 +1689,28 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
           ? { activeResultId: entries[firstResultEntry].id }
           : {}),
       });
+
+      const failed = batchResults.filter((r) => r?.error).length;
+      const succeeded = batchResults.length - failed;
+      const total = performance.now() - batchStart;
+      void notifyQueryFinished({
+        enabled: settings.notifyLongQueries,
+        thresholdSec: settings.notifyLongQueriesThresholdSec,
+        durationMs: total,
+        content: {
+          title: t(
+            failed > 0
+              ? "editor.queryNotification.batchErrorTitle"
+              : "editor.queryNotification.batchSuccessTitle",
+          ),
+          body: t("editor.queryNotification.batchBody", {
+            tab: targetTab.title,
+            succeeded,
+            failed,
+            duration: formatDuration(total),
+          }),
+        },
+      });
     },
     [
       clearEntryScrollTops,
@@ -1641,6 +1718,8 @@ export const Editor = ({ commandScopeId }: EditorProps) => {
       updateTab,
       patchResultEntry,
       settings.resultPageSize,
+      settings.notifyLongQueries,
+      settings.notifyLongQueriesThresholdSec,
       activeSchema,
       t,
       isMultiDb,

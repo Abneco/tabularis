@@ -513,6 +513,10 @@
     "runStatementUnderCursorDesc": "스크립트에 여러 구문이 있을 때 쿼리 선택 창을 표시하지 않고 커서 위치의 구문을 실행합니다. 특정 범위를 실행하려면 텍스트를 선택하세요.",
     "safetyConfirmationDelay": "안전 확인 지연",
     "safetyConfirmationDelayDesc": "파괴적인 쿼리와 프로덕션 쓰기의 확인 버튼을 5초 동안 비활성화합니다.",
+    "notifyLongQueries": "긴 쿼리 완료 시 알림",
+    "notifyLongQueriesDesc": "Tabularis가 백그라운드에 있는 동안 쿼리가 완료되면 데스크톱 알림을 보냅니다.",
+    "notifyLongQueriesThreshold": "알림 기준 시간",
+    "notifyLongQueriesThresholdDesc": "이 시간 이상 실행된 쿼리에만 알림을 보냅니다.",
     "formatter_title": "SQL 포맷터",
     "formatter_keywordCase": "키워드 대소문자",
     "formatter_keywordCaseDesc": "포맷 후 SQL 키워드(SELECT, FROM, WHERE)의 대소문자 처리.",
@@ -1608,6 +1612,14 @@
       "collapseAll": "모두 접기",
       "expandAll": "모두 펼치기",
       "collapsed": "접힘"
+    },
+    "queryNotification": {
+      "successTitle": "쿼리 완료",
+      "errorTitle": "쿼리 실패",
+      "body": "{{tab}} · {{duration}}",
+      "batchSuccessTitle": "모두 실행 완료",
+      "batchErrorTitle": "모두 실행 완료(오류 있음)",
+      "batchBody": "{{tab}} · 성공 {{succeeded}}개, 실패 {{failed}}개 · {{duration}}"
     }
   },
   "createTable": {

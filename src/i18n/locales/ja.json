@@ -549,6 +549,10 @@
     "runStatementUnderCursorDesc": "スクリプトに複数のステートメントがある場合、クエリ選択画面を表示せずにカーソル位置のステートメントを実行します。特定の範囲を実行するにはテキストを選択してください。",
     "safetyConfirmationDelay": "安全確認を遅延",
     "safetyConfirmationDelayDesc": "破壊的なクエリと本番環境への書き込みでは、確認ボタンを5秒間無効にします。",
+    "notifyLongQueries": "長時間のクエリ終了時に通知",
+    "notifyLongQueriesDesc": "Tabularisがバックグラウンドの間にクエリが終了すると、デスクトップ通知を送信します。",
+    "notifyLongQueriesThreshold": "通知しきい値",
+    "notifyLongQueriesThresholdDesc": "この時間以上実行されたクエリのみ通知します。",
     "formatter_title": "SQLフォーマッター",
     "formatter_keywordCase": "キーワードの大文字/小文字",
     "formatter_keywordCaseDesc": "フォーマット後のSQLキーワード（SELECT、FROM、WHERE）の大文字/小文字。",
@@ -1645,6 +1649,14 @@
       "collapseAll": "すべて折りたたむ",
       "expandAll": "すべて展開",
       "collapsed": "折りたたみ中"
+    },
+    "queryNotification": {
+      "successTitle": "クエリが完了しました",
+      "errorTitle": "クエリが失敗しました",
+      "body": "{{tab}} · {{duration}}",
+      "batchSuccessTitle": "すべて実行が完了しました",
+      "batchErrorTitle": "すべて実行がエラーで完了しました",
+      "batchBody": "{{tab}} · 成功 {{succeeded}} 件、失敗 {{failed}} 件 · {{duration}}"
     }
   },
   "createTable": {

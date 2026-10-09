@@ -568,6 +568,10 @@
     "runStatementUnderCursorDesc": "Lorsqu'un script contient plusieurs instructions, exécute celle sous le curseur au lieu d'afficher le sélecteur de requêtes. Sélectionnez du texte pour exécuter une plage spécifique.",
     "safetyConfirmationDelay": "Retarder les confirmations de sécurité",
     "safetyConfirmationDelayDesc": "Désactive les boutons de confirmation pendant cinq secondes pour les requêtes destructives et les écritures en production.",
+    "notifyLongQueries": "Notifier quand les longues requêtes se terminent",
+    "notifyLongQueriesDesc": "Envoie une notification de bureau quand une requête se termine pendant que Tabularis est en arrière-plan.",
+    "notifyLongQueriesThreshold": "Seuil de notification",
+    "notifyLongQueriesThresholdDesc": "Notifie uniquement les requêtes ayant duré au moins ce temps.",
     "formatter_title": "Formateur SQL",
     "formatter_keywordCase": "Casse des mots-clés",
     "formatter_keywordCaseDesc": "Comment les mots-clés SQL (SELECT, FROM, WHERE) sont capitalisés après le formatage.",
@@ -1674,6 +1678,14 @@
       "collapseAll": "Tout réduire",
       "expandAll": "Tout développer",
       "collapsed": "Réduit"
+    },
+    "queryNotification": {
+      "successTitle": "Requête terminée",
+      "errorTitle": "Échec de la requête",
+      "body": "{{tab}} · {{duration}}",
+      "batchSuccessTitle": "Tout exécuter terminé",
+      "batchErrorTitle": "Tout exécuter terminé avec des erreurs",
+      "batchBody": "{{tab}} · {{succeeded}} réussies, {{failed}} échouées · {{duration}}"
     }
   },
   "createTable": {
