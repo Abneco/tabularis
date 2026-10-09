@@ -24,7 +24,12 @@
     "selectForApplyAll": "Piliin para sa Ilapat Lahat",
     "valuePlaceholder": "halaga",
     "fromPlaceholder": "mula",
-    "toPlaceholder": "hanggang"
+    "toPlaceholder": "hanggang",
+    "opContains": "naglalaman",
+    "opStartsWith": "nagsisimula sa",
+    "opEndsWith": "nagtatapos sa",
+    "opIsEmpty": "walang laman",
+    "opIsNotEmpty": "may laman"
   },
   "tags": {
     "label": "Mga tag",

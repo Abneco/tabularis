@@ -24,7 +24,12 @@
     "selectForApplyAll": "Selecionar para Aplicar Tudo",
     "valuePlaceholder": "valor",
     "fromPlaceholder": "de",
-    "toPlaceholder": "até"
+    "toPlaceholder": "até",
+    "opContains": "contém",
+    "opStartsWith": "começa com",
+    "opEndsWith": "termina com",
+    "opIsEmpty": "está vazio",
+    "opIsNotEmpty": "não está vazio"
   },
   "common": {
     "save": "Salvar",

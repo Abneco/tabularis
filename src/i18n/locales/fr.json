@@ -24,7 +24,12 @@
     "selectForApplyAll": "Sélectionner pour Tout appliquer",
     "valuePlaceholder": "valeur",
     "fromPlaceholder": "de",
-    "toPlaceholder": "à"
+    "toPlaceholder": "à",
+    "opContains": "contient",
+    "opStartsWith": "commence par",
+    "opEndsWith": "se termine par",
+    "opIsEmpty": "est vide",
+    "opIsNotEmpty": "n'est pas vide"
   },
   "tags": {
     "label": "Tags",
